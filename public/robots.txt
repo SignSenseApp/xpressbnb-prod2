@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /auth/
+Disallow: /host/
+
+Sitemap: https://xpressbnb.com/sitemap.xml

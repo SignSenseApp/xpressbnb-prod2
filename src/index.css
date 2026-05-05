@@ -1,0 +1,299 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── XpressBnB light Gen Z theme tokens ── */
+:root {
+  --xpx-base: #FAFAF7;
+  --xpx-surface: #FFFFFF;
+  --xpx-surface-light: #F5F2EC;
+  --xpx-surface-elevated: #EEE9DF;
+  --xpx-warm: #F4A261;
+  --xpx-warm-dark: #E08C45;
+  --xpx-accent2: #A78BFA;
+  --xpx-text: #0F172A;
+  --xpx-muted: rgba(15, 23, 42, 0.62);
+  --xpx-subtle: rgba(15, 23, 42, 0.42);
+  --xpx-border: rgba(15, 23, 42, 0.08);
+  --xpx-border-strong: rgba(15, 23, 42, 0.12);
+}
+
+/* ── Keyframes (must live at top level, not inside @layer) ── */
+
+@keyframes pulse-scale {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.05); opacity: 0.95; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(244, 162, 97, 0.25); }
+  50%       { box-shadow: 0 0 40px rgba(244, 162, 97, 0.45); }
+}
+
+/* ── Base ── */
+
+@layer base {
+  html {
+    /* Smooth scroll on anchor navigation, momentum on iOS. */
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    /* Native momentum scroll on mobile. */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
+    /* Anti-aliased text reads more like native iOS / macOS. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Disable automatic text inflation in landscape on iOS. */
+    text-rendering: optimizeLegibility;
+    background: var(--xpx-base);
+    color: var(--xpx-text);
+  }
+
+  /* Kill the long-press blue overlay on tap (iOS). Buttons/links handle their
+     own feedback via :active / scale transitions. */
+  *,
+  *::before,
+  *::after {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* iOS will auto-zoom into any input whose computed font-size is below 16px.
+     Killing that here keeps the page from jumping when a user focuses a field. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  @media (min-width: 640px) {
+    input,
+    select,
+    textarea {
+      /* Restore Tailwind sizing on tablet+ where auto-zoom is irrelevant. */
+      font-size: inherit;
+    }
+  }
+
+  button {
+    /* Removes the 300ms tap delay and the default user-select drag selection. */
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Mobile bottom-nav reserves its own safe-area; we still pad the body to
+     account for the floating nav itself. */
+  @media (max-width: 768px) {
+    body {
+      padding-bottom: calc(72px + env(safe-area-inset-bottom));
+    }
+  }
+
+  /* Visible accessibility ring on keyboard focus only — never on mouse / touch.
+     Uses the warm token so it harmonizes with the rest of the brand. */
+  *:focus-visible {
+    outline: 2px solid var(--xpx-warm);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  /* Inputs already render their own focus shadow via .xpx-input — drop the
+     extra outline so the field looks clean. */
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+  }
+}
+
+/* Honor user preference for reduced motion — collapses transitions and
+   animations site-wide so we never trigger vestibular discomfort. Framer
+   Motion's <MotionConfig reducedMotion="user"> covers JS-driven motion;
+   this rule covers everything CSS-driven. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Utilities ── */
+
+@layer components {
+  /* Reusable light surfaces — apply with class names so we don't repeat
+     the same style block across dozens of files. */
+  .xpx-page {
+    @apply bg-xpx-base text-xpx-text min-h-screen;
+  }
+  .xpx-card {
+    background: var(--xpx-surface);
+    border: 1px solid var(--xpx-border);
+    border-radius: 1.25rem;
+    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.06);
+  }
+  .xpx-card-elevated {
+    background: var(--xpx-surface);
+    border: 1px solid var(--xpx-border);
+    border-radius: 1.5rem;
+    box-shadow: 0 20px 56px rgba(15, 23, 42, 0.10);
+  }
+  /* Frosted-white glass: blurred white over a busy background, used for
+     sticky headers / floating bars on top of hero photos. */
+  .xpx-glass {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(20px) saturate(1.6);
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    border: 1px solid var(--xpx-border);
+  }
+  .xpx-input {
+    @apply w-full rounded-xl px-4 py-3 text-sm text-xpx-text placeholder:text-xpx-subtle outline-none transition-colors;
+    background: #FFFFFF;
+    border: 1px solid var(--xpx-border-strong);
+  }
+  .xpx-input:focus {
+    border-color: var(--xpx-warm);
+    box-shadow: 0 0 0 3px rgba(244, 162, 97, 0.18);
+  }
+  .xpx-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-bold text-sm transition-all hover:scale-[1.02] active:scale-[0.97];
+    background: var(--xpx-warm);
+    color: #ffffff;
+    box-shadow: 0 8px 24px rgba(244, 162, 97, 0.32);
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+  .xpx-btn-primary:hover {
+    background: var(--xpx-warm-dark);
+  }
+  .xpx-btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 font-semibold text-sm transition-colors text-xpx-text;
+    background: #FFFFFF;
+    border: 1px solid var(--xpx-border-strong);
+  }
+  .xpx-btn-secondary:hover {
+    background: var(--xpx-surface-light);
+  }
+  .xpx-divider {
+    border-top: 1px solid var(--xpx-border);
+  }
+  .xpx-eyebrow {
+    @apply text-[11px] font-bold uppercase tracking-[0.18em];
+    color: var(--xpx-warm);
+  }
+
+  /* Tactile press: applies an iOS-style spring scale to any tappable element.
+     Use on cards / list rows that should feel pressable on mobile. */
+  .xpx-tap {
+    transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    touch-action: manipulation;
+  }
+  .xpx-tap:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Safe-area aware utility (top + bottom). Used on full-bleed surfaces so the
+   notch and home-indicator never crop content. */
+@layer utilities {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .min-h-screen-safe {
+    min-height: 100svh;
+  }
+  /* Spring easing reusable in inline styles or animations. */
+  .ease-spring {
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  /* Native-feeling momentum scroll on horizontal carousels. */
+  .scroll-momentum {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+  }
+}
+
+@layer utilities {
+  .animate-pulse-scale {
+    animation: pulse-scale 2s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s infinite linear;
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      rgba(15, 23, 42, 0.08) 50%,
+      transparent 100%
+    );
+    background-size: 1000px 100%;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite;
+  }
+
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Hide scrollbar while keeping scroll functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Parallax performance helpers */
+  .parallax-container {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
+    scroll-behavior: smooth;
+  }
+
+  .parallax-hero,
+  .parallax-properties {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    perspective: 1000px;
+    -webkit-perspective: 1000px;
+  }
+
+  .parallax-properties {
+    touch-action: pan-y;
+  }
+}
