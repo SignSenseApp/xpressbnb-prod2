@@ -15,6 +15,7 @@ import {
   Menu,
   X,
 } from 'lucide-react';
+import { XPRESSBNB_LOGO_NAV_IMG_CLASS, XPRESSBNB_LOGO_PATH } from '../../lib/branding';
 import { theme } from '../../lib/theme';
 
 interface HostDashboardLayoutProps {
@@ -73,11 +74,18 @@ export default function HostDashboardLayout({
         }}
       >
         <div className="flex items-center justify-between px-4 py-4">
-          <div className="flex items-center gap-2">
-            <img src="/image.png" alt="XpressBnB" className="h-8 w-8 object-contain" />
+          <div className="flex items-center gap-2 text-base leading-none">
+            <img
+              src={XPRESSBNB_LOGO_PATH}
+              alt=""
+              className={XPRESSBNB_LOGO_NAV_IMG_CLASS}
+              width={44}
+              height={44}
+              decoding="async"
+            />
             <div>
-              <p className="text-base font-extrabold tracking-tight text-xpx-text leading-none">
-                Xpress<span style={{ color: theme.warm }}>BnB</span>
+              <p className="font-extrabold tracking-tight text-xpx-text leading-none">
+                Xpress<span style={{ color: theme.accent }}>BnB</span>
               </p>
               <p className="text-[10px] uppercase tracking-wider text-xpx-subtle mt-0.5">
                 Host Dashboard
@@ -115,11 +123,18 @@ export default function HostDashboardLayout({
         <div className="h-full flex flex-col">
           {/* Brand */}
           <div className="p-6" style={{ borderBottom: '1px solid var(--xpx-border)' }}>
-            <div className="flex items-center gap-2.5">
-              <img src="/image.png" alt="XpressBnB" className="h-9 w-9 object-contain" />
+            <div className="flex items-center gap-2.5 text-lg leading-none">
+              <img
+                src={XPRESSBNB_LOGO_PATH}
+                alt=""
+                className={XPRESSBNB_LOGO_NAV_IMG_CLASS}
+                width={48}
+                height={48}
+                decoding="async"
+              />
               <div>
-                <p className="text-lg font-extrabold tracking-tight text-xpx-text leading-none">
-                  Xpress<span style={{ color: theme.warm }}>BnB</span>
+                <p className="font-extrabold tracking-tight text-xpx-text leading-none">
+                  Xpress<span style={{ color: theme.accent }}>BnB</span>
                 </p>
                 <p className="text-[10px] uppercase tracking-wider text-xpx-subtle mt-1">
                   Host Dashboard
@@ -136,7 +151,7 @@ export default function HostDashboardLayout({
             >
               <div
                 className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-base"
-                style={{ background: theme.warm, color: '#ffffff' }}
+                style={{ background: theme.accent, color: '#ffffff' }}
               >
                 {initial}
               </div>
@@ -161,7 +176,7 @@ export default function HostDashboardLayout({
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors"
                     style={
                       isActive
-                        ? { background: theme.warm, color: '#ffffff' }
+                        ? { background: theme.accent, color: '#ffffff' }
                         : { color: 'rgba(15,23,42,0.75)' }
                     }
                     onMouseEnter={(e) => {

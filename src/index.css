@@ -2,20 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── XpressBnB light Gen Z theme tokens ── */
+/* ── XpressBnB theme tokens ── */
 :root {
-  --xpx-base: #FAFAF7;
-  --xpx-surface: #FFFFFF;
-  --xpx-surface-light: #F5F2EC;
-  --xpx-surface-elevated: #EEE9DF;
-  --xpx-warm: #F4A261;
-  --xpx-warm-dark: #E08C45;
-  --xpx-accent2: #A78BFA;
-  --xpx-text: #0F172A;
-  --xpx-muted: rgba(15, 23, 42, 0.62);
-  --xpx-subtle: rgba(15, 23, 42, 0.42);
-  --xpx-border: rgba(15, 23, 42, 0.08);
-  --xpx-border-strong: rgba(15, 23, 42, 0.12);
+  --accent: #50c878;
+  --accent-dark: #3dae68;
+  --accent-light: #ecfdf5;
+  --accent-border: #bbf7d0;
+  --cta-red: #ff385c;
+  --cta-red-dark: #e11d48;
+
+  --xpx-base: #ffffff;
+  --xpx-surface: #ffffff;
+  --xpx-surface-light: #f8fafc;
+  --xpx-surface-elevated: #f1f5f9;
+  --xpx-slate: #0f172a;
+  --xpx-navy: #0f172a;
+
+  /** UI accent. Legacy names map here — not booking coral (below). */
+  --xpx-warm: #50c878;
+  --xpx-warm-dark: #3dae68;
+
+  /** Reserve / Book Now — urgency coral */
+  --xpx-cta: #ff385c;
+  --xpx-cta-dark: #e11d48;
+
+  --xpx-verified: #50c878;
+  --xpx-verified-bg: #ecfdf5;
+  --xpx-trust: #2563eb;
+  --xpx-trust-bg: #eff6ff;
+  --xpx-rating: #d97706;
+  --xpx-rating-bg: #fffbeb;
+
+  --xpx-accent2: #a78bfa;
+  --xpx-text: #0f172a;
+  --xpx-muted: #64748b;
+  --xpx-subtle: #94a3b8;
+  --xpx-border: #e2e8f0;
+  --xpx-border-strong: #cbd5e1;
+
+  --xpx-shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 16px rgba(15, 23, 42, 0.08);
+  --xpx-shadow-hover: 0 8px 32px rgba(15, 23, 42, 0.14);
 }
 
 /* ── Keyframes (must live at top level, not inside @layer) ── */
@@ -41,42 +67,34 @@
 }
 
 @keyframes glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(244, 162, 97, 0.25); }
-  50%       { box-shadow: 0 0 40px rgba(244, 162, 97, 0.45); }
+  0%, 100% { box-shadow: 0 0 20px rgba(80, 200, 120, 0.22); }
+  50%       { box-shadow: 0 0 40px rgba(80, 200, 120, 0.36); }
 }
 
 /* ── Base ── */
 
 @layer base {
   html {
-    /* Smooth scroll on anchor navigation, momentum on iOS. */
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
   }
 
   body {
-    /* Native momentum scroll on mobile. */
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: none;
-    /* Anti-aliased text reads more like native iOS / macOS. */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Disable automatic text inflation in landscape on iOS. */
     text-rendering: optimizeLegibility;
     background: var(--xpx-base);
     color: var(--xpx-text);
   }
 
-  /* Kill the long-press blue overlay on tap (iOS). Buttons/links handle their
-     own feedback via :active / scale transitions. */
   *,
   *::before,
   *::after {
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* iOS will auto-zoom into any input whose computed font-size is below 16px.
-     Killing that here keeps the page from jumping when a user focuses a field. */
   input,
   select,
   textarea {
@@ -86,35 +104,27 @@
     input,
     select,
     textarea {
-      /* Restore Tailwind sizing on tablet+ where auto-zoom is irrelevant. */
       font-size: inherit;
     }
   }
 
   button {
-    /* Removes the 300ms tap delay and the default user-select drag selection. */
     touch-action: manipulation;
     -webkit-user-select: none;
     user-select: none;
   }
 
-  /* Mobile bottom-nav reserves its own safe-area; we still pad the body to
-     account for the floating nav itself. */
   @media (max-width: 768px) {
     body {
       padding-bottom: calc(72px + env(safe-area-inset-bottom));
     }
   }
 
-  /* Visible accessibility ring on keyboard focus only — never on mouse / touch.
-     Uses the warm token so it harmonizes with the rest of the brand. */
   *:focus-visible {
-    outline: 2px solid var(--xpx-warm);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-radius: 4px;
   }
-  /* Inputs already render their own focus shadow via .xpx-input — drop the
-     extra outline so the field looks clean. */
   input:focus-visible,
   select:focus-visible,
   textarea:focus-visible {
@@ -122,10 +132,6 @@
   }
 }
 
-/* Honor user preference for reduced motion — collapses transitions and
-   animations site-wide so we never trigger vestibular discomfort. Framer
-   Motion's <MotionConfig reducedMotion="user"> covers JS-driven motion;
-   this rule covers everything CSS-driven. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -140,8 +146,6 @@
 /* ── Utilities ── */
 
 @layer components {
-  /* Reusable light surfaces — apply with class names so we don't repeat
-     the same style block across dozens of files. */
   .xpx-page {
     @apply bg-xpx-base text-xpx-text min-h-screen;
   }
@@ -149,16 +153,20 @@
     background: var(--xpx-surface);
     border: 1px solid var(--xpx-border);
     border-radius: 1.25rem;
-    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.06);
+    box-shadow: var(--xpx-shadow-card);
+  }
+  .xpx-card-interactive {
+    transition: box-shadow 0.2s ease;
+  }
+  .xpx-card-interactive:hover {
+    box-shadow: var(--xpx-shadow-hover);
   }
   .xpx-card-elevated {
     background: var(--xpx-surface);
     border: 1px solid var(--xpx-border);
     border-radius: 1.5rem;
-    box-shadow: 0 20px 56px rgba(15, 23, 42, 0.10);
+    box-shadow: var(--xpx-shadow-hover);
   }
-  /* Frosted-white glass: blurred white over a busy background, used for
-     sticky headers / floating bars on top of hero photos. */
   .xpx-glass {
     background: rgba(255, 255, 255, 0.72);
     backdrop-filter: blur(20px) saturate(1.6);
@@ -167,28 +175,44 @@
   }
   .xpx-input {
     @apply w-full rounded-xl px-4 py-3 text-sm text-xpx-text placeholder:text-xpx-subtle outline-none transition-colors;
-    background: #FFFFFF;
+    background: #ffffff;
     border: 1px solid var(--xpx-border-strong);
   }
   .xpx-input:focus {
-    border-color: var(--xpx-warm);
-    box-shadow: 0 0 0 3px rgba(244, 162, 97, 0.18);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(80, 200, 120, 0.18);
   }
+  /** Default primary — brand emerald */
   .xpx-btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-bold text-sm transition-all hover:scale-[1.02] active:scale-[0.97];
-    background: var(--xpx-warm);
+    background: var(--accent);
     color: #ffffff;
-    box-shadow: 0 8px 24px rgba(244, 162, 97, 0.32);
+    box-shadow: 0 8px 24px rgba(80, 200, 120, 0.26);
     transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
     min-height: 44px;
     touch-action: manipulation;
   }
   .xpx-btn-primary:hover {
-    background: var(--xpx-warm-dark);
+    background: var(--accent-dark);
+    box-shadow: var(--xpx-shadow-hover);
+  }
+  /** Reserve / Book Now — coral */
+  .xpx-btn-cta-red {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-bold text-sm transition-all hover:scale-[1.02] active:scale-[0.97];
+    background: var(--cta-red);
+    color: #ffffff;
+    box-shadow: 0 8px 24px rgba(255, 56, 92, 0.26);
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+  .xpx-btn-cta-red:hover {
+    background: var(--cta-red-dark);
+    box-shadow: var(--xpx-shadow-hover);
   }
   .xpx-btn-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 font-semibold text-sm transition-colors text-xpx-text;
-    background: #FFFFFF;
+    background: #ffffff;
     border: 1px solid var(--xpx-border-strong);
   }
   .xpx-btn-secondary:hover {
@@ -199,11 +223,17 @@
   }
   .xpx-eyebrow {
     @apply text-[11px] font-bold uppercase tracking-[0.18em];
-    color: var(--xpx-warm);
+    color: var(--accent);
   }
 
-  /* Tactile press: applies an iOS-style spring scale to any tappable element.
-     Use on cards / list rows that should feel pressable on mobile. */
+  .xpx-section-cta {
+    background: var(--xpx-slate);
+    color: #ffffff;
+  }
+  .xpx-section-cta .xpx-eyebrow {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
   .xpx-tap {
     transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
     touch-action: manipulation;
@@ -213,8 +243,6 @@
   }
 }
 
-/* Safe-area aware utility (top + bottom). Used on full-bleed surfaces so the
-   notch and home-indicator never crop content. */
 @layer utilities {
   .pt-safe {
     padding-top: env(safe-area-inset-top);
@@ -225,11 +253,9 @@
   .min-h-screen-safe {
     min-height: 100svh;
   }
-  /* Spring easing reusable in inline styles or animations. */
   .ease-spring {
     transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  /* Native-feeling momentum scroll on horizontal carousels. */
   .scroll-momentum {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
@@ -248,7 +274,7 @@
     background: linear-gradient(
       to right,
       transparent 0%,
-      rgba(15, 23, 42, 0.08) 50%,
+      rgba(15, 23, 42, 0.06) 50%,
       transparent 100%
     );
     background-size: 1000px 100%;
@@ -266,7 +292,6 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  /* Hide scrollbar while keeping scroll functionality */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -278,7 +303,6 @@
     display: none;
   }
 
-  /* Parallax performance helpers */
   .parallax-container {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: none;

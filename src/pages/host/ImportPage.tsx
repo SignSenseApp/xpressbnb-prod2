@@ -39,7 +39,7 @@ export default function ImportPage() {
         </div>
         <span
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] uppercase tracking-wider font-bold"
-          style={{ background: 'rgba(244,162,97,0.12)', color: 'var(--xpx-warm)', border: '1px solid rgba(244,162,97,0.30)' }}
+          style={{ background: 'rgba(80,200,120,0.12)', color: 'var(--xpx-warm)', border: '1px solid rgba(80,200,120,0.30)' }}
         >
           Beta
         </span>
@@ -61,8 +61,8 @@ export default function ImportPage() {
         <ProviderTile
           name="Custom URL"
           body="Import via iCal URL"
-          logo={<LinkIcon className="w-8 h-8" style={{ color: '#16A34A' }} />}
-          accent="#16A34A"
+          logo={<LinkIcon className="w-8 h-8" style={{ color: '#50C878' }} />}
+          accent="#50C878"
         />
       </div>
 
@@ -104,7 +104,7 @@ export default function ImportPage() {
             type="submit"
             disabled={importing}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all disabled:opacity-50"
-            style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 20px rgba(244,162,97,0.35)' }}
+            style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 20px rgba(80,200,120,0.35)' }}
           >
             {importing ? (
               <>
@@ -136,7 +136,7 @@ export default function ImportPage() {
               >
                 <div className="flex items-center gap-4 min-w-0">
                   {item.status === 'success' ? (
-                    <CheckCircle className="w-6 h-6 flex-shrink-0" style={{ color: '#16A34A' }} />
+                    <CheckCircle className="w-6 h-6 flex-shrink-0" style={{ color: '#50C878' }} />
                   ) : (
                     <XCircle className="w-6 h-6 flex-shrink-0" style={{ color: '#DC2626' }} />
                   )}

@@ -114,14 +114,14 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
 
         <div className="flex items-center justify-between text-sm">
           <label className="flex items-center gap-2 text-xpx-muted cursor-pointer">
-            <input type="checkbox" className="w-4 h-4 rounded accent-[var(--xpx-warm)]" />
+            <input type="checkbox" className="w-4 h-4 rounded accent-[var(--accent)]" />
             Remember me
           </label>
           <button
             type="button"
             onClick={() => onNavigate('forgot')}
             className="font-semibold transition-opacity hover:opacity-80"
-            style={{ color: theme.warmDark }}
+            style={{ color: theme.accentDark }}
           >
             Forgot password?
           </button>
@@ -131,7 +131,7 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
           type="submit"
           disabled={loading || googleLoading}
           className="group w-full py-4 rounded-2xl font-bold text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ background: theme.warm, color: '#ffffff', boxShadow: '0 8px 32px rgba(244,162,97,0.35)' }}
+          style={{ background: theme.accent, color: '#ffffff', boxShadow: '0 8px 32px rgba(80,200,120,0.35)' }}
         >
           <span className="flex items-center justify-center gap-2">
             {loading ? (
@@ -178,11 +178,11 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
 
       <div className="mt-6 pt-6 xpx-divider flex items-center justify-center gap-6 text-xs text-xpx-subtle">
         <span className="flex items-center gap-1.5">
-          <CheckCircle2 className="w-4 h-4" style={{ color: '#15803D' }} />
+          <CheckCircle2 className="w-4 h-4" style={{ color: '#3dae68' }} />
           Secure login
         </span>
         <span className="flex items-center gap-1.5">
-          <Shield className="w-4 h-4" style={{ color: theme.warm }} />
+          <Shield className="w-4 h-4" style={{ color: theme.accent }} />
           Data protected
         </span>
       </div>

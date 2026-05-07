@@ -1,5 +1,6 @@
 import { Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { XPRESSBNB_LOGO_NAV_IMG_CLASS, XPRESSBNB_LOGO_PATH } from '../lib/branding';
 import { theme } from '../lib/theme';
 
 interface HeaderProps {
@@ -21,7 +22,7 @@ interface HeaderProps {
  * Design language:
  *  - frosted-white glass surface that fades from transparent → blurred on
  *    scroll, with a subtle slate hairline.
- *  - warm accent (theme.warm) for the brand mark and the primary CTA.
+ *  - emerald accent for brand mark; Host Login uses emerald (conversion CTAs stay red on-page).
  *  - tight tracking, extra-bold logotype.
  */
 export default function Header({
@@ -66,17 +67,23 @@ export default function Header({
       }}
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 flex items-center justify-between h-[60px] md:h-[72px] gap-2">
-        <button onClick={goHome} className="flex items-center gap-2 min-w-0 shrink">
+        <button
+          onClick={goHome}
+          className="flex items-center gap-2 min-w-0 shrink text-base sm:text-lg md:text-xl leading-none"
+        >
           <img
-            src="/image.png"
-            alt="XpressBnB"
-            className="h-8 md:h-9 w-8 md:w-9 object-contain shrink-0"
+            src={XPRESSBNB_LOGO_PATH}
+            alt=""
+            className={XPRESSBNB_LOGO_NAV_IMG_CLASS}
+            width={48}
+            height={48}
+            decoding="async"
           />
           <span
-            className={`text-base sm:text-lg md:text-xl font-extrabold tracking-tight truncate ${brandTextClass}`}
+            className={`font-extrabold tracking-tight truncate ${brandTextClass}`}
             style={{ textShadow: transparentTextShadow }}
           >
-            Xpress<span style={{ color: theme.warm }}>BnB</span>
+            Xpress<span style={{ color: theme.accent }}>BnB</span>
           </span>
         </button>
 
@@ -126,11 +133,9 @@ export default function Header({
           {onHostLoginClick && (
             <button
               onClick={onHostLoginClick}
-              className="rounded-full px-3.5 sm:px-5 md:px-6 py-2 md:py-2.5 font-bold text-xs sm:text-sm transition-all hover:scale-[1.03] whitespace-nowrap"
+              className="rounded-full px-3.5 sm:px-5 md:px-6 py-2 md:py-2.5 font-bold text-xs sm:text-sm transition-all hover:scale-[1.03] whitespace-nowrap bg-xpx-warm hover:bg-xpx-warm-dark text-white shadow-md"
               style={{
-                background: theme.warm,
-                color: '#ffffff',
-                boxShadow: '0 6px 18px rgba(244,162,97,0.32)',
+                boxShadow: '0 6px 18px rgba(80,200,120,0.28)',
               }}
             >
               Host Login

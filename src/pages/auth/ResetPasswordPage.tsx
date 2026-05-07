@@ -94,13 +94,13 @@ export default function ResetPasswordPage({ onNavigate }: ResetPasswordPageProps
           className="rounded-xl p-4 mb-6 flex items-start gap-3"
           style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.4)' }}
         >
-          <CheckCircle className="w-5 h-5 mt-0.5" style={{ color: '#15803D' }} />
+          <CheckCircle className="w-5 h-5 mt-0.5" style={{ color: '#3dae68' }} />
           <p className="text-sm text-emerald-700">Your password has been updated.</p>
         </div>
         <button
           onClick={() => onNavigate('login')}
           className="w-full py-3.5 rounded-2xl font-bold transition-all"
-          style={{ background: theme.warm, color: '#ffffff', boxShadow: '0 6px 24px rgba(244,162,97,0.35)' }}
+          style={{ background: theme.accent, color: '#ffffff', boxShadow: '0 6px 24px rgba(80,200,120,0.35)' }}
         >
           Continue to login
         </button>
@@ -134,7 +134,7 @@ export default function ResetPasswordPage({ onNavigate }: ResetPasswordPageProps
           <button
             onClick={() => onNavigate('login')}
             className="w-full py-3.5 rounded-2xl font-bold transition-all"
-            style={{ background: theme.warm, color: '#ffffff', boxShadow: '0 6px 24px rgba(244,162,97,0.35)' }}
+            style={{ background: theme.accent, color: '#ffffff', boxShadow: '0 6px 24px rgba(80,200,120,0.35)' }}
           >
             Back to login
           </button>
@@ -203,7 +203,7 @@ export default function ResetPasswordPage({ onNavigate }: ResetPasswordPageProps
             type="submit"
             disabled={loading || !recoveryReady}
             className="w-full py-4 rounded-2xl font-bold text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ background: theme.warm, color: '#ffffff', boxShadow: '0 8px 32px rgba(244,162,97,0.35)' }}
+            style={{ background: theme.accent, color: '#ffffff', boxShadow: '0 8px 32px rgba(80,200,120,0.35)' }}
           >
             {loading ? 'Updating…' : 'Update password'}
           </button>

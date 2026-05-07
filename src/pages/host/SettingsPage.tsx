@@ -53,16 +53,16 @@ export default function SettingsPage() {
               className="flex items-start gap-3 rounded-xl p-4"
               style={
                 message.kind === 'ok'
-                  ? { background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.30)' }
+                  ? { background: 'rgba(80,200,120,0.08)', border: '1px solid rgba(80,200,120,0.30)' }
                   : { background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.25)' }
               }
             >
               {message.kind === 'ok' ? (
-                <CheckCircle className="w-5 h-5 mt-0.5" style={{ color: '#16A34A' }} />
+                <CheckCircle className="w-5 h-5 mt-0.5" style={{ color: '#50C878' }} />
               ) : (
                 <AlertCircle className="w-5 h-5 mt-0.5" style={{ color: '#DC2626' }} />
               )}
-              <p className="text-sm" style={{ color: message.kind === 'ok' ? '#15803D' : '#B91C1C' }}>
+              <p className="text-sm" style={{ color: message.kind === 'ok' ? '#3dae68' : '#B91C1C' }}>
                 {message.text}
               </p>
             </div>
@@ -98,7 +98,7 @@ export default function SettingsPage() {
             type="submit"
             disabled={loading}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all disabled:opacity-50"
-            style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 20px rgba(244,162,97,0.35)' }}
+            style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 20px rgba(80,200,120,0.35)' }}
           >
             <Save className="w-5 h-5" />
             {loading ? 'Saving…' : 'Save Changes'}

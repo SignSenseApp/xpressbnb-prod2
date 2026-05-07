@@ -30,7 +30,7 @@ const RishikeshPrivateSoloB2bCard: React.FC<RishikeshPrivateSoloB2bCardProps> = 
       style={{
         borderColor: 'var(--xpx-border)',
         background:
-          'linear-gradient(180deg, rgba(250,250,247,0.92) 0%, var(--xpx-base) 100%)',
+          'linear-gradient(180deg, rgba(255,255,255,0.96) 0%, var(--xpx-base) 100%)',
       }}
       aria-labelledby="rishikesh-b2b-solo-heading"
     >

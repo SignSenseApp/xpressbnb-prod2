@@ -251,7 +251,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
           className="px-4 py-5"
           style={{
             background:
-              'linear-gradient(120deg, rgba(244,162,97,0.16) 0%, var(--xpx-surface-light) 60%, var(--xpx-base) 100%)',
+              'linear-gradient(120deg, rgba(80,200,120,0.16) 0%, var(--xpx-surface-light) 60%, var(--xpx-base) 100%)',
             borderBottom: '1px solid var(--xpx-border)',
           }}
         >
@@ -297,9 +297,9 @@ export default function CityListingPage({ city }: CityListingPageProps) {
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div
               className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-              style={{ background: 'rgba(244,162,97,0.12)' }}
+              style={{ background: 'rgba(80,200,120,0.12)' }}
             >
-              <MapPin className="w-8 h-8" style={{ color: theme.warmDark }} />
+              <MapPin className="w-8 h-8" style={{ color: theme.accentDark }} />
             </div>
             <h3 className="text-lg font-bold text-xpx-text mb-2">No stays found</h3>
             <p className="text-xpx-muted text-sm mb-5 max-w-xs leading-relaxed">
@@ -311,7 +311,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
               <button
                 onClick={() => setFilters(DEFAULT_FILTERS)}
                 className="px-6 py-2.5 rounded-full text-sm font-semibold transition-colors"
-                style={{ background: theme.warm, color: '#ffffff', boxShadow: '0 6px 18px rgba(244,162,97,0.32)' }}
+                style={{ background: theme.warm, color: '#ffffff', boxShadow: '0 6px 18px rgba(80,200,120,0.28)' }}
               >
                 Clear all filters
               </button>
@@ -325,7 +325,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
                 <button
                   onClick={() => setFilters(DEFAULT_FILTERS)}
                   className="ml-2 font-semibold hover:underline"
-                  style={{ color: theme.warmDark }}
+                  style={{ color: theme.accentDark }}
                 >
                   Clear filters
                 </button>
@@ -565,7 +565,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
               <button
                 onClick={() => setShowFilters(false)}
                 className="flex-1 px-5 py-3.5 rounded-2xl font-bold text-sm transition-all"
-                style={{ background: theme.warm, color: '#ffffff', boxShadow: '0 8px 24px rgba(244,162,97,0.32)' }}
+                style={{ background: theme.warm, color: '#ffffff', boxShadow: '0 8px 24px rgba(80,200,120,0.28)' }}
               >
                 Show {filteredProperties.length} stays
               </button>

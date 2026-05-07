@@ -137,7 +137,7 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
           type="submit"
           disabled={loading || googleLoading}
           className="group w-full py-4 rounded-2xl font-bold text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ background: theme.warm, color: '#ffffff', boxShadow: '0 8px 32px rgba(244,162,97,0.35)' }}
+          style={{ background: theme.accent, color: '#ffffff', boxShadow: '0 8px 32px rgba(80,200,120,0.35)' }}
         >
           <span className="flex items-center justify-center gap-2">
             {loading ? (

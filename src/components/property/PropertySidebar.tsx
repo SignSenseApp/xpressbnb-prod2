@@ -98,18 +98,18 @@ export default function PropertySidebar({
           className="mt-4 rounded-xl p-3 flex items-start gap-2.5"
           style={{
             background:
-              'linear-gradient(120deg, rgba(244,162,97,0.18) 0%, rgba(244,162,97,0.06) 60%, var(--xpx-surface-light) 100%)',
-            border: '1px solid rgba(244,162,97,0.36)',
+              'linear-gradient(120deg, rgba(80,200,120,0.18) 0%, rgba(80,200,120,0.06) 60%, var(--xpx-surface-light) 100%)',
+            border: '1px solid rgba(80,200,120,0.36)',
           }}
         >
           <div
             className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: 'rgba(244,162,97,0.22)', color: 'var(--xpx-warm-dark)' }}
+            style={{ background: 'rgba(80,200,120,0.12)', color: 'var(--accent-dark)' }}
           >
             <Tag className="w-3.5 h-3.5" />
           </div>
           <div className="text-xs leading-snug">
-            <span className="font-bold tabular-nums" style={{ color: 'var(--xpx-warm-dark)' }}>
+            <span className="font-bold tabular-nums" style={{ color: 'var(--accent-dark)' }}>
               {promoCode}
             </span>{' '}
             <span className="text-xpx-text font-semibold">— {promoLabel}.</span>
@@ -208,8 +208,8 @@ export default function PropertySidebar({
         onClick={onBookNow}
         className="mt-5 w-full py-3.5 rounded-2xl font-bold text-[15px] text-white transition-transform active:scale-[0.98]"
         style={{
-          background: 'var(--xpx-warm)',
-          boxShadow: '0 10px 32px rgba(244,162,97,0.32)',
+          background: 'var(--xpx-cta)',
+          boxShadow: '0 10px 32px rgba(255,56,92,0.32)',
           transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
           minHeight: 52,
         }}
@@ -238,7 +238,7 @@ export default function PropertySidebar({
       <p
         className="mt-3 text-[11px] text-xpx-subtle text-center inline-flex items-center justify-center gap-1.5 w-full"
       >
-        <Shield className="w-3 h-3" style={{ color: 'var(--xpx-warm-dark)' }} />
+        <Shield className="w-3 h-3" style={{ color: 'var(--accent-dark)' }} />
         Secure booking. No hidden fees. Free cancellation up to 24 h.
       </p>
 

@@ -118,7 +118,7 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                   )}
                   {property.images.length > 2 && (
                     <div
-                      className="aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-[#cc2b5e] to-[#753a88] flex items-center justify-center cursor-pointer hover:from-[#d64371] hover:to-[#8a4b9e] transition-all"
+                      className="aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-[#50C878] to-[#22c55e] flex items-center justify-center cursor-pointer hover:from-[#3dae68] hover:to-[#22c55e] transition-all"
                       onClick={() => openLightbox(0)}
                     >
                       <div className="text-center text-white">
@@ -151,7 +151,7 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="px-4 py-2 bg-pink-50 text-[#cc2b5e] rounded-full font-semibold text-sm">
+                    <span className="px-4 py-2 bg-pink-50 text-[#50C878] rounded-full font-semibold text-sm">
                       {property.property_type}
                     </span>
                     <div className="relative">
@@ -217,17 +217,17 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
 
                 <div className="grid grid-cols-3 gap-4 mb-6 pb-6 border-b border-gray-200">
                   <div className="text-center p-4 bg-gray-50 rounded-xl">
-                    <Bed className="w-6 h-6 mx-auto mb-2 text-[#cc2b5e]" />
+                    <Bed className="w-6 h-6 mx-auto mb-2 text-[#50C878]" />
                     <p className="font-semibold text-gray-900">{property.bedrooms}</p>
                     <p className="text-sm text-gray-600">Bedrooms</p>
                   </div>
                   <div className="text-center p-4 bg-gray-50 rounded-xl">
-                    <Bath className="w-6 h-6 mx-auto mb-2 text-[#cc2b5e]" />
+                    <Bath className="w-6 h-6 mx-auto mb-2 text-[#50C878]" />
                     <p className="font-semibold text-gray-900">{property.bathrooms}</p>
                     <p className="text-sm text-gray-600">Bathrooms</p>
                   </div>
                   <div className="text-center p-4 bg-gray-50 rounded-xl">
-                    <Users className="w-6 h-6 mx-auto mb-2 text-[#cc2b5e]" />
+                    <Users className="w-6 h-6 mx-auto mb-2 text-[#50C878]" />
                     <p className="font-semibold text-gray-900">{property.max_guests}</p>
                     <p className="text-sm text-gray-600">Guests</p>
                   </div>
@@ -247,7 +247,7 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                         return (
                           <div key={index} className="flex items-center gap-3 text-gray-700">
                             <div className="w-10 h-10 bg-pink-50 rounded-xl flex items-center justify-center">
-                              <Icon className="w-5 h-5 text-[#cc2b5e]" />
+                              <Icon className="w-5 h-5 text-[#50C878]" />
                             </div>
                             <span className="font-medium">{amenity}</span>
                           </div>
@@ -284,7 +284,7 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                 {!showBooking ? (
                   <button
                     onClick={() => setShowBooking(true)}
-                    className="w-full py-4 bg-gradient-to-r from-[#cc2b5e] to-[#753a88] text-white font-bold rounded-xl hover:from-[#d64371] hover:to-[#8a4b9e] transition-all shadow-lg hover:shadow-xl"
+                    className="w-full py-4 bg-gradient-to-r from-[#FF385C] to-[#E11D48] text-white font-bold rounded-xl hover:from-[#f43f5e] hover:to-[#be123c] transition-all shadow-lg hover:shadow-xl"
                   >
                     Book Now
                   </button>

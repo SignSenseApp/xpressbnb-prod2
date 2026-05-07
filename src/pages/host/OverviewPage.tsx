@@ -97,8 +97,8 @@ export default function OverviewPage({ onNavigate }: OverviewPageProps = {}) {
     accent: string;
   }> = [
     { title: 'Properties', value: stats.totalProperties, subtitle: `${stats.activeProperties} active`, icon: Building2, accent: '#2563EB' },
-    { title: 'Bookings', value: stats.totalBookings, subtitle: `${stats.pendingBookings} pending`, icon: BookOpen, accent: '#16A34A' },
-    { title: 'Revenue', value: `₹${stats.totalRevenue.toLocaleString()}`, subtitle: 'Total earnings', icon: DollarSign, accent: '#F4A261' },
+    { title: 'Bookings', value: stats.totalBookings, subtitle: `${stats.pendingBookings} pending`, icon: BookOpen, accent: '#50C878' },
+    { title: 'Revenue', value: `₹${stats.totalRevenue.toLocaleString()}`, subtitle: 'Total earnings', icon: DollarSign, accent: '#50C878' },
     { title: 'Views', value: stats.totalViews, subtitle: 'Total property views', icon: Eye, accent: '#EC4899' },
   ];
 
@@ -157,7 +157,7 @@ export default function OverviewPage({ onNavigate }: OverviewPageProps = {}) {
           <div className="flex items-center gap-3 mb-6">
             <div
               className="p-2 rounded-lg"
-              style={{ background: 'rgba(244,162,97,0.12)', border: '1px solid rgba(244,162,97,0.3)' }}
+              style={{ background: 'rgba(80,200,120,0.12)', border: '1px solid rgba(80,200,120,0.3)' }}
             >
               <TrendingUp className="w-5 h-5" style={{ color: 'var(--xpx-warm)' }} />
             </div>
@@ -176,7 +176,7 @@ export default function OverviewPage({ onNavigate }: OverviewPageProps = {}) {
                 style={{ background: 'var(--xpx-surface-light)', border: '1px solid var(--xpx-border)' }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = 'var(--xpx-warm)';
-                  e.currentTarget.style.background = 'rgba(244,162,97,0.06)';
+                  e.currentTarget.style.background = 'rgba(80,200,120,0.06)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.borderColor = 'var(--xpx-border)';
@@ -211,7 +211,7 @@ export default function OverviewPage({ onNavigate }: OverviewPageProps = {}) {
               </div>
             ) : (
               <div className="space-y-3">
-                <ActivityRow color="#16A34A" title="Account Created" subtitle="Your host account is active" />
+                <ActivityRow color="#50C878" title="Account Created" subtitle="Your host account is active" />
                 {stats.totalProperties > 0 && (
                   <ActivityRow color="#2563EB" title="Properties Added" subtitle={`${stats.totalProperties} properties listed`} />
                 )}
@@ -231,7 +231,7 @@ export default function OverviewPage({ onNavigate }: OverviewPageProps = {}) {
             <div className="flex items-center gap-3">
               <div
                 className="p-2 rounded-lg"
-                style={{ background: 'rgba(244,162,97,0.12)', border: '1px solid rgba(244,162,97,0.3)' }}
+                style={{ background: 'rgba(80,200,120,0.12)', border: '1px solid rgba(80,200,120,0.3)' }}
               >
                 <Sparkles className="w-6 h-6" style={{ color: 'var(--xpx-warm)' }} />
               </div>
@@ -282,8 +282,8 @@ export default function OverviewPage({ onNavigate }: OverviewPageProps = {}) {
           className="rounded-2xl p-6"
           style={{
             background:
-              'linear-gradient(135deg, rgba(244,162,97,0.14) 0%, var(--xpx-surface) 70%)',
-            border: '1px solid rgba(244,162,97,0.3)',
+              'linear-gradient(135deg, rgba(80,200,120,0.14) 0%, var(--xpx-surface) 70%)',
+            border: '1px solid rgba(80,200,120,0.3)',
             boxShadow: '0 12px 40px rgba(15,23,42,0.06)',
           }}
         >
@@ -295,7 +295,7 @@ export default function OverviewPage({ onNavigate }: OverviewPageProps = {}) {
           <button
             onClick={() => onNavigate?.('subscription')}
             className="px-6 py-2.5 rounded-xl font-bold transition-all"
-            style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 20px rgba(244,162,97,0.35)' }}
+            style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 20px rgba(80,200,120,0.35)' }}
           >
             Upgrade Now
           </button>

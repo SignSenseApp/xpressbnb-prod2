@@ -116,8 +116,8 @@ export default function CalendarSyncPage() {
                     >
                       {copied === property.id ? (
                         <>
-                          <Check className="w-4 h-4" style={{ color: '#16A34A' }} />
-                          <span className="text-sm" style={{ color: '#15803D' }}>Copied</span>
+                          <Check className="w-4 h-4" style={{ color: '#50C878' }} />
+                          <span className="text-sm" style={{ color: '#3dae68' }}>Copied</span>
                         </>
                       ) : (
                         <>

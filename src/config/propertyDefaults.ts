@@ -223,13 +223,15 @@ export function getHouseRules(): HouseRule[] {
 export interface TrustPill {
   title: string;
   subtitle: string;
+  /** verified = emerald; trust = blue info / booking */
+  tone: 'verified' | 'trust';
 }
 
 export const TRUST_PILLS: TrustPill[] = [
-  { title: 'Verified & inspected', subtitle: 'Quality-checked stay' },
-  { title: 'Pay at property or secure booking', subtitle: 'Flexible booking' },
-  { title: 'No hidden fees', subtitle: 'What you see is what you pay' },
-  { title: 'Quick host response', subtitle: 'Typically replies in an hour' },
+  { title: 'Verified & inspected', subtitle: 'Quality-checked stay', tone: 'verified' },
+  { title: 'Pay at property or secure booking', subtitle: 'Flexible booking', tone: 'trust' },
+  { title: 'No hidden fees', subtitle: 'What you see is what you pay', tone: 'trust' },
+  { title: 'Quick host response', subtitle: 'Typically replies in an hour', tone: 'trust' },
 ];
 
 /**

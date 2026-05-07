@@ -37,7 +37,7 @@ export default function SupportPage() {
         } accent="#2563EB" />
         <SupportTile icon={Phone} title="Phone Support" body="Mon–Fri, 9AM–6PM IST" cta={
           <a href="tel:+911234567890" className="text-sm font-semibold hover:underline" style={{ color: 'var(--xpx-warm)' }}>+91 123 456 7890</a>
-        } accent="#16A34A" />
+        } accent="#50C878" />
         <SupportTile icon={MessageSquare} title="Live Chat" body="Chat with our team" cta={
           <button className="text-sm font-semibold hover:underline" style={{ color: 'var(--xpx-warm)' }}>Start Chat</button>
         } accent="#EC4899" />
@@ -52,7 +52,7 @@ export default function SupportPage() {
         {submitted && (
           <div
             className="mb-6 p-4 rounded-xl flex items-start gap-3"
-            style={{ background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.30)' }}
+            style={{ background: 'rgba(80,200,120,0.08)', border: '1px solid rgba(80,200,120,0.30)' }}
           >
             <div>
               <p className="font-semibold text-xpx-text">Request submitted successfully.</p>
@@ -104,7 +104,7 @@ export default function SupportPage() {
             type="submit"
             disabled={loading}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all disabled:opacity-50"
-            style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 20px rgba(244,162,97,0.35)' }}
+            style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 20px rgba(80,200,120,0.35)' }}
           >
             <Send className="w-5 h-5" />
             {loading ? 'Sending…' : 'Submit Request'}

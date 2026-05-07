@@ -55,16 +55,16 @@ export default function RealtimeToast({
         className="rounded-2xl p-4 shadow-xl flex items-start gap-3"
         style={{
           background:
-            'linear-gradient(135deg, rgba(244,162,97,0.12) 0%, #FFFFFF 70%)',
-          border: '1px solid rgba(244,162,97,0.45)',
+            'linear-gradient(135deg, rgba(80,200,120,0.12) 0%, #FFFFFF 70%)',
+          border: '1px solid rgba(80,200,120,0.45)',
           boxShadow: '0 16px 48px rgba(15,23,42,0.10)',
         }}
       >
         <div
           className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-xl"
-          style={{ background: 'rgba(244,162,97,0.18)' }}
+          style={{ background: 'rgba(80,200,120,0.18)' }}
         >
-          <Tag className="w-4 h-4" style={{ color: theme.warm }} />
+          <Tag className="w-4 h-4" style={{ color: theme.accent }} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-xpx-text">{toast.title}</p>

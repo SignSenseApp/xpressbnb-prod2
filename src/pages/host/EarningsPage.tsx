@@ -82,7 +82,7 @@ export default function EarningsPage() {
   }
 
   const trendUp = Number(percentChange) >= 0;
-  const trendColor = trendUp ? '#15803D' : '#B91C1C';
+  const trendColor = trendUp ? '#3dae68' : '#B91C1C';
 
   return (
     <div className="space-y-6">
@@ -102,7 +102,7 @@ export default function EarningsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-        <StatCard label="Total Earnings" value={earnings.total} icon={DollarSign} accent="#16A34A" />
+        <StatCard label="Total Earnings" value={earnings.total} icon={DollarSign} accent="#50C878" />
         <StatCard
           label="This Month"
           value={earnings.thisMonth}
@@ -116,7 +116,7 @@ export default function EarningsPage() {
           }
         />
         <StatCard label="Last Month" value={earnings.lastMonth} icon={Calendar} accent="#EC4899" />
-        <StatCard label="Pending Payout" value={earnings.pending} icon={TrendingUp} accent="#F4A261" />
+        <StatCard label="Pending Payout" value={earnings.pending} icon={TrendingUp} accent="#50C878" />
       </div>
 
       <div
@@ -155,7 +155,7 @@ export default function EarningsPage() {
                     <td className="py-3 px-4">
                       <span
                         className="px-2 py-1 text-[10px] uppercase tracking-wider rounded-full font-bold"
-                        style={{ background: 'rgba(22,163,74,0.10)', color: '#15803D' }}
+                        style={{ background: 'rgba(80,200,120,0.10)', color: '#3dae68' }}
                       >
                         {transaction.payment_status}
                       </span>

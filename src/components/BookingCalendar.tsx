@@ -271,7 +271,7 @@ export default function BookingCalendar({ propertyId, basePrice, onDateRangeSele
             const baseColor = day.isCurrentMonth ? 'text-xpx-text' : 'text-xpx-subtle';
             const todayRing = day.isToday ? 'ring-1 sm:ring-2 ring-[var(--xpx-warm)]' : '';
             const selectedBg = day.isSelected ? 'bg-[var(--xpx-warm)] text-white font-bold' : '';
-            const inRangeBg = day.isInRange && !day.isSelected ? 'bg-[rgba(244,162,97,0.18)]' : '';
+            const inRangeBg = day.isInRange && !day.isSelected ? 'bg-[rgba(80,200,120,0.18)]' : '';
             const hoverable =
               !day.isSelected && !day.isInRange && day.isAvailable && day.isCurrentMonth
                 ? 'hover:bg-white active:bg-slate-100'
@@ -343,7 +343,7 @@ export default function BookingCalendar({ propertyId, basePrice, onDateRangeSele
           <span>Selected</span>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded flex-shrink-0" style={{ background: 'rgba(244,162,97,0.18)' }} />
+          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded flex-shrink-0" style={{ background: 'rgba(80,200,120,0.18)' }} />
           <span>In range</span>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">

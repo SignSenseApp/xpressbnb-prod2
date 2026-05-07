@@ -57,7 +57,7 @@ export default function PropertyMapView({ property }: PropertyMapViewProps) {
               <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="rgba(0,0,0,0.25)"/>
             </filter>
             <linearGradient id="pinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#cc2b5e;stop-opacity:1" />
+              <stop offset="0%" style="stop-color:#50C878;stop-opacity:1" />
               <stop offset="100%" style="stop-color:#a0203f;stop-opacity:1" />
             </linearGradient>
           </defs>
@@ -90,7 +90,7 @@ export default function PropertyMapView({ property }: PropertyMapViewProps) {
       const infoContent = `
         <div style="padding:12px 14px;max-width:200px;font-family:system-ui,-apple-system,sans-serif;">
           <p style="font-weight:700;font-size:14px;margin:0 0 4px 0;color:#111;">${property.title}</p>
-          <p style="color:#cc2b5e;font-weight:600;font-size:13px;margin:0;">${formattedPrice}/night</p>
+          <p style="color:#50C878;font-weight:600;font-size:13px;margin:0;">${formattedPrice}/night</p>
         </div>
       `;
       const infoWindow = new window.google.maps.InfoWindow({ content: infoContent });

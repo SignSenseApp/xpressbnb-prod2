@@ -136,8 +136,8 @@ useEffect(() => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
         <Stat label="Total Views" value={analytics.totalViews} icon={Eye} accent="#2563EB" sub="Property page views" />
-        <Stat label="Total Bookings" value={analytics.totalBookings} icon={Calendar} accent="#16A34A" sub="Successful bookings" />
-        <Stat label="Conversion Rate" value={`${analytics.conversionRate.toFixed(1)}%`} icon={TrendingUp} accent="#F4A261" sub="Views to bookings" />
+        <Stat label="Total Bookings" value={analytics.totalBookings} icon={Calendar} accent="#50C878" sub="Successful bookings" />
+        <Stat label="Conversion Rate" value={`${analytics.conversionRate.toFixed(1)}%`} icon={TrendingUp} accent="#50C878" sub="Views to bookings" />
         <Stat label="Avg Booking Value" value={`₹${analytics.avgBookingValue.toFixed(0)}`} icon={Activity} accent="#EC4899" sub="Per booking" />
         <Stat
           label="Most Popular Property"
@@ -156,13 +156,13 @@ useEffect(() => {
         <h2 className="text-xl font-bold text-xpx-text mb-4">Performance Insights</h2>
         <div className="space-y-3">
           <Insight
-            color={aboveAverage ? '#16A34A' : '#F4A261'}
+            color={aboveAverage ? '#50C878' : '#64748B'}
             icon={TrendingUp}
             title={aboveAverage ? 'Above-average conversion' : 'Conversion below average'}
             body={`Your conversion rate of ${analytics.conversionRate.toFixed(1)}% is ${aboveAverage ? 'above' : 'below'} the platform average of 5%.`}
           />
           <Insight
-            color="#16A34A"
+            color="#50C878"
             icon={Activity}
             title="Booking Performance"
             body={`You have ${analytics.totalBookings} total bookings with an average value of ₹${analytics.avgBookingValue.toFixed(0)}.`}
@@ -182,7 +182,7 @@ useEffect(() => {
             <div className="flex items-center gap-3">
               <div
                 className="p-2 rounded-lg"
-                style={{ background: 'rgba(244,162,97,0.12)', border: '1px solid rgba(244,162,97,0.3)' }}
+                style={{ background: 'rgba(80,200,120,0.12)', border: '1px solid rgba(80,200,120,0.3)' }}
               >
                 <Sparkles className="w-6 h-6" style={{ color: 'var(--xpx-warm)' }} />
               </div>

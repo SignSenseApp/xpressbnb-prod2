@@ -194,9 +194,9 @@ export default function OfferModal({
           <div className="px-6 pb-6 pt-4 space-y-5 text-center">
             <div
               className="w-16 h-16 rounded-full mx-auto flex items-center justify-center"
-              style={{ background: 'rgba(22,163,74,0.12)', border: '1px solid rgba(22,163,74,0.4)' }}
+              style={{ background: 'rgba(80,200,120,0.12)', border: '1px solid rgba(80,200,120,0.4)' }}
             >
-              <CheckCircle className="w-8 h-8" style={{ color: '#15803D' }} />
+              <CheckCircle className="w-8 h-8" style={{ color: '#3dae68' }} />
             </div>
             <div>
               <h3 className="text-lg font-bold text-xpx-text">Offer sent</h3>
@@ -217,7 +217,7 @@ export default function OfferModal({
               </div>
               <div className="flex justify-between text-sm mt-1">
                 <span className="text-xpx-muted">Total ({inferredNights} {inferredNights === 1 ? 'night' : 'nights'})</span>
-                <span className="font-bold" style={{ color: theme.warmDark }}>
+                <span className="font-bold" style={{ color: theme.accentDark }}>
                   ₹{totalOffer.toLocaleString()}
                 </span>
               </div>
@@ -225,7 +225,7 @@ export default function OfferModal({
             <button
               onClick={onClose}
               className="w-full py-3 rounded-2xl font-bold transition-all"
-              style={{ background: theme.warm, color: '#ffffff', boxShadow: '0 8px 24px rgba(244,162,97,0.32)' }}
+              style={{ background: theme.accent, color: '#ffffff', boxShadow: '0 8px 24px rgba(80,200,120,0.32)' }}
             >
               Done
             </button>
@@ -239,8 +239,8 @@ export default function OfferModal({
               className="rounded-2xl p-4"
               style={{
                 background:
-                  'linear-gradient(135deg, rgba(244,162,97,0.10) 0%, var(--xpx-surface-light) 100%)',
-                border: '1px solid rgba(244,162,97,0.28)',
+                  'linear-gradient(135deg, rgba(80,200,120,0.10) 0%, var(--xpx-surface-light) 100%)',
+                border: '1px solid rgba(80,200,120,0.28)',
               }}
             >
               {/* Listed | Offered | Total — three stat columns, comfortable
@@ -261,7 +261,7 @@ export default function OfferModal({
                 </div>
                 <div className="min-w-0 text-right">
                   <p className="text-[10px] sm:text-xs uppercase tracking-wide text-xpx-muted font-semibold">Total</p>
-                  <p className="mt-1 text-sm sm:text-base font-extrabold truncate" style={{ color: theme.warmDark }}>
+                  <p className="mt-1 text-sm sm:text-base font-extrabold truncate" style={{ color: theme.accentDark }}>
                     ₹{totalOffer.toLocaleString()}
                   </p>
                   <p className="text-[10px] text-xpx-subtle mt-0.5">{inferredNights}n</p>
@@ -271,9 +271,9 @@ export default function OfferModal({
                 <div
                   className="mt-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
                   style={{
-                    background: 'rgba(22,163,74,0.12)',
-                    color: '#15803D',
-                    border: '1px solid rgba(22,163,74,0.32)',
+                    background: 'rgba(80,200,120,0.12)',
+                    color: '#3dae68',
+                    border: '1px solid rgba(80,200,120,0.32)',
                   }}
                 >
                   <ArrowDown className="w-3 h-3" />
@@ -292,7 +292,7 @@ export default function OfferModal({
                 value={offer}
                 onChange={(e) => setOffer(Number(e.target.value))}
                 aria-label="Offer per night"
-                className="w-full accent-[var(--xpx-warm)]"
+                className="w-full accent-[var(--accent)]"
               />
               <div className="mt-1 flex justify-between text-[10px] text-xpx-subtle font-mono">
                 <span>₹{minOffer.toLocaleString()}</span>
@@ -327,7 +327,7 @@ export default function OfferModal({
                   style={{ background: 'var(--xpx-surface-light)', border: '1px solid var(--xpx-border)' }}
                 >
                   <span>{inferredNights} {inferredNights === 1 ? 'night' : 'nights'}</span>
-                  <span className="font-bold" style={{ color: theme.warmDark }}>
+                  <span className="font-bold" style={{ color: theme.accentDark }}>
                     ₹{totalOffer.toLocaleString()}
                   </span>
                 </div>
@@ -406,9 +406,9 @@ export default function OfferModal({
               disabled={submitting}
               className="w-full py-4 rounded-2xl font-bold text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
-                background: theme.warm,
+                background: theme.accent,
                 color: '#ffffff',
-                boxShadow: '0 8px 32px rgba(244,162,97,0.32)',
+                boxShadow: '0 8px 32px rgba(80,200,120,0.32)',
               }}
             >
               <span className="inline-flex items-center justify-center gap-2">

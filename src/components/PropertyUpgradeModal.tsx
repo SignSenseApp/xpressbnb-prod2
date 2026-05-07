@@ -102,7 +102,7 @@ export default function PropertyUpgradeModal({ isOpen, onClose, onSelectProperty
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
-        <div className="bg-gradient-to-r from-[#cc2b5e] to-[#753a88] px-6 py-4 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-[#50C878] to-[#22c55e] px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Crown className="w-6 h-6 text-white" />
             <h2 className="text-2xl font-bold text-white">Select Property to Upgrade</h2>
@@ -122,7 +122,7 @@ export default function PropertyUpgradeModal({ isOpen, onClose, onSelectProperty
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-[#cc2b5e]" />
+              <Loader2 className="w-8 h-8 animate-spin text-[#50C878]" />
             </div>
           ) : properties.length === 0 ? (
             <div className="text-center py-12">
@@ -145,8 +145,8 @@ export default function PropertyUpgradeModal({ isOpen, onClose, onSelectProperty
                       isPremium
                         ? 'border-green-200 bg-green-50 cursor-not-allowed opacity-60'
                         : isSelected
-                        ? 'border-[#cc2b5e] bg-pink-50'
-                        : 'border-gray-200 hover:border-[#cc2b5e] hover:bg-pink-50/50'
+                        ? 'border-[#50C878] bg-pink-50'
+                        : 'border-gray-200 hover:border-[#50C878] hover:bg-pink-50/50'
                     }`}
                   >
                     <div className="flex gap-4">
@@ -185,7 +185,7 @@ export default function PropertyUpgradeModal({ isOpen, onClose, onSelectProperty
                       {!isPremium && (
                         <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                           isSelected
-                            ? 'border-[#cc2b5e] bg-[#cc2b5e]'
+                            ? 'border-[#50C878] bg-[#50C878]'
                             : 'border-gray-300'
                         }`}>
                           {isSelected && <Check className="w-4 h-4 text-white" />}
@@ -208,7 +208,7 @@ export default function PropertyUpgradeModal({ isOpen, onClose, onSelectProperty
             <button
               onClick={handleUpgrade}
               disabled={!selectedPropertyId || loading}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-[#cc2b5e] to-[#753a88] text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <Crown className="w-5 h-5" />
               Upgrade Selected Property

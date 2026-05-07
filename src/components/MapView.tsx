@@ -36,7 +36,7 @@ function formatPrice(price: number): string {
 
 function buildPinSvg(price: number, selected: boolean): string {
   const formattedPrice = formatPrice(price);
-  const bg = selected ? '#111827' : '#cc2b5e';
+  const bg = selected ? '#111827' : '#50C878';
   const bgDark = selected ? '#000000' : '#a0203f';
   const w = 120;
   const h = 56;
@@ -133,7 +133,7 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
             <div style="padding:10px 12px;font-family:system-ui,-apple-system,sans-serif;min-width:160px;">
               <p style="font-weight:700;font-size:13px;margin:0 0 4px 0;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;">${property.title}</p>
               <p style="color:#6b7280;font-size:11px;margin:0 0 6px 0;">${property.city}</p>
-              <p style="color:#cc2b5e;font-weight:700;font-size:14px;margin:0;">${formatPrice(price)}<span style="color:#9ca3af;font-weight:400;font-size:11px;">/night</span></p>
+              <p style="color:#50C878;font-weight:700;font-size:14px;margin:0;">${formatPrice(price)}<span style="color:#9ca3af;font-weight:400;font-size:11px;">/night</span></p>
             </div>
           `;
           infoWindowRef.current.setContent(infoContent);
@@ -238,8 +238,8 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
                   ${isSelected
                     ? 'bg-gray-900 text-white scale-110 shadow-xl ring-2 ring-white'
                     : isHovered
-                    ? 'bg-[#cc2b5e] text-white scale-105 shadow-xl'
-                    : 'bg-[#cc2b5e] text-white hover:scale-105'
+                    ? 'bg-[#50C878] text-white scale-105 shadow-xl'
+                    : 'bg-[#50C878] text-white hover:scale-105'
                   }
                 `}>
                   {formatPrice(price)}

@@ -96,7 +96,7 @@ export default function LocationPicker({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search for your property address..."
-            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#cc2b5e] focus:border-transparent transition-all"
+            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#50C878] focus:border-transparent transition-all"
           />
         </div>
 
@@ -116,7 +116,7 @@ export default function LocationPicker({
                 className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 first:rounded-t-xl last:rounded-b-xl"
               >
                 <div className="flex items-start gap-2">
-                  <MapPin className="w-5 h-5 text-[#cc2b5e] flex-shrink-0 mt-0.5" />
+                  <MapPin className="w-5 h-5 text-[#50C878] flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 break-words">
                       {suggestion.display_name}

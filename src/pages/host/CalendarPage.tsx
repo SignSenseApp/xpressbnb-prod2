@@ -142,7 +142,7 @@ export default function CalendarPage({ hostId }: CalendarPageProps) {
             className="mb-6 p-5 rounded-2xl"
             style={{
               background:
-                'linear-gradient(135deg, rgba(244,162,97,0.06) 0%, var(--xpx-surface-light) 100%)',
+                'linear-gradient(135deg, rgba(80,200,120,0.06) 0%, var(--xpx-surface-light) 100%)',
               border: '1px solid var(--xpx-border-strong)',
             }}
           >

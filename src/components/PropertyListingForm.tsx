@@ -248,7 +248,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto">
       <div className="min-h-screen flex flex-col">
-        <div className="sticky top-0 bg-gradient-to-r from-[#cc2b5e] to-[#753a88] text-white px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex justify-between items-center z-10 shadow-lg">
+        <div className="sticky top-0 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex justify-between items-center z-10 shadow-lg">
           <div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold">{property ? 'Edit Property' : 'List Your Property'}</h2>
             <p className="text-white/90 mt-1 text-sm sm:text-base">{property ? 'Update your property details' : 'Share your space with travelers'}</p>
@@ -273,7 +273,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
           <div className="space-y-6">
             <div>
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
-                <Home className="w-4 h-4 sm:w-5 sm:h-5 text-[#cc2b5e]" />
+                <Home className="w-4 h-4 sm:w-5 sm:h-5 text-[#50C878]" />
                 Property Details
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
@@ -286,7 +286,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#cc2b5e] focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#50C878] focus:border-transparent transition-all"
                     placeholder="Beautiful 2BR apartment in the heart of the city"
                   />
                 </div>
@@ -300,7 +300,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={4}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#cc2b5e] focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#50C878] focus:border-transparent transition-all"
                     placeholder="Describe your property, its unique features, and what makes it special..."
                   />
                 </div>
@@ -313,7 +313,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
                     required
                     value={formData.property_type}
                     onChange={(e) => setFormData({ ...formData, property_type: e.target.value })}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#cc2b5e] focus:border-transparent transition-all bg-white"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#50C878] focus:border-transparent transition-all bg-white"
                   >
                     {PROPERTY_TYPES.map(type => (
                       <option key={type.value} value={type.value}>{type.label}</option>
@@ -325,7 +325,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
 
             <div>
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
-                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-[#cc2b5e]" />
+                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-[#50C878]" />
                 Location
               </h3>
               <LocationPicker
@@ -345,7 +345,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
                   required
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#cc2b5e] focus:border-transparent transition-all bg-white"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#50C878] focus:border-transparent transition-all bg-white"
                 >
                   <option value="">Select City</option>
                   <option value="Delhi">Delhi</option>
@@ -360,7 +360,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
 
             <div>
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
-                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-[#cc2b5e]" />
+                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-[#50C878]" />
                 Pricing & Capacity
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
@@ -374,7 +374,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
                     min="0"
                     value={formData.price_per_day}
                     onChange={(e) => setFormData({ ...formData, price_per_day: parseInt(e.target.value) })}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#cc2b5e] focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#50C878] focus:border-transparent transition-all"
                   />
                 </div>
 
@@ -389,7 +389,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
                     min="0"
                     value={formData.bedrooms}
                     onChange={(e) => setFormData({ ...formData, bedrooms: parseInt(e.target.value) })}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#cc2b5e] focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#50C878] focus:border-transparent transition-all"
                   />
                 </div>
 
@@ -404,7 +404,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
                     min="0"
                     value={formData.bathrooms}
                     onChange={(e) => setFormData({ ...formData, bathrooms: parseInt(e.target.value) })}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#cc2b5e] focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#50C878] focus:border-transparent transition-all"
                   />
                 </div>
 
@@ -419,7 +419,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
                     min="1"
                     value={formData.max_guests}
                     onChange={(e) => setFormData({ ...formData, max_guests: parseInt(e.target.value) })}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#cc2b5e] focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#50C878] focus:border-transparent transition-all"
                   />
                 </div>
               </div>
@@ -427,7 +427,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
 
             <div>
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#cc2b5e]" />
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#50C878]" />
                 Amenities ({formData.amenities.length} selected)
               </h3>
               <div className="space-y-4">
@@ -441,7 +441,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
                       <span className="font-semibold text-gray-900">{category.name}</span>
                       <div className="flex items-center gap-2">
                         {formData.amenities.filter(a => category.amenities.some(ca => ca.name === a)).length > 0 && (
-                          <span className="text-xs px-2 py-1 bg-[#cc2b5e] text-white rounded-full">
+                          <span className="text-xs px-2 py-1 bg-[#50C878] text-white rounded-full">
                             {formData.amenities.filter(a => category.amenities.some(ca => ca.name === a)).length}
                           </span>
                         )}
@@ -462,13 +462,13 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
                               onClick={() => handleAmenityToggle(amenity.name)}
                               className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 font-medium text-sm transition-all text-left ${
                                 isSelected
-                                  ? 'border-[#cc2b5e] bg-pink-50 text-[#cc2b5e]'
-                                  : 'border-gray-200 bg-white text-gray-700 hover:border-[#cc2b5e] hover:bg-gray-50'
+                                  ? 'border-[#50C878] bg-pink-50 text-[#50C878]'
+                                  : 'border-gray-200 bg-white text-gray-700 hover:border-[#50C878] hover:bg-gray-50'
                               }`}
                             >
-                              <Icon className={`w-5 h-5 flex-shrink-0 ${isSelected ? 'text-[#cc2b5e]' : 'text-gray-400'}`} />
+                              <Icon className={`w-5 h-5 flex-shrink-0 ${isSelected ? 'text-[#50C878]' : 'text-gray-400'}`} />
                               <span className="flex-1">{amenity.name}</span>
-                              {isSelected && <CheckCircle2 className="w-5 h-5 text-[#cc2b5e] flex-shrink-0" />}
+                              {isSelected && <CheckCircle2 className="w-5 h-5 text-[#50C878] flex-shrink-0" />}
                             </button>
                           );
                         })}
@@ -481,12 +481,12 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
 
             <div>
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
-                <Upload className="w-4 h-4 sm:w-5 sm:h-5 text-[#cc2b5e]" />
+                <Upload className="w-4 h-4 sm:w-5 sm:h-5 text-[#50C878]" />
                 Images ({formData.images.length}/10)
               </h3>
               <div className="space-y-4">
                 {/* File Upload */}
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 sm:p-6 hover:border-[#cc2b5e] transition-colors">
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 sm:p-6 hover:border-[#50C878] transition-colors">
                   <label className="flex flex-col items-center justify-center cursor-pointer">
                     <input
                       type="file"
@@ -526,13 +526,13 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
                     onChange={(e) => setImageUrl(e.target.value)}
                     placeholder="Enter image URL (https://...)"
                     disabled={formData.images.length >= 10}
-                    className="flex-1 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#cc2b5e] focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="flex-1 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#50C878] focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                   />
                   <button
                     type="button"
                     onClick={handleAddImage}
                     disabled={formData.images.length >= 10}
-                    className="px-6 py-2 sm:py-3 bg-[#cc2b5e] text-white font-semibold text-sm sm:text-base rounded-xl hover:bg-[#d64371] transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    className="px-6 py-2 sm:py-3 bg-[#50C878] text-white font-semibold text-sm sm:text-base rounded-xl hover:bg-[#3dae68] transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
                     Add
                   </button>
@@ -577,7 +577,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
             <button
               type="submit"
               disabled={loading}
-              className="w-full sm:flex-1 px-6 py-3 sm:py-4 bg-gradient-to-r from-[#cc2b5e] to-[#753a88] text-white font-semibold text-sm sm:text-base rounded-xl hover:from-[#d64371] hover:to-[#8a4b9e] transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:flex-1 px-6 py-3 sm:py-4 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white font-semibold text-sm sm:text-base rounded-xl hover:from-[#3dae68] hover:to-[#22c55e] transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (property ? 'Updating...' : 'Creating...') : (property ? 'Update Property' : 'List Property')}
             </button>

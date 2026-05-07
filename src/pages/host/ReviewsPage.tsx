@@ -62,8 +62,8 @@ export default function ReviewsPage() {
         key={i}
         className="w-5 h-5"
         style={{
-          color: i < rating ? '#F4A261' : 'rgba(15,23,42,0.18)',
-          fill: i < rating ? '#F4A261' : 'transparent',
+          color: i < rating ? '#D97706' : 'rgba(15,23,42,0.18)',
+          fill: i < rating ? '#D97706' : 'transparent',
         }}
       />
     ));
@@ -90,7 +90,7 @@ export default function ReviewsPage() {
             className="rounded-2xl p-6"
             style={{
               background:
-                'linear-gradient(135deg, rgba(244,162,97,0.06) 0%, var(--xpx-surface) 100%)',
+                'linear-gradient(135deg, rgba(80,200,120,0.06) 0%, var(--xpx-surface) 100%)',
               border: '1px solid var(--xpx-border-strong)',
               boxShadow: '0 12px 40px rgba(15,23,42,0.06)',
             }}

@@ -307,8 +307,8 @@ export default function HostCalendarManager({ propertyId, basePrice }: HostCalen
           className="mb-4 p-4 rounded-xl"
           style={{
             background:
-              'linear-gradient(135deg, rgba(244,162,97,0.10) 0%, var(--xpx-surface-light) 100%)',
-            border: '1px solid rgba(244,162,97,0.4)',
+              'linear-gradient(135deg, rgba(80,200,120,0.10) 0%, var(--xpx-surface-light) 100%)',
+            border: '1px solid rgba(80,200,120,0.4)',
           }}
         >
           <div className="flex items-center justify-between mb-3">
@@ -328,7 +328,7 @@ export default function HostCalendarManager({ propertyId, basePrice }: HostCalen
             <button
               onClick={() => setShowBulkEditor(true)}
               className="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
-              style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 18px rgba(244,162,97,0.3)' }}
+              style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 18px rgba(80,200,120,0.3)' }}
             >
               Update Selected Dates
             </button>
@@ -344,7 +344,7 @@ export default function HostCalendarManager({ propertyId, basePrice }: HostCalen
                     className="flex-1 py-2 rounded-xl text-sm font-semibold transition-colors"
                     style={
                       bulkAvailable
-                        ? { background: 'rgba(22,163,74,0.14)', color: '#15803D', border: '1px solid rgba(22,163,74,0.4)' }
+                        ? { background: 'rgba(80,200,120,0.14)', color: '#3dae68', border: '1px solid rgba(80,200,120,0.4)' }
                         : { background: '#FFFFFF', color: 'var(--xpx-muted)', border: '1px solid var(--xpx-border)' }
                     }
                   >
@@ -382,7 +382,7 @@ export default function HostCalendarManager({ propertyId, basePrice }: HostCalen
                   onClick={handleBulkUpdate}
                   disabled={isSaving}
                   className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
-                  style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 18px rgba(244,162,97,0.3)' }}
+                  style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 18px rgba(80,200,120,0.3)' }}
                 >
                   {isSaving ? 'Saving…' : 'Apply Changes'}
                 </button>
@@ -467,7 +467,7 @@ export default function HostCalendarManager({ propertyId, basePrice }: HostCalen
                     {day.isAvailable ? (
                       <Lock className="w-3 h-3" style={{ color: '#B91C1C' }} />
                     ) : (
-                      <Unlock className="w-3 h-3" style={{ color: '#15803D' }} />
+                      <Unlock className="w-3 h-3" style={{ color: '#3dae68' }} />
                     )}
                   </button>
                 )}

@@ -5,8 +5,6 @@ import {
   ChevronLeft,
   Star,
   MapPin,
-  Calendar,
-  Users,
   Heart,
   CheckCircle,
   ShieldCheck,
@@ -14,21 +12,36 @@ import {
   Zap,
   Lock,
 } from 'lucide-react';
+import { XPRESSBNB_LOGO_IMG_CLASS, XPRESSBNB_LOGO_NAV_IMG_CLASS, XPRESSBNB_LOGO_PATH } from '../lib/branding';
 import { supabase } from '../lib/supabase';
 import SEOHead from './SEOHead';
 import { generateOrganizationStructuredData } from '../lib/seo';
 import type { Property } from '../lib/database.types';
 
-// Light Gen Z palette — warm off-white surfaces, white cards, almost-black ink.
-const WARM = '#F4A261';
-const WARM_DARK = '#E08C45';
-const BASE = '#FAFAF7';
+// Brand emerald (#50C878) — coral (#FF385C) reserved for Search Stays + Reserve/Book only.
+const ACCENT = '#50C878';
+const ACCENT_DARK = '#3dae68';
+const ACCENT_LIGHT = '#ecfdf5';
+const ACCENT_BORDER = '#bbf7d0';
+const CTA_RED = '#FF385C';
+const CTA_RED_DARK = '#E11D48';
+const BASE = '#FFFFFF';
 const SURFACE = '#FFFFFF';
-const SURFACE_LIGHT = '#F5F2EC';
+const SURFACE_LIGHT = '#F8FAFC';
 const TEXT = '#0F172A';
-const TEXT_MUTED = 'rgba(15,23,42,0.62)';
-const TEXT_SUBTLE = 'rgba(15,23,42,0.42)';
-const BORDER = 'rgba(15,23,42,0.08)';
+const TEXT_MUTED = '#64748B';
+const TEXT_SUBTLE = '#94A3B8';
+const BORDER = '#E2E8F0';
+const VERIFIED = '#50C878';
+const VERIFIED_BG = '#ecfdf5';
+const RATING = '#D97706';
+const FOOTER_HEADING = '#FFFFFF';
+const FOOTER_BODY = 'rgba(255,255,255,0.6)';
+const FOOTER_LINK_HOVER = '#6EE7B7';
+const FOOTER_LOGO_ACCENT = '#6EE7B7';
+const FOOTER_DIVIDER = 'rgba(255,255,255,0.08)';
+const FOOTER_COPY = 'rgba(255,255,255,0.35)';
+const INK_FAINT = 'rgba(15,23,42,0.18)';
 
 const HERO_SLIDES = [
   {
@@ -222,7 +235,7 @@ export default function NewHomepage() {
   const featuredProperties = properties.slice(0, 8);
 
   return (
-    <div className="min-h-screen" style={{ background: BASE, color: TEXT }}>
+    <div className="min-h-screen relative" style={{ background: BASE, color: TEXT }}>
       <SEOHead
         config={{
           title:
@@ -251,21 +264,24 @@ export default function NewHomepage() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 h-16 md:h-[72px] flex items-center justify-between gap-2">
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="flex items-center gap-2 min-w-0 shrink"
+            className="flex items-center gap-2 min-w-0 shrink text-base sm:text-lg md:text-xl leading-none"
           >
             <img
-              src="/image.png"
-              alt="XpressBnB"
-              className="h-8 sm:h-9 w-8 sm:w-9 object-contain shrink-0"
+              src={XPRESSBNB_LOGO_PATH}
+              alt=""
+              className={XPRESSBNB_LOGO_NAV_IMG_CLASS}
+              width={48}
+              height={48}
+              decoding="async"
             />
             <span
-              className="text-base sm:text-lg md:text-xl font-extrabold tracking-tight truncate"
+              className="font-extrabold tracking-tight truncate"
               style={{
                 color: scrolled ? TEXT : '#ffffff',
                 textShadow: scrolled ? 'none' : '0 1px 2px rgba(0,0,0,0.35), 0 0 18px rgba(0,0,0,0.22)',
               }}
             >
-              Xpress<span style={{ color: WARM }}>BnB</span>
+              Xpress<span style={{ color: ACCENT }}>BnB</span>
             </span>
           </button>
 
@@ -292,9 +308,10 @@ export default function NewHomepage() {
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => navigate('/auth/login')}
-              className="hidden md:inline-flex px-4 py-2 rounded-full text-sm font-medium transition-colors"
+              className={`hidden md:inline-flex px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                scrolled ? 'text-[#0F172A] hover:text-[#50C878]' : 'text-white/85 hover:text-white'
+              }`}
               style={{
-                color: scrolled ? TEXT_MUTED : 'rgba(255,255,255,0.85)',
                 textShadow: scrolled ? 'none' : '0 1px 2px rgba(0,0,0,0.3)',
               }}
             >
@@ -302,11 +319,16 @@ export default function NewHomepage() {
             </button>
             <button
               onClick={() => navigate('/auth/register')}
-              className="rounded-full px-3.5 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold transition-all hover:scale-[1.03] whitespace-nowrap"
+              className="rounded-full px-3.5 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-white transition-all hover:scale-[1.03] whitespace-nowrap hover:brightness-95"
               style={{
-                background: WARM,
-                color: '#ffffff',
-                boxShadow: '0 6px 18px rgba(244,162,97,0.32)',
+                background: ACCENT,
+                boxShadow: '0 8px 24px rgba(80,200,120,0.35)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = ACCENT_DARK;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = ACCENT;
               }}
             >
               Sign up
@@ -344,11 +366,11 @@ export default function NewHomepage() {
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(180deg, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0.45) 50%, rgba(15,23,42,0.55) 88%, ' + BASE + ' 100%)',
+              'linear-gradient(180deg, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0.45) 50%, rgba(13,27,42,0.55) 88%, ' + BASE + ' 100%)',
           }}
         />
 
-        <div className="relative z-10 h-full flex flex-col justify-center px-4 md:px-8 max-w-7xl mx-auto pt-20 pb-4">
+        <div className="relative z-[1] h-full flex flex-col justify-center px-4 md:px-8 max-w-7xl mx-auto pt-20 pb-4">
           <div className="flex-1 flex flex-col justify-center md:justify-center">
             <div className="max-w-xl">
               <h1
@@ -359,7 +381,7 @@ export default function NewHomepage() {
               </h1>
               <p
                 className="mt-3 text-base md:text-lg font-medium"
-                style={{ color: WARM, textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}
+                style={{ color: ACCENT, textShadow: '0 1px 6px rgba(0,0,0,0.35)' }}
               >
                 Zero commission. Trusted hosts.
               </p>
@@ -372,9 +394,9 @@ export default function NewHomepage() {
                   onClick={() => setHeroIndex(i)}
                   className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all"
                   style={{
-                    background: i === heroIndex ? 'rgba(244,162,97,0.25)' : 'rgba(255,255,255,0.16)',
+                    background: i === heroIndex ? 'rgba(80,200,120,0.28)' : 'rgba(255,255,255,0.16)',
                     color: i === heroIndex ? '#ffffff' : 'rgba(255,255,255,0.85)',
-                    border: i === heroIndex ? `1px solid ${WARM}` : '1px solid rgba(255,255,255,0.25)',
+                    border: i === heroIndex ? `1px solid ${ACCENT}` : '1px solid rgba(255,255,255,0.25)',
                     backdropFilter: 'blur(12px)',
                   }}
                 >
@@ -399,24 +421,13 @@ export default function NewHomepage() {
                 onSearch={handleHeroSearch}
               />
             </div>
-            <div
-              className="mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold"
-              style={{
-                background: 'rgba(244,162,97,0.18)',
-                color: '#ffffff',
-                border: `1px solid rgba(244,162,97,0.5)`,
-                backdropFilter: 'blur(12px)',
-              }}
-            >
-              <span className="font-mono">WELCOME10</span> · 10% off your first stay
-            </div>
           </div>
         </div>
       </section>
 
       {/* ──── Trust Strip ──── */}
       <section
-        className="relative z-10 -mt-1"
+        className="relative z-[1] -mt-1"
         style={{ background: SURFACE_LIGHT, borderBottom: `1px solid ${BORDER}` }}
       >
         <div className="max-w-7xl mx-auto px-4 md:px-8">
@@ -425,13 +436,13 @@ export default function NewHomepage() {
               <div
                 key={label}
                 className="flex items-center gap-2.5 shrink-0 px-4 py-2.5 rounded-xl"
-                style={{ background: SURFACE, border: `1px solid ${BORDER}` }}
+                style={{ background: SURFACE, border: '1px solid rgba(80,200,120,0.4)' }}
               >
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: `${WARM}1A` }}
+                  style={{ background: ACCENT_LIGHT }}
                 >
-                  <Icon className="w-4 h-4" style={{ color: WARM_DARK }} />
+                  <Icon className="w-4 h-4" style={{ color: ACCENT }} />
                 </div>
                 <span className="text-sm font-semibold whitespace-nowrap" style={{ color: TEXT }}>
                   {label}
@@ -452,8 +463,7 @@ export default function NewHomepage() {
             action={
               <button
                 onClick={() => handleCityClick('Delhi')}
-                className="flex items-center gap-1 text-sm font-semibold transition-colors"
-                style={{ color: WARM_DARK }}
+                className="flex items-center gap-1 text-sm font-semibold transition-colors text-[#50C878] hover:text-[#3dae68]"
               >
                 View all
                 <ChevronRight className="w-4 h-4" />
@@ -481,61 +491,52 @@ export default function NewHomepage() {
             title="Top Destinations"
             subtitle="Verified homes across India's best cities"
           />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-            {CITIES.slice(0, 4).map((city, idx) => {
-              const count = propertiesByCity[city]?.length || 0;
-              const cover = propertiesByCity[city]?.[0]?.images?.[0] || CITY_IMAGES[city];
-              const isLarge = idx === 0 || idx === 3;
-              return (
-                <button
-                  key={city}
-                  onClick={() => handleCityClick(city)}
-                  className={`group relative rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] ${
-                    isLarge ? 'row-span-2 aspect-[3/4]' : 'aspect-square'
-                  }`}
-                  style={{ boxShadow: '0 12px 40px rgba(15,23,42,0.08)' }}
-                >
-                  <img
-                    src={cover}
-                    alt={city}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
-                  <div className="absolute left-4 right-4 bottom-4 text-left">
-                    <div className="text-white font-bold text-lg md:text-xl leading-tight">{city}</div>
-                    <div className="text-white/80 text-xs mt-0.5">{count} properties</div>
-                  </div>
-                </button>
-              );
-            })}
+
+          {/* Desktop: row1 Delhi (2 cols) | Gurgaon; row2 Noida | Greater Noida | Rishikesh */}
+          <div className="hidden md:grid md:grid-cols-3 md:gap-3">
+            <button
+              type="button"
+              onClick={() => handleCityClick('Delhi')}
+              className="group relative md:col-span-2 aspect-[16/9] overflow-hidden cursor-pointer rounded-2xl transition-all duration-300 md:hover:scale-[1.01]"
+              style={{ boxShadow: '0 12px 40px rgba(15,23,42,0.08)', borderRadius: 16 }}
+            >
+              <TopDestinationCardInner city="Delhi" propertiesByCity={propertiesByCity} large />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleCityClick('Gurgaon')}
+              className="group relative aspect-[4/3] overflow-hidden cursor-pointer rounded-2xl transition-all duration-300 md:hover:scale-[1.01]"
+              style={{ boxShadow: '0 12px 40px rgba(15,23,42,0.08)', borderRadius: 16 }}
+            >
+              <TopDestinationCardInner city="Gurgaon" propertiesByCity={propertiesByCity} />
+            </button>
+            {(['Noida', 'Greater Noida', 'Rishikesh'] as const).map(city => (
+              <button
+                key={city}
+                type="button"
+                onClick={() => handleCityClick(city)}
+                className="group relative aspect-[4/3] overflow-hidden cursor-pointer rounded-2xl transition-all duration-300 md:hover:scale-[1.01]"
+                style={{ boxShadow: '0 12px 40px rgba(15,23,42,0.08)', borderRadius: 16 }}
+              >
+                <TopDestinationCardInner city={city} propertiesByCity={propertiesByCity} />
+              </button>
+            ))}
           </div>
 
-          {CITIES.length > 4 && (
-            <div className="mt-3 grid grid-cols-1">
+          {/* Mobile: 2×3, equal 4/3 */}
+          <div className="grid md:hidden grid-cols-2 gap-3">
+            {CITIES.map(city => (
               <button
-                onClick={() => handleCityClick(CITIES[4])}
-                className="group relative h-40 md:h-48 rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.01]"
-                style={{ boxShadow: '0 12px 40px rgba(15,23,42,0.08)' }}
+                key={city}
+                type="button"
+                onClick={() => handleCityClick(city)}
+                className="group relative aspect-[4/3] overflow-hidden cursor-pointer rounded-2xl transition-all duration-300 active:scale-[0.99]"
+                style={{ boxShadow: '0 12px 40px rgba(15,23,42,0.08)', borderRadius: 16 }}
               >
-                <img
-                  src={
-                    propertiesByCity[CITIES[4]]?.[0]?.images?.[0] || CITY_IMAGES[CITIES[4]]
-                  }
-                  alt={CITIES[4]}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/25 to-transparent" />
-                <div className="absolute left-5 bottom-5 text-left">
-                  <div className="text-white font-bold text-xl">{CITIES[4]}</div>
-                  <div className="text-white/80 text-xs mt-0.5">
-                    {propertiesByCity[CITIES[4]]?.length || 0} properties
-                  </div>
-                </div>
+                <TopDestinationCardInner city={city} propertiesByCity={propertiesByCity} />
               </button>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
       </section>
 
@@ -546,10 +547,10 @@ export default function NewHomepage() {
             <div className="inline-flex items-center gap-2 mb-4">
               <div className="flex">
                 {[1, 2, 3, 4, 5].map(i => (
-                  <Star key={i} className="w-6 h-6" style={{ color: WARM }} fill={WARM} />
+                  <Star key={i} className="w-6 h-6" style={{ color: RATING }} fill={RATING} />
                 ))}
               </div>
-              <span className="text-3xl md:text-4xl font-extrabold ml-2" style={{ color: TEXT }}>4.8</span>
+              <span className="text-3xl md:text-4xl font-extrabold ml-2" style={{ color: '#50C878' }}>4.8</span>
             </div>
             <p className="text-sm" style={{ color: TEXT_MUTED }}>from 50,000+ verified guest reviews</p>
           </div>
@@ -558,7 +559,7 @@ export default function NewHomepage() {
             {testimonials.slice(0, 3).map(t => (
               <article
                 key={t.id}
-                className="snap-start shrink-0 w-[85%] sm:w-[60%] md:w-auto rounded-2xl p-6"
+                className="snap-start shrink-0 w-[85%] sm:w-[60%] md:w-auto rounded-2xl p-6 transition-colors duration-200 hover:border-[#50C878]"
                 style={{ background: SURFACE, border: `1px solid ${BORDER}`, boxShadow: '0 12px 40px rgba(15,23,42,0.06)' }}
               >
                 <div className="flex items-center gap-3">
@@ -566,7 +567,7 @@ export default function NewHomepage() {
                     src={t.avatar_url}
                     alt={t.name}
                     className="w-11 h-11 rounded-full object-cover"
-                    style={{ boxShadow: `0 0 0 2px ${WARM}40` }}
+                    style={{ boxShadow: `0 0 0 2px ${ACCENT}40` }}
                     loading="lazy"
                   />
                   <div>
@@ -579,8 +580,8 @@ export default function NewHomepage() {
                     <Star
                       key={i}
                       className="w-3.5 h-3.5"
-                      style={{ color: i < t.rating ? WARM : 'rgba(15,23,42,0.18)' }}
-                      fill={i < t.rating ? WARM : 'transparent'}
+                      style={{ color: i < t.rating ? RATING : INK_FAINT }}
+                      fill={i < t.rating ? RATING : 'transparent'}
                     />
                   ))}
                 </div>
@@ -598,42 +599,48 @@ export default function NewHomepage() {
         id="host"
         className="relative overflow-hidden"
         style={{
-          background: `linear-gradient(135deg, ${SURFACE_LIGHT} 0%, ${BASE} 60%, #FFEFE0 100%)`,
+          background: 'linear-gradient(135deg, #022c22 0%, #166534 50%, #50C878 100%)',
         }}
       >
-        <div
-          className="absolute inset-0 opacity-40"
-          style={{
-            background: `radial-gradient(circle at 80% 50%, ${WARM}30, transparent 60%), radial-gradient(circle at 15% 30%, rgba(167,139,250,0.18), transparent 55%)`,
-          }}
-        />
-        <div className="relative z-10 max-w-3xl mx-auto px-4 md:px-8 py-16 md:py-24 text-center">
+        <div className="relative z-[1] max-w-3xl mx-auto px-4 md:px-8 py-16 md:py-24 text-center">
           <h2
-            className="text-3xl md:text-4xl font-extrabold tracking-tight leading-tight"
-            style={{ color: TEXT }}
+            className="text-3xl md:text-4xl font-extrabold tracking-tight leading-tight text-white"
+            style={{ fontWeight: 800 }}
           >
             Earn with XpressBnB
           </h2>
-          <p className="mt-3 text-base md:text-lg max-w-lg mx-auto" style={{ color: TEXT_MUTED }}>
+          <p
+            className="mt-3 text-base md:text-lg max-w-lg mx-auto"
+            style={{ color: 'rgba(255,255,255,0.65)' }}
+          >
             List your property in 5 minutes. Start earning from day one with zero platform fees.
           </p>
           <button
+            type="button"
             onClick={() => navigate('/auth/login')}
-            className="mt-8 inline-flex items-center gap-2 rounded-full px-8 py-4 font-bold text-base transition-all hover:scale-[1.03]"
+            className="mt-8 inline-flex items-center gap-2 rounded-full px-8 py-4 text-base font-bold transition-all hover:scale-[1.03]"
             style={{
-              background: WARM,
-              color: '#ffffff',
-              boxShadow: `0 12px 32px ${WARM}55`,
+              background: '#FFFFFF',
+              color: '#15803d',
+              fontWeight: 700,
+              borderRadius: 50,
+              boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.92)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#FFFFFF';
             }}
           >
             Start Hosting
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-5 h-5" style={{ color: '#15803d' }} />
           </button>
         </div>
       </section>
 
       {/* ──── Why XpressBnB ──── */}
-      <section id="why" className="scroll-mt-24" style={{ background: SURFACE_LIGHT }}>
+      <section id="why" className="scroll-mt-24 relative z-[1]" style={{ background: SURFACE_LIGHT }}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-14 md:py-20">
           <SectionHeader
             label="WHY XPRESSBNB"
@@ -641,47 +648,56 @@ export default function NewHomepage() {
             subtitle="Direct relationships, transparent pricing, verified properties"
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            {[
-              {
-                icon: ShieldCheck,
-                title: '100% Verified',
-                desc: 'Every property is personally inspected and approved before going live.',
-              },
-              {
-                icon: Zap,
-                title: 'Zero Commission',
-                desc: 'Book directly from the host. No middlemen, no surprise fees.',
-              },
-              {
-                icon: Lock,
-                title: 'Secure Payments',
-                desc: 'PCI-grade encryption and instant refunds keep your money protected.',
-              },
-              {
-                icon: Star,
-                title: 'Best Price Guarantee',
-                desc: 'See a lower price elsewhere? We match it and credit the difference.',
-              },
-            ].map(card => (
+            {(
+              [
+                {
+                  icon: ShieldCheck,
+                  title: '100% Verified',
+                  desc: 'Every property is personally inspected and approved before going live.',
+                  accent: 'card' as const,
+                },
+                {
+                  icon: Zap,
+                  title: 'Zero Commission',
+                  desc: 'Book directly from the host. No middlemen, no surprise fees.',
+                  accent: 'card' as const,
+                },
+                {
+                  icon: Lock,
+                  title: 'Secure Payments',
+                  desc: 'PCI-grade encryption and instant refunds keep your money protected.',
+                  accent: 'card' as const,
+                },
+                {
+                  icon: Star,
+                  title: 'Best Price Guarantee',
+                  desc: 'See a lower price elsewhere? We match it and credit the difference.',
+                  accent: 'card' as const,
+                },
+              ] as const
+            ).map(card => {
+              const chip = { bg: ACCENT_LIGHT, fg: ACCENT };
+              return (
               <div
                 key={card.title}
                 className="group rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1"
                 style={{
                   background: SURFACE,
                   border: `1px solid ${BORDER}`,
-                  boxShadow: '0 8px 32px rgba(15,23,42,0.05)',
+                  boxShadow: 'var(--xpx-shadow-card)',
                 }}
               >
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center transition-colors"
-                  style={{ background: `${WARM}1A` }}
+                  style={{ background: chip.bg }}
                 >
-                  <card.icon className="w-5 h-5" style={{ color: WARM_DARK }} />
+                  <card.icon className="w-5 h-5" style={{ color: chip.fg }} />
                 </div>
                 <h3 className="mt-5 font-bold text-lg" style={{ color: TEXT }}>{card.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed" style={{ color: TEXT_MUTED }}>{card.desc}</p>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
       </section>
@@ -689,24 +705,27 @@ export default function NewHomepage() {
       {/* ──── Footer ──── */}
       <footer
         style={{
-          background: BASE,
-          borderTop: `1px solid ${BORDER}`,
+          background: '#022c22',
+          borderTop: `1px solid ${FOOTER_DIVIDER}`,
         }}
       >
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-14">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-10">
             <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 text-lg leading-none">
                 <img
-                  src="/image.png"
-                  alt="XpressBnB"
-                  className="h-9 w-9 object-contain"
+                  src={XPRESSBNB_LOGO_PATH}
+                  alt=""
+                  className={XPRESSBNB_LOGO_IMG_CLASS}
+                  width={36}
+                  height={36}
+                  decoding="async"
                 />
-                <span className="text-lg font-extrabold tracking-tight" style={{ color: TEXT }}>
-                  Xpress<span style={{ color: WARM }}>BnB</span>
+                <span className="font-extrabold tracking-tight" style={{ color: FOOTER_HEADING }}>
+                  Xpress<span style={{ color: FOOTER_LOGO_ACCENT }}>BnB</span>
                 </span>
               </div>
-              <p className="mt-4 text-sm leading-relaxed max-w-xs" style={{ color: TEXT_MUTED }}>
+              <p className="mt-4 text-sm leading-relaxed max-w-xs" style={{ color: FOOTER_BODY }}>
                 India&rsquo;s first zero-commission booking platform. Direct, verified, and
                 beautifully simple.
               </p>
@@ -734,12 +753,12 @@ export default function NewHomepage() {
           </div>
           <div
             className="pt-8 flex flex-col md:flex-row items-center justify-between gap-3"
-            style={{ borderTop: `1px solid ${BORDER}` }}
+            style={{ borderTop: `1px solid ${FOOTER_DIVIDER}` }}
           >
-            <p className="text-xs" style={{ color: TEXT_SUBTLE }}>
+            <p className="text-xs" style={{ color: FOOTER_COPY }}>
               &copy; 2026 XpressBnB. All rights reserved.
             </p>
-            <p className="text-xs font-semibold" style={{ color: WARM_DARK }}>
+            <p className="text-xs font-semibold" style={{ color: FOOTER_BODY }}>
               India&rsquo;s Smarter Stay
             </p>
           </div>
@@ -768,10 +787,54 @@ interface HeroSearchBarProps {
   onSearch: () => void;
 }
 
+function formatHeroDisplayDate(iso: string): string {
+  if (!iso) return '';
+  const d = new Date(`${iso}T12:00:00`);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function TopDestinationCardInner({
+  city,
+  propertiesByCity,
+  large = false,
+}: {
+  city: string;
+  propertiesByCity: Record<string, Property[]>;
+  large?: boolean;
+}) {
+  const count = propertiesByCity[city]?.length || 0;
+  const cover = propertiesByCity[city]?.[0]?.images?.[0] || CITY_IMAGES[city];
+  return (
+    <>
+      <img
+        src={cover}
+        alt={city}
+        className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+        loading="lazy"
+      />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 55%)',
+        }}
+      />
+      <div className="absolute bottom-4 left-4 text-left">
+        <div
+          className="text-white font-extrabold leading-tight"
+          style={{ fontSize: large ? 22 : 16 }}
+        >
+          {city}
+        </div>
+        <div className="mt-0.5 text-xs font-normal" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          {count} properties
+        </div>
+      </div>
+    </>
+  );
+}
+
 /**
- * HeroSearchBar — fully controlled search widget. Mobile shows a compact
- * frosted-white pill that opens a full-width sheet with white surface.
- * Desktop shows an Airbnb-style segmented bar.
+ * HeroSearchBar — mobile: 46px pill (Where to? + search). Desktop: Airbnb-style pill (no guests row).
  */
 function HeroSearchBar({
   cities,
@@ -790,35 +853,43 @@ function HeroSearchBar({
 
   return (
     <>
-      {/* Mobile compact pill — opens a full-width sheet for input */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="md:hidden flex items-center gap-3 w-full rounded-full px-4 py-3.5"
+      {/* Mobile — Where to? + search only (dates/guests in sheet) */}
+      <div
+        className="md:hidden flex items-center w-full rounded-full overflow-hidden"
         style={{
-          background: 'rgba(255,255,255,0.92)',
-          backdropFilter: 'blur(20px) saturate(1.6)',
-          border: '1px solid rgba(255,255,255,0.6)',
-          boxShadow: '0 12px 32px rgba(15,23,42,0.18)',
+          height: 46,
+          background: '#ffffff',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
+          padding: '0 6px 0 14px',
         }}
       >
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-          style={{ background: WARM }}
+        <button
+          type="button"
+          onClick={() => setMobileOpen(true)}
+          className="flex-1 flex flex-col items-start justify-center min-w-0 py-2 text-left"
         >
-          <Search className="w-4 h-4" style={{ color: '#ffffff' }} />
-        </div>
-        <div className="text-left min-w-0">
-          <div className="text-sm font-bold" style={{ color: TEXT }}>{city || 'Where to?'}</div>
-          <div className="text-xs truncate" style={{ color: TEXT_MUTED }}>
-            {checkin && checkout ? `${checkin} → ${checkout}` : 'Add dates'} · {guests}{' '}
-            {guests === 1 ? 'guest' : 'guests'}
-          </div>
-        </div>
-      </button>
+          <span style={{ fontSize: 11, color: '#717171', fontWeight: 600 }}>Where to?</span>
+          <span style={{ fontSize: 14, color: '#111', fontWeight: 700 }}>{city}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => onSearch()}
+          className="flex items-center justify-center shrink-0 rounded-full"
+          style={{
+            background: CTA_RED,
+            width: 40,
+            height: 40,
+            marginRight: 4,
+          }}
+          aria-label="Search stays"
+        >
+          <Search className="w-5 h-5" style={{ color: '#ffffff' }} />
+        </button>
+      </div>
 
       {mobileOpen && (
         <div
-          className="md:hidden fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-md flex items-end"
+          className="md:hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-md flex items-end"
           onClick={() => setMobileOpen(false)}
           role="dialog"
           aria-label="Search stays"
@@ -895,7 +966,7 @@ function HeroSearchBar({
                 onSearch();
               }}
               className="w-full mt-2 inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-4 font-bold text-base"
-              style={{ background: WARM, color: '#ffffff', boxShadow: '0 8px 24px rgba(244,162,97,0.32)' }}
+              style={{ background: CTA_RED, color: '#ffffff', boxShadow: '0 8px 24px rgba(255,56,92,0.32)' }}
             >
               <Search className="w-4 h-4" />
               Search stays
@@ -904,139 +975,99 @@ function HeroSearchBar({
         </div>
       )}
 
-      {/* Desktop expanded search — frosted white over the hero photo */}
+      {/* Desktop — single pill, dividers, icon-only search (no guests in bar) */}
       <div
-        className="hidden md:block rounded-2xl p-2"
+        className="hidden md:flex items-center w-full"
         style={{
-          background: 'rgba(255,255,255,0.85)',
-          backdropFilter: 'blur(20px) saturate(1.6)',
-          border: '1px solid rgba(255,255,255,0.5)',
-          boxShadow: '0 12px 32px rgba(15,23,42,0.18)',
+          background: '#ffffff',
+          borderRadius: 60,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
+          height: 66,
+          padding: '0 8px 0 0',
+          maxWidth: 680,
+          width: '100%',
         }}
       >
-        <div className="flex items-center gap-1">
-          <SearchSelect
-            icon={<MapPin className="w-5 h-5" style={{ color: WARM_DARK }} />}
-            label="Where to?"
+        <div
+          className="flex flex-col justify-center min-w-0"
+          style={{ flex: '1.5', paddingLeft: 24, paddingRight: 24 }}
+        >
+          <span style={{ fontSize: 11, color: '#717171', fontWeight: 600 }}>Where to?</span>
+          <select
             value={city}
-            onChange={onCityChange}
-            options={cities.map((c) => ({ value: c, label: c }))}
-          />
-          <span className="w-px h-8" style={{ background: BORDER }} />
-          <SearchDate
-            icon={<Calendar className="w-5 h-5" style={{ color: WARM_DARK }} />}
-            label="Check-in"
-            value={checkin}
-            min={today}
-            onChange={onCheckinChange}
-          />
-          <span className="w-px h-8" style={{ background: BORDER }} />
-          <SearchDate
-            icon={<Calendar className="w-5 h-5" style={{ color: WARM_DARK }} />}
-            label="Check-out"
-            value={checkout}
-            min={checkin || today}
-            onChange={onCheckoutChange}
-          />
-          <span className="w-px h-8" style={{ background: BORDER }} />
-          <SearchSelect
-            icon={<Users className="w-5 h-5" style={{ color: WARM_DARK }} />}
-            label="Guests"
-            value={String(guests)}
-            onChange={(v) => onGuestsChange(Number(v))}
-            options={Array.from({ length: 8 }, (_, i) => i + 1).map((n) => ({
-              value: String(n),
-              label: `${n} ${n === 1 ? 'guest' : 'guests'}`,
-            }))}
-          />
-          <button
-            onClick={onSearch}
-            className="flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 font-bold text-sm transition-all hover:scale-[1.02] ml-1"
-            style={{
-              background: WARM,
-              color: '#ffffff',
-              boxShadow: `0 6px 20px ${WARM}55`,
-              minHeight: 52,
-            }}
+            onChange={(e) => onCityChange(e.target.value)}
+            className="mt-0.5 appearance-none bg-transparent border-0 p-0 text-[14px] outline-none cursor-pointer w-full truncate"
+            style={{ color: '#111', fontWeight: 700 }}
           >
-            <Search className="w-4 h-4" />
-            Search Stays
-          </button>
+            {cities.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
         </div>
+        <div style={{ width: 1, height: 32, background: '#ebebeb', flexShrink: 0 }} aria-hidden />
+        <label
+          className="flex flex-col justify-center min-w-0 cursor-pointer"
+          style={{ flex: 1, paddingLeft: 20, paddingRight: 20 }}
+        >
+          <span style={{ fontSize: 11, color: '#717171', fontWeight: 600 }}>Check-in</span>
+          <div className="relative mt-0.5 h-[22px] flex items-center">
+            <input
+              type="date"
+              min={today}
+              value={checkin}
+              onChange={(e) => onCheckinChange(e.target.value)}
+              className="absolute inset-0 z-[1] cursor-pointer opacity-0 w-full"
+              style={{ colorScheme: 'light' }}
+            />
+            <span
+              className="text-[14px] font-bold pointer-events-none truncate"
+              style={{ color: '#111' }}
+            >
+              {checkin ? formatHeroDisplayDate(checkin) : 'Add date'}
+            </span>
+          </div>
+        </label>
+        <div style={{ width: 1, height: 32, background: '#ebebeb', flexShrink: 0 }} aria-hidden />
+        <label
+          className="flex flex-col justify-center min-w-0 cursor-pointer"
+          style={{ flex: 1, paddingLeft: 20, paddingRight: 20 }}
+        >
+          <span style={{ fontSize: 11, color: '#717171', fontWeight: 600 }}>Check-out</span>
+          <div className="relative mt-0.5 h-[22px] flex items-center">
+            <input
+              type="date"
+              min={checkin || today}
+              value={checkout}
+              onChange={(e) => onCheckoutChange(e.target.value)}
+              className="absolute inset-0 z-[1] cursor-pointer opacity-0 w-full"
+              style={{ colorScheme: 'light' }}
+            />
+            <span
+              className="text-[14px] font-bold pointer-events-none truncate"
+              style={{ color: '#111' }}
+            >
+              {checkout ? formatHeroDisplayDate(checkout) : 'Add date'}
+            </span>
+          </div>
+        </label>
+        <button
+          type="button"
+          onClick={onSearch}
+          className="flex items-center justify-center shrink-0 rounded-full"
+          style={{
+            background: CTA_RED,
+            width: 48,
+            height: 48,
+            marginRight: 4,
+          }}
+          aria-label="Search stays"
+        >
+          <Search className="w-5 h-5" style={{ color: '#ffffff' }} />
+        </button>
       </div>
     </>
-  );
-}
-
-function SearchSelect({
-  icon,
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-}) {
-  return (
-    <label
-      className="flex-1 flex items-center gap-3 px-4 py-3 rounded-xl text-left hover:bg-slate-100 transition-colors cursor-pointer"
-      style={{ minHeight: 48 }}
-    >
-      <span className="shrink-0">{icon}</span>
-      <span className="min-w-0 flex-1 flex flex-col leading-tight">
-        <span className="text-[13px] font-bold" style={{ color: TEXT }}>{label}</span>
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="bg-transparent text-[12px] outline-none cursor-pointer"
-          style={{ color: TEXT_MUTED }}
-        >
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      </span>
-    </label>
-  );
-}
-
-function SearchDate({
-  icon,
-  label,
-  value,
-  onChange,
-  min,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  min?: string;
-}) {
-  return (
-    <label
-      className="flex-1 flex items-center gap-3 px-4 py-3 rounded-xl text-left hover:bg-slate-100 transition-colors cursor-pointer"
-      style={{ minHeight: 48 }}
-    >
-      <span className="shrink-0">{icon}</span>
-      <span className="min-w-0 flex-1 flex flex-col leading-tight">
-        <span className="text-[13px] font-bold" style={{ color: TEXT }}>{label}</span>
-        <input
-          type="date"
-          value={value}
-          min={min}
-          onChange={(e) => onChange(e.target.value)}
-          className="bg-transparent text-[12px] outline-none w-full cursor-pointer"
-          style={{ color: TEXT_MUTED, colorScheme: 'light' }}
-        />
-      </span>
-    </label>
   );
 }
 
@@ -1054,7 +1085,7 @@ function SectionHeader({
   return (
     <div className="flex items-end justify-between gap-4 mb-8 md:mb-10">
       <div>
-        <span className="text-[11px] font-bold tracking-[0.2em]" style={{ color: WARM_DARK }}>
+        <span className="text-[11px] font-bold tracking-[0.2em]" style={{ color: ACCENT }}>
           {label}
         </span>
         <h2 className="mt-2 text-2xl md:text-3xl font-extrabold tracking-tight leading-tight" style={{ color: TEXT }}>
@@ -1093,7 +1124,7 @@ function HorizontalScrollCards({ properties }: { properties: Property[] }) {
       {canScrollLeft && (
         <button
           onClick={() => scroll('left')}
-          className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full items-center justify-center transition-all opacity-0 group-hover/scroll:opacity-100"
+          className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-[1] w-10 h-10 rounded-full items-center justify-center transition-all opacity-0 group-hover/scroll:opacity-100"
           style={{
             background: SURFACE,
             border: `1px solid ${BORDER}`,
@@ -1106,7 +1137,7 @@ function HorizontalScrollCards({ properties }: { properties: Property[] }) {
       {canScrollRight && (
         <button
           onClick={() => scroll('right')}
-          className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full items-center justify-center transition-all opacity-0 group-hover/scroll:opacity-100"
+          className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-[1] w-10 h-10 rounded-full items-center justify-center transition-all opacity-0 group-hover/scroll:opacity-100"
           style={{
             background: SURFACE,
             border: `1px solid ${BORDER}`,
@@ -1119,7 +1150,8 @@ function HorizontalScrollCards({ properties }: { properties: Property[] }) {
       <div
         ref={ref}
         onScroll={checkScroll}
-        className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2"
+        className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {properties.map(p => (
           <FeaturedCard key={p.id} property={p} />
@@ -1131,7 +1163,7 @@ function HorizontalScrollCards({ properties }: { properties: Property[] }) {
           <span
             key={i}
             className="w-1.5 h-1.5 rounded-full"
-            style={{ background: i === 0 ? WARM : 'rgba(15,23,42,0.18)' }}
+            style={{ background: i === 0 ? ACCENT : INK_FAINT }}
           />
         ))}
       </div>
@@ -1150,7 +1182,7 @@ function FeaturedCard({ property }: { property: Property }) {
   return (
     <article
       onClick={handleClick}
-      className="snap-start shrink-0 w-[240px] md:w-[260px] cursor-pointer rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 group"
+      className="snap-start shrink-0 min-w-[240px] max-w-[260px] w-[min(260px,85vw)] cursor-pointer rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 group"
       style={{
         background: SURFACE,
         border: `1px solid ${BORDER}`,
@@ -1174,15 +1206,14 @@ function FeaturedCard({ property }: { property: Property }) {
           </div>
         )}
         <div
-          className="absolute top-3 right-3 px-3 py-1.5 rounded-lg text-xs font-bold"
+          className="absolute top-3 right-3 px-3 py-1.5 rounded-lg text-xs font-bold text-white"
           style={{
-            background: 'rgba(255,255,255,0.92)',
+            background: ACCENT,
             backdropFilter: 'blur(8px)',
-            color: TEXT,
-            boxShadow: '0 4px 12px rgba(15,23,42,0.12)',
+            boxShadow: '0 4px 12px rgba(80,200,120,0.25)',
           }}
         >
-          &#8377;{price}<span className="font-normal" style={{ color: TEXT_MUTED }}>/night</span>
+          &#8377;{price}<span className="font-normal opacity-90">/night</span>
         </div>
         <button
           onClick={e => e.stopPropagation()}
@@ -1190,18 +1221,19 @@ function FeaturedCard({ property }: { property: Property }) {
           className="absolute top-3 left-3 w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110"
           style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', boxShadow: '0 4px 12px rgba(15,23,42,0.12)' }}
         >
-          <Heart className="w-4 h-4" style={{ color: '#475569' }} />
+          <Heart className="w-4 h-4" style={{ color: ACCENT }} fill={ACCENT} />
         </button>
         {property.is_verified && (
           <div
             className="absolute bottom-3 left-3 inline-flex items-center gap-1 px-2 py-1 rounded-lg"
             style={{
-              background: WARM,
-              boxShadow: '0 4px 12px rgba(244,162,97,0.32)',
+              background: VERIFIED_BG,
+              border: `1px solid ${ACCENT_BORDER}`,
+              boxShadow: '0 4px 12px rgba(80, 200, 120, 0.12)',
             }}
           >
-            <CheckCircle className="w-3 h-3 text-white" />
-            <span className="text-[10px] font-bold text-white">Verified</span>
+            <CheckCircle className="w-3 h-3" style={{ color: ACCENT }} />
+            <span className="text-[10px] font-bold" style={{ color: ACCENT_DARK }}>Verified</span>
           </div>
         )}
       </div>
@@ -1214,7 +1246,7 @@ function FeaturedCard({ property }: { property: Property }) {
           {property.city}
         </p>
         <div className="flex items-center gap-1 mt-2.5 text-xs">
-          <Star className="w-3.5 h-3.5" style={{ color: WARM }} fill={WARM} />
+          <Star className="w-3.5 h-3.5" style={{ color: RATING }} fill={RATING} />
           <span className="font-bold" style={{ color: TEXT }}>{property.rating?.toFixed(1) || '4.8'}</span>
           <span style={{ color: TEXT_SUBTLE }}>({reviews})</span>
         </div>
@@ -1229,7 +1261,7 @@ function FeaturedSkeleton() {
       {[1, 2, 3, 4].map(i => (
         <div
           key={i}
-          className="shrink-0 w-[240px] rounded-2xl overflow-hidden"
+          className="shrink-0 min-w-[240px] max-w-[260px] w-[260px] rounded-2xl overflow-hidden"
           style={{ background: SURFACE, border: `1px solid ${BORDER}` }}
         >
           <div className="h-[180px] animate-pulse" style={{ background: SURFACE_LIGHT }} />
@@ -1253,14 +1285,16 @@ function FooterCol({
 }) {
   return (
     <div>
-      <h4 className="font-bold text-sm mb-4" style={{ color: TEXT }}>{title}</h4>
+      <h4 className="font-bold text-sm mb-4" style={{ color: FOOTER_HEADING }}>{title}</h4>
       <ul className="space-y-2.5">
         {items.map(item => (
           <li key={item.label}>
             <button
               onClick={item.onClick}
               className="text-sm transition-colors hover:underline"
-              style={{ color: TEXT_MUTED }}
+              style={{ color: FOOTER_BODY }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = FOOTER_LINK_HOVER; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = FOOTER_BODY; }}
             >
               {item.label}
             </button>

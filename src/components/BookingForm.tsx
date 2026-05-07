@@ -181,9 +181,9 @@ export default function BookingForm({ property, onSuccess, checkInDate, checkOut
         <div className="text-center">
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ background: 'rgba(22,163,74,0.12)', border: '1px solid rgba(22,163,74,0.4)' }}
+            style={{ background: 'rgba(80,200,120,0.12)', border: '1px solid rgba(80,200,120,0.4)' }}
           >
-            <svg className="w-10 h-10" style={{ color: '#15803D' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-10 h-10" style={{ color: '#3dae68' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -196,12 +196,12 @@ export default function BookingForm({ property, onSuccess, checkInDate, checkOut
             className="rounded-2xl p-6"
             style={{
               background:
-                'linear-gradient(135deg, rgba(244,162,97,0.10) 0%, var(--xpx-surface-light) 100%)',
+                'linear-gradient(135deg, rgba(80,200,120,0.10) 0%, var(--xpx-surface-light) 100%)',
               border: '1px solid var(--xpx-border-strong)',
             }}
           >
             <h4 className="text-lg font-bold text-xpx-text mb-4 flex items-center gap-2">
-              <Mail className="w-5 h-5" style={{ color: 'var(--xpx-warm)' }} />
+              <Mail className="w-5 h-5" style={{ color: 'var(--accent)' }} />
               Your host
             </h4>
 
@@ -244,7 +244,7 @@ export default function BookingForm({ property, onSuccess, checkInDate, checkOut
                       title="Copy number"
                     >
                       {copiedEmail ? (
-                        <Check className="w-5 h-5" style={{ color: '#15803D' }} />
+                        <Check className="w-5 h-5" style={{ color: '#3dae68' }} />
                       ) : (
                         <Copy className="w-5 h-5" />
                       )}
@@ -288,7 +288,7 @@ export default function BookingForm({ property, onSuccess, checkInDate, checkOut
         <button
           onClick={onSuccess}
           className="w-full py-3 font-semibold rounded-xl transition-all"
-          style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 24px rgba(244,162,97,0.32)' }}
+          style={{ background: 'var(--accent)', color: '#ffffff', boxShadow: '0 6px 24px rgba(80,200,120,0.32)' }}
         >
           Back to Properties
         </button>
@@ -303,12 +303,12 @@ export default function BookingForm({ property, onSuccess, checkInDate, checkOut
           className="rounded-2xl p-5 sm:p-6"
           style={{
             background:
-              'linear-gradient(135deg, rgba(244,162,97,0.10) 0%, var(--xpx-surface-light) 100%)',
+              'linear-gradient(135deg, rgba(80,200,120,0.10) 0%, var(--xpx-surface-light) 100%)',
             border: '1px solid var(--xpx-border-strong)',
           }}
         >
           <h4 className="text-sm font-bold text-xpx-text mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5" style={{ color: 'var(--xpx-warm)' }} />
+            <Calendar className="w-5 h-5" style={{ color: 'var(--accent)' }} />
             Selected Dates
           </h4>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4">
@@ -323,7 +323,7 @@ export default function BookingForm({ property, onSuccess, checkInDate, checkOut
           </div>
           <div className="flex items-center justify-between rounded-xl p-3" style={{ background: 'var(--xpx-surface)' }}>
             <span className="text-sm text-xpx-muted">Duration:</span>
-            <span className="font-bold" style={{ color: 'var(--xpx-warm-dark)' }}>{numberOfDays} {numberOfDays === 1 ? 'Night' : 'Nights'}</span>
+            <span className="font-bold" style={{ color: 'var(--accent-dark)' }}>{numberOfDays} {numberOfDays === 1 ? 'Night' : 'Nights'}</span>
           </div>
         </div>
       )}
@@ -332,11 +332,11 @@ export default function BookingForm({ property, onSuccess, checkInDate, checkOut
         <div
           className="rounded-xl p-4 flex items-start gap-3"
           style={{
-            background: 'rgba(244,162,97,0.10)',
-            border: '1px solid rgba(244,162,97,0.32)',
+            background: 'rgba(80,200,120,0.10)',
+            border: '1px solid rgba(80,200,120,0.32)',
           }}
         >
-          <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold" style={{ background: 'var(--xpx-warm)', color: '#ffffff' }}>!</div>
+          <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold" style={{ background: 'var(--accent)', color: '#ffffff' }}>!</div>
           <div>
             <p className="font-semibold text-xpx-text">Please select dates</p>
             <p className="text-sm text-xpx-muted mt-1">Use the calendar above to select your check-in and check-out dates before completing the booking form.</p>
@@ -422,7 +422,7 @@ export default function BookingForm({ property, onSuccess, checkInDate, checkOut
         className="rounded-2xl p-5"
         style={{
           background:
-            'linear-gradient(135deg, rgba(244,162,97,0.12) 0%, var(--xpx-surface-light) 100%)',
+            'linear-gradient(135deg, rgba(80,200,120,0.12) 0%, var(--xpx-surface-light) 100%)',
           border: '1px solid var(--xpx-border-strong)',
         }}
       >
@@ -431,13 +431,13 @@ export default function BookingForm({ property, onSuccess, checkInDate, checkOut
             type="checkbox"
             checked={includeDecoration}
             onChange={(e) => setIncludeDecoration(e.target.checked)}
-            className="w-5 h-5 mt-1 rounded accent-[var(--xpx-warm)]"
+            className="w-5 h-5 mt-1 rounded accent-[var(--accent)]"
           />
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <Sparkles className="w-5 h-5" style={{ color: 'var(--xpx-warm)' }} />
+              <Sparkles className="w-5 h-5" style={{ color: 'var(--accent)' }} />
               <span className="font-bold text-xpx-text">Add Decoration Service</span>
-              <span className="ml-auto text-lg font-bold" style={{ color: 'var(--xpx-warm-dark)' }}>₹2,000</span>
+              <span className="ml-auto text-lg font-bold" style={{ color: 'var(--accent-dark)' }}>₹2,000</span>
             </div>
             <p className="text-sm text-xpx-muted">
               Professional decoration setup for your special occasion. Includes balloons, banners, and themed decorations.
@@ -481,11 +481,11 @@ export default function BookingForm({ property, onSuccess, checkInDate, checkOut
           <div
             className="rounded-xl p-3 flex items-start gap-3"
             style={{
-              background: 'rgba(22,163,74,0.10)',
-              border: '1px solid rgba(22,163,74,0.4)',
+              background: 'rgba(80,200,120,0.10)',
+              border: '1px solid rgba(80,200,120,0.4)',
             }}
           >
-            <Tag className="w-4 h-4 mt-0.5" style={{ color: '#15803D' }} />
+            <Tag className="w-4 h-4 mt-0.5" style={{ color: '#3dae68' }} />
             <div className="text-sm" style={{ color: '#14532D' }}>
               <p className="font-semibold">
                 Code <span className="font-mono">{appliedPromo.code}</span> applied
@@ -514,9 +514,9 @@ export default function BookingForm({ property, onSuccess, checkInDate, checkOut
               onClick={handleApplyPromo}
               className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
               style={{
-                background: 'rgba(244,162,97,0.12)',
-                color: 'var(--xpx-warm-dark)',
-                border: '1px solid rgba(244,162,97,0.4)',
+                background: 'rgba(80,200,120,0.12)',
+                color: 'var(--accent-dark)',
+                border: '1px solid rgba(80,200,120,0.4)',
               }}
             >
               Apply
@@ -543,13 +543,13 @@ export default function BookingForm({ property, onSuccess, checkInDate, checkOut
             </div>
           )}
           {discountResult.propertyDiscount > 0 && (
-            <div className="flex justify-between items-center" style={{ color: '#15803D' }}>
+            <div className="flex justify-between items-center" style={{ color: '#3dae68' }}>
               <span className="flex items-center gap-2"><Tag className="w-4 h-4" />Property offer</span>
               <span className="font-semibold">−₹{discountResult.propertyDiscount.toLocaleString()}</span>
             </div>
           )}
           {discountResult.promoDiscount > 0 && (
-            <div className="flex justify-between items-center" style={{ color: '#15803D' }}>
+            <div className="flex justify-between items-center" style={{ color: '#3dae68' }}>
               <span className="flex items-center gap-2"><Tag className="w-4 h-4" />Promo {discountResult.promoCodeApplied}</span>
               <span className="font-semibold">−₹{discountResult.promoDiscount.toLocaleString()}</span>
             </div>
@@ -557,10 +557,10 @@ export default function BookingForm({ property, onSuccess, checkInDate, checkOut
           {includeDecoration && (
             <div className="flex justify-between items-center">
               <span className="text-xpx-muted flex items-center gap-2">
-                <Sparkles className="w-4 h-4" style={{ color: 'var(--xpx-warm)' }} />
+                <Sparkles className="w-4 h-4" style={{ color: 'var(--accent)' }} />
                 Decoration Service:
               </span>
-              <span className="font-semibold" style={{ color: 'var(--xpx-warm-dark)' }}>₹{decorationPrice.toLocaleString()}</span>
+              <span className="font-semibold" style={{ color: 'var(--accent-dark)' }}>₹{decorationPrice.toLocaleString()}</span>
             </div>
           )}
           <div className="pt-3 xpx-divider flex justify-between items-center">
@@ -568,13 +568,13 @@ export default function BookingForm({ property, onSuccess, checkInDate, checkOut
             <span className="text-3xl font-extrabold text-xpx-text">₹{totalPrice.toLocaleString()}</span>
           </div>
           {totalSaved > 0 && numberOfDays > 0 && (
-            <p className="text-xs font-semibold text-right" style={{ color: '#15803D' }}>
+            <p className="text-xs font-semibold text-right" style={{ color: '#3dae68' }}>
               You save ₹{totalSaved.toLocaleString()} on this booking
             </p>
           )}
         </div>
         {numberOfDays === 0 && (
-          <p className="text-sm mt-3 flex items-center gap-2" style={{ color: 'var(--xpx-warm-dark)' }}>
+          <p className="text-sm mt-3 flex items-center gap-2" style={{ color: 'var(--accent-dark)' }}>
             <Calendar className="w-4 h-4" />
             Select dates in the calendar above to see pricing
           </p>
@@ -586,9 +586,9 @@ export default function BookingForm({ property, onSuccess, checkInDate, checkOut
         disabled={loading}
         className="w-full py-4 font-bold rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         style={{
-          background: 'var(--xpx-warm)',
+          background: 'var(--xpx-cta)',
           color: '#ffffff',
-          boxShadow: '0 8px 32px rgba(244,162,97,0.32)',
+          boxShadow: '0 8px 32px rgba(255,56,92,0.32)',
         }}
       >
         {loading ? 'Submitting...' : 'Submit Booking Request'}

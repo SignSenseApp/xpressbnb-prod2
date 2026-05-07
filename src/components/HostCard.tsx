@@ -96,9 +96,9 @@ export default function HostCard({
       <div
         className={`rounded-2xl p-6 text-sm ${className}`}
         style={{
-          background: 'rgba(244,162,97,0.08)',
-          border: '1px solid rgba(244,162,97,0.3)',
-          color: theme.warmDark,
+          background: 'rgba(80,200,120,0.08)',
+          border: '1px solid rgba(80,200,120,0.3)',
+          color: theme.accentDark,
         }}
       >
         Host details are not available for this listing yet.
@@ -139,7 +139,7 @@ export default function HostCard({
         <div className="relative">
           <div
             className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold shadow-sm"
-            style={{ background: theme.warm, color: '#ffffff' }}
+            style={{ background: theme.accent, color: '#ffffff' }}
           >
             {initial}
           </div>
@@ -147,7 +147,7 @@ export default function HostCard({
             <span
               title="ID verified host"
               className="absolute -bottom-1 -right-1 inline-flex items-center justify-center w-6 h-6 rounded-full text-white"
-              style={{ background: theme.warm, border: `2px solid ${theme.surfaceLight}` }}
+              style={{ background: theme.accent, border: `2px solid ${theme.surfaceLight}` }}
             >
               <CheckCircle className="w-3.5 h-3.5" fill="currentColor" />
             </span>
@@ -161,9 +161,9 @@ export default function HostCard({
               <span
                 className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full"
                 style={{
-                  background: 'rgba(244,162,97,0.12)',
-                  color: theme.warmDark,
-                  border: `1px solid rgba(244,162,97,0.3)`,
+                  background: 'rgba(80,200,120,0.12)',
+                  color: theme.accentDark,
+                  border: '1px solid rgba(80,200,120,0.3)',
                 }}
               >
                 <Shield className="w-3 h-3" />
@@ -183,7 +183,7 @@ export default function HostCard({
             )}
             {typeof host.rating === 'number' && host.rating > 0 && (
               <span className="inline-flex items-center gap-1">
-                <Star className="w-4 h-4" style={{ color: theme.warm }} fill="currentColor" />
+                <Star className="w-4 h-4" style={{ color: theme.rating }} fill="currentColor" />
                 {host.rating.toFixed(1)}
                 {host.total_bookings ? (
                   <span className="text-xpx-subtle">({host.total_bookings} bookings)</span>
@@ -238,7 +238,7 @@ export default function HostCard({
               {TEAM_PHONE_DISPLAY}
             </p>
           </div>
-          <Phone className="w-5 h-5" style={{ color: 'var(--xpx-warm)' }} />
+          <Phone className="w-5 h-5" style={{ color: 'var(--accent)' }} />
         </a>
 
         {/* Message + Call CTA row — wraps on extra-narrow phones so the
@@ -248,9 +248,9 @@ export default function HostCard({
             onClick={handleMessage}
             className="flex-1 min-w-[180px] inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition-all hover:scale-[1.01]"
             style={{
-              background: theme.warm,
+              background: theme.accent,
               color: '#ffffff',
-              boxShadow: '0 6px 20px rgba(244,162,97,0.32)',
+              boxShadow: '0 6px 20px rgba(80,200,120,0.32)',
             }}
           >
             <MessageCircle className="w-4 h-4" />

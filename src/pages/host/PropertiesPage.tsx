@@ -201,7 +201,7 @@ export default function PropertiesPage() {
           contact: host.phone,
         },
         theme: {
-          color: '#cc2b5e',
+          color: '#50C878',
         },
       };
 
@@ -243,7 +243,7 @@ export default function PropertiesPage() {
         <button
           onClick={handleAddNew}
           className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold transition-all"
-          style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 20px rgba(244,162,97,0.35)' }}
+          style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 20px rgba(80,200,120,0.35)' }}
         >
           <Plus className="w-5 h-5" />
           Add Property
@@ -261,7 +261,7 @@ export default function PropertiesPage() {
           <button
             onClick={handleAddNew}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all"
-            style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 20px rgba(244,162,97,0.35)' }}
+            style={{ background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 20px rgba(80,200,120,0.35)' }}
           >
             <Plus className="w-5 h-5" />
             Add Your First Property
@@ -302,7 +302,7 @@ export default function PropertiesPage() {
                     className="px-3 py-1 rounded-full text-xs font-bold"
                     style={
                       property.is_active
-                        ? { background: 'rgba(22,163,74,0.12)', color: '#15803D', border: '1px solid rgba(22,163,74,0.3)' }
+                        ? { background: 'rgba(80,200,120,0.12)', color: '#3dae68', border: '1px solid rgba(80,200,120,0.3)' }
                         : { background: 'rgba(220,38,38,0.10)', color: '#B91C1C', border: '1px solid rgba(220,38,38,0.3)' }
                     }
                   >
@@ -365,8 +365,8 @@ export default function PropertiesPage() {
                     className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl transition-all"
                     style={{
                       background:
-                        'linear-gradient(120deg, rgba(244,162,97,0.08) 0%, var(--xpx-surface-light) 100%)',
-                      border: '1px solid rgba(244,162,97,0.3)',
+                        'linear-gradient(120deg, rgba(80,200,120,0.08) 0%, var(--xpx-surface-light) 100%)',
+                      border: '1px solid rgba(80,200,120,0.3)',
                     }}
                   >
                     <div className="flex items-center gap-2">
@@ -376,7 +376,7 @@ export default function PropertiesPage() {
                         className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
                         style={
                           hasPremiumAccess(property)
-                            ? { background: 'rgba(22,163,74,0.10)', color: '#15803D' }
+                            ? { background: 'rgba(80,200,120,0.10)', color: '#3dae68' }
                             : { background: 'rgba(15,23,42,0.05)', color: 'rgba(15,23,42,0.55)' }
                         }
                       >
@@ -399,7 +399,7 @@ export default function PropertiesPage() {
                           className="rounded-xl p-6"
                           style={{
                             background:
-                              'linear-gradient(135deg, rgba(244,162,97,0.08) 0%, var(--xpx-surface-light) 100%)',
+                              'linear-gradient(135deg, rgba(80,200,120,0.08) 0%, var(--xpx-surface-light) 100%)',
                             border: '1px solid var(--xpx-border-strong)',
                           }}
                         >
@@ -423,7 +423,7 @@ export default function PropertiesPage() {
                                   style={{
                                     background: 'var(--xpx-warm)',
                                     color: '#ffffff',
-                                    boxShadow: '0 6px 20px rgba(244,162,97,0.35)',
+                                    boxShadow: '0 6px 20px rgba(80,200,120,0.35)',
                                   }}
                                 >
                                   {upgradingPropertyId === property.id ? (

@@ -31,7 +31,7 @@ export default function PricingPopup() {
       }`}
     >
       <div className="bg-white rounded-2xl md:rounded-2xl rounded-xl overflow-hidden backdrop-blur-sm" style={{ border: '1px solid var(--xpx-border)', boxShadow: '0 20px 56px rgba(15,23,42,0.10)' }}>
-        <div className="p-3 md:p-4" style={{ background: 'linear-gradient(135deg, #F4A261 0%, #A78BFA 100%)' }}>
+        <div className="p-3 md:p-4" style={{ background: 'linear-gradient(135deg, #50C878 0%, #22c55e 100%)' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 md:gap-3">
               <div className="w-8 h-8 md:w-10 md:h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
@@ -72,9 +72,9 @@ export default function PricingPopup() {
           <button
             onClick={handleClose}
             className="w-full px-4 py-2.5 md:px-6 md:py-3 text-white text-sm md:text-base font-semibold rounded-lg md:rounded-xl transition-all"
-            style={{ background: 'var(--xpx-warm)', boxShadow: '0 8px 24px rgba(244,162,97,0.32)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--xpx-warm-dark)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--xpx-warm)'; }}
+            style={{ background: 'var(--accent)', boxShadow: '0 8px 24px rgba(80,200,120,0.32)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-dark)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--accent)'; }}
           >
             Got it!
           </button>

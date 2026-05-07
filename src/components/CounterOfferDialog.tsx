@@ -128,8 +128,8 @@ export default function CounterOfferDialog({
             className="rounded-2xl p-4"
             style={{
               background:
-                'linear-gradient(135deg, rgba(244,162,97,0.10) 0%, var(--xpx-surface-light) 100%)',
-              border: '1px solid rgba(244,162,97,0.28)',
+                'linear-gradient(135deg, rgba(80,200,120,0.10) 0%, var(--xpx-surface-light) 100%)',
+              border: '1px solid rgba(80,200,120,0.28)',
             }}
           >
             <div className="flex items-center justify-between text-sm">
@@ -155,7 +155,7 @@ export default function CounterOfferDialog({
             {aboveGuest > 0 && (
               <p className="mt-1 text-[11px] text-xpx-subtle">
                 ₹{aboveGuest.toLocaleString()} above guest&apos;s offer ·{' '}
-                <span className="font-semibold" style={{ color: theme.warmDark }}>
+                <span className="font-semibold" style={{ color: theme.accentDark }}>
                   ₹{totalCounter.toLocaleString()} total
                 </span>{' '}
                 for {nights} {nights === 1 ? 'night' : 'nights'}
@@ -173,7 +173,7 @@ export default function CounterOfferDialog({
               value={counter}
               onChange={(e) => setCounter(Number(e.target.value))}
               aria-label="Counter offer per night"
-              className="w-full accent-[var(--xpx-warm)]"
+              className="w-full accent-[var(--accent)]"
             />
             <div className="mt-1 flex justify-between text-[10px] text-xpx-subtle font-mono">
               <span>₹{min.toLocaleString()}</span>
@@ -226,9 +226,9 @@ export default function CounterOfferDialog({
             disabled={submitting}
             className="w-full py-4 rounded-2xl font-bold text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
-              background: theme.warm,
+              background: theme.accent,
               color: '#ffffff',
-              boxShadow: '0 8px 32px rgba(244,162,97,0.32)',
+              boxShadow: '0 8px 32px rgba(80,200,120,0.32)',
             }}
           >
             <span className="inline-flex items-center justify-center gap-2">

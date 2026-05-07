@@ -19,14 +19,12 @@ export default function ConversionPropertyCard({ property }: ConversionPropertyC
   };
 
   // Single primary marketing badge — picks the most distinguishing trait.
-  const primaryBadge = property.is_couple_friendly
-    ? { label: 'Couple Friendly', color: '#EC4899' }
-    : property.hourly_stay_available
+  const primaryBadge = property.hourly_stay_available
     ? { label: 'Hourly Stay', color: '#2563EB' }
     : property.is_private_space
-    ? { label: 'Private Space', color: '#16A34A' }
+    ? { label: 'Private Space', color: '#50C878' }
     : property.instant_booking
-    ? { label: 'Instant Book', color: theme.warm }
+    ? { label: 'Instant Book', color: theme.accent }
     : null;
 
   const price = (property.price_per_day || property.price_full_day || 0).toLocaleString();
@@ -39,7 +37,7 @@ export default function ConversionPropertyCard({ property }: ConversionPropertyC
       onKeyDown={(e) => {
         if (e.key === 'Enter') handleClick();
       }}
-      className="cursor-pointer overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] group focus:outline-none focus:ring-2 focus:ring-[var(--xpx-warm)] xpx-tap"
+      className="cursor-pointer overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] group focus:outline-none focus:ring-2 focus:ring-[var(--accent)] xpx-tap"
       style={{
         background: 'var(--xpx-surface)',
         border: '1px solid var(--xpx-border)',
@@ -76,17 +74,33 @@ export default function ConversionPropertyCard({ property }: ConversionPropertyC
           style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', boxShadow: '0 4px 12px rgba(15,23,42,0.12)' }}
           aria-label="Save"
         >
-          <Heart className="w-4 h-4 text-slate-700" />
+          <Heart className="w-4 h-4" style={{ color: theme.accent }} fill={theme.accent} />
         </button>
 
         {/* Top-left badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+          {property.is_couple_friendly && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold"
+              style={{
+                background: theme.accentLight,
+                color: '#22c55e',
+                border: `1px solid ${theme.accentBorder}`,
+              }}
+            >
+              Couple Friendly
+            </span>
+          )}
           {property.is_verified && (
             <span
-              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold text-white"
-              style={{ background: theme.warm, boxShadow: '0 4px 12px rgba(244,162,97,0.32)' }}
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold"
+              style={{
+                background: theme.accentLight,
+                color: '#22c55e',
+                border: `1px solid ${theme.accentBorder}`,
+              }}
             >
-              <CheckCircle className="w-3 h-3" />
+              <CheckCircle className="w-3 h-3" style={{ color: theme.accent }} />
               Verified
             </span>
           )}
@@ -117,7 +131,7 @@ export default function ConversionPropertyCard({ property }: ConversionPropertyC
             className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold text-white"
             style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)' }}
           >
-            <Star className="w-3 h-3" style={{ color: theme.warm }} fill={theme.warm} />
+            <Star className="w-3 h-3" style={{ color: theme.rating }} fill={theme.rating} />
             Guest favourite
           </div>
         )}
@@ -126,7 +140,7 @@ export default function ConversionPropertyCard({ property }: ConversionPropertyC
       {/* Content */}
       <div className="p-4 space-y-3">
         <div>
-          <h3 className="font-bold text-base text-xpx-text line-clamp-1 leading-tight transition-colors group-hover:text-[var(--xpx-warm-dark)]">
+          <h3 className="font-bold text-base text-xpx-text line-clamp-1 leading-tight transition-colors group-hover:text-[var(--accent-dark)]">
             {property.title}
           </h3>
           <div className="flex items-center gap-1 mt-1 text-xpx-muted text-xs">
@@ -140,16 +154,16 @@ export default function ConversionPropertyCard({ property }: ConversionPropertyC
           {typeof property.rating === 'number' && property.rating > 0 && (
             <span
               className="inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold text-xpx-text"
-              style={{ background: 'rgba(244,162,97,0.12)', border: `1px solid rgba(244,162,97,0.35)` }}
+              style={{ background: 'rgba(80,200,120,0.08)', border: '1px solid rgba(80,200,120,0.35)' }}
             >
-              <Star className="w-3 h-3" style={{ color: theme.warm }} fill={theme.warm} />
+              <Star className="w-3 h-3" style={{ color: theme.rating }} fill={theme.rating} />
               {property.rating.toFixed(1)}
             </span>
           )}
           {property.no_brokerage && (
             <span
               className="inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold"
-              style={{ background: 'rgba(22,163,74,0.10)', border: '1px solid rgba(22,163,74,0.32)', color: '#15803D' }}
+              style={{ background: 'rgba(80,200,120,0.10)', border: '1px solid rgba(80,200,120,0.32)', color: '#3dae68' }}
             >
               <CheckCircle className="w-3 h-3" />
               No Brokerage
@@ -174,9 +188,9 @@ export default function ConversionPropertyCard({ property }: ConversionPropertyC
           </div>
           <span
             className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold"
-            style={{ background: 'rgba(22,163,74,0.10)', border: '1px solid rgba(22,163,74,0.32)', color: '#15803D' }}
+            style={{ background: 'rgba(80,200,120,0.10)', border: '1px solid rgba(80,200,120,0.32)', color: '#3dae68' }}
           >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#16A34A' }} />
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#50C878' }} />
             Best Price
           </span>
         </div>

@@ -141,7 +141,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md mx-4">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#cc2b5e] to-[#753a88] rounded-full mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#50C878] to-[#22c55e] rounded-full mb-4">
               <Lock className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Admin Access</h2>
@@ -163,7 +163,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#cc2b5e] focus:border-transparent transition-all"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#50C878] focus:border-transparent transition-all"
                 placeholder="Enter admin password"
                 autoFocus
                 required
@@ -180,7 +180,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
               </button>
               <button
                 type="submit"
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-[#cc2b5e] to-[#753a88] text-white font-semibold rounded-xl hover:from-[#d64371] hover:to-[#8a4b9e] transition-all shadow-lg"
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white font-semibold rounded-xl hover:from-[#3dae68] hover:to-[#22c55e] transition-all shadow-lg"
               >
                 Login
               </button>
@@ -205,7 +205,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
                 {activeTab === 'properties' && (
                   <button
                     onClick={() => setShowListPropertyForm(true)}
-                    className="px-6 py-3 bg-gradient-to-r from-[#cc2b5e] to-[#753a88] text-white rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+                    className="px-6 py-3 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2"
                   >
                     <Plus className="w-5 h-5" />
                     Add Property
@@ -228,7 +228,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
               onClick={() => setActiveTab('bookings')}
               className={`px-8 py-3 rounded-xl font-semibold transition-all ${
                 activeTab === 'bookings'
-                  ? 'bg-gradient-to-r from-[#cc2b5e] to-[#753a88] text-white shadow-lg'
+                  ? 'bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white shadow-lg'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -239,7 +239,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
               onClick={() => setActiveTab('properties')}
               className={`px-8 py-3 rounded-xl font-semibold transition-all ${
                 activeTab === 'properties'
-                  ? 'bg-gradient-to-r from-[#cc2b5e] to-[#753a88] text-white shadow-lg'
+                  ? 'bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white shadow-lg'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -253,7 +253,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-gray-600 font-semibold">Total Bookings</h3>
-                <Calendar className="w-5 h-5 text-[#cc2b5e]" />
+                <Calendar className="w-5 h-5 text-[#50C878]" />
               </div>
               <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
             </div>
@@ -282,7 +282,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
               <p className="text-3xl font-bold text-red-600">{stats.cancelled}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-[#cc2b5e] to-[#753a88] rounded-2xl p-6 shadow-lg">
+            <div className="bg-gradient-to-br from-[#50C878] to-[#22c55e] rounded-2xl p-6 shadow-lg">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-pink-100 font-semibold">Revenue</h3>
                 <DollarSign className="w-5 h-5 text-white" />
@@ -302,7 +302,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
                       onClick={() => setFilter(status)}
                       className={`px-4 py-2 rounded-full font-semibold text-sm transition-all ${
                         filter === status
-                          ? 'bg-gradient-to-r from-[#cc2b5e] to-[#753a88] text-white'
+                          ? 'bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
@@ -315,7 +315,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
 
             {loading ? (
               <div className="p-12 text-center">
-                <div className="inline-block w-12 h-12 border-4 border-[#cc2b5e] border-t-transparent rounded-full animate-spin" />
+                <div className="inline-block w-12 h-12 border-4 border-[#50C878] border-t-transparent rounded-full animate-spin" />
                 <p className="text-gray-600 mt-4">Loading bookings...</p>
               </div>
             ) : filteredBookings.length === 0 ? (
@@ -427,7 +427,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
 
               {loading ? (
                 <div className="p-12 text-center">
-                  <div className="inline-block w-12 h-12 border-4 border-[#cc2b5e] border-t-transparent rounded-full animate-spin" />
+                  <div className="inline-block w-12 h-12 border-4 border-[#50C878] border-t-transparent rounded-full animate-spin" />
                   <p className="text-gray-600 mt-4">Loading properties...</p>
                 </div>
               ) : properties.length === 0 ? (
@@ -459,7 +459,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
                               }`}>
                                 {property.is_active ? 'Active' : 'Inactive'}
                               </span>
-                              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-[#cc2b5e]">
+                              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-pink-100 text-[#50C878]">
                                 {property.property_type}
                               </span>
                             </div>

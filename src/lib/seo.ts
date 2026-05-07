@@ -1,3 +1,5 @@
+import { xpLogoAbsoluteUrl } from './branding';
+
 export interface SEOConfig {
   title: string;
   description: string;
@@ -129,7 +131,7 @@ export function generateOrganizationStructuredData() {
     '@type': 'Organization',
     name: 'XpressBnB',
     url: 'https://xpressbnb.com',
-    logo: 'https://xpressbnb.com/image.png',
+    logo: xpLogoAbsoluteUrl(),
     description: 'Leading platform for couple-friendly hourly stays in Delhi NCR. Safe, verified, and private properties for flexible short-term bookings.',
     contactPoint: {
       '@type': 'ContactPoint',

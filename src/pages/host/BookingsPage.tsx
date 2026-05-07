@@ -235,9 +235,9 @@ export default function BookingsPage() {
   const getStatusStyles = (status: Booking['status']) => {
     switch (status) {
       case 'pending':
-        return { bg: 'rgba(244,162,97,0.12)', color: theme.warm };
+        return { bg: 'rgba(80,200,120,0.12)', color: theme.warm };
       case 'confirmed':
-        return { bg: 'rgba(22,163,74,0.10)', color: '#15803D' };
+        return { bg: 'rgba(80,200,120,0.10)', color: '#3dae68' };
       case 'cancelled':
         return { bg: 'rgba(220,38,38,0.08)', color: '#B91C1C' };
       case 'completed':
@@ -285,8 +285,8 @@ export default function BookingsPage() {
           className="rounded-2xl p-5 sm:p-6"
           style={{
             background:
-              'linear-gradient(135deg, rgba(244,162,97,0.06) 0%, var(--xpx-surface) 100%)',
-            border: '1px solid rgba(244,162,97,0.25)',
+              'linear-gradient(135deg, rgba(80,200,120,0.06) 0%, var(--xpx-surface) 100%)',
+            border: '1px solid rgba(80,200,120,0.25)',
             boxShadow: '0 12px 40px rgba(15,23,42,0.06)',
           }}
         >
@@ -323,7 +323,7 @@ export default function BookingsPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span
                           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
-                          style={{ background: 'rgba(244,162,97,0.12)', color: theme.warm }}
+                          style={{ background: 'rgba(80,200,120,0.12)', color: theme.warm }}
                         >
                           <Tag className="w-3 h-3" />
                           Offer
@@ -361,8 +361,8 @@ export default function BookingsPage() {
                         <div
                           className="rounded-xl p-3"
                           style={{
-                            background: 'rgba(244,162,97,0.10)',
-                            border: '1px solid rgba(244,162,97,0.30)',
+                            background: 'rgba(80,200,120,0.10)',
+                            border: '1px solid rgba(80,200,120,0.30)',
                           }}
                         >
                           <p className="text-[10px] uppercase tracking-wider" style={{ color: theme.warm }}>
@@ -440,7 +440,7 @@ export default function BookingsPage() {
                         style={{
                           background: theme.warm,
                           color: '#ffffff',
-                          boxShadow: '0 4px 18px rgba(244,162,97,0.35)',
+                          boxShadow: '0 4px 18px rgba(80,200,120,0.35)',
                         }}
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -598,10 +598,10 @@ export default function BookingsPage() {
                           className="text-[11px] px-2 py-1 rounded-full font-semibold"
                           style={
                             booking.payment_status === 'paid'
-                              ? { background: 'rgba(22,163,74,0.10)', color: '#15803D' }
+                              ? { background: 'rgba(80,200,120,0.10)', color: '#3dae68' }
                               : booking.payment_status === 'failed'
                               ? { background: 'rgba(220,38,38,0.08)', color: '#B91C1C' }
-                              : { background: 'rgba(244,162,97,0.12)', color: theme.warm }
+                              : { background: 'rgba(80,200,120,0.12)', color: theme.warm }
                           }
                         >
                           Payment: {booking.payment_status || 'pending'}
@@ -621,7 +621,7 @@ export default function BookingsPage() {
                         onClick={() => handleStatusUpdate(booking.id, 'confirmed')}
                         disabled={busyId === booking.id}
                         className="px-4 py-2 rounded-xl font-medium transition-colors disabled:opacity-50"
-                        style={{ background: 'rgba(22,163,74,0.10)', color: '#15803D', border: '1px solid rgba(22,163,74,0.30)' }}
+                        style={{ background: 'rgba(80,200,120,0.10)', color: '#3dae68', border: '1px solid rgba(80,200,120,0.30)' }}
                       >
                         Confirm
                       </button>

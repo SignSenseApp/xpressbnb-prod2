@@ -40,7 +40,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
       <div className="p-5">
         <div className="flex items-start justify-between mb-2">
           <h3 className="font-bold text-lg text-gray-900 line-clamp-1">{property.title}</h3>
-          <span className="text-xs px-2.5 py-1 bg-pink-50 text-[#cc2b5e] rounded-full font-medium whitespace-nowrap ml-2">
+          <span className="text-xs px-2.5 py-1 bg-pink-50 text-[#50C878] rounded-full font-medium whitespace-nowrap ml-2">
             {property.property_type}
           </span>
         </div>
@@ -76,7 +76,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
               Lowest Price Guaranteed
             </span>
           </div>
-          <button className="px-5 py-2.5 bg-gradient-to-r from-[#cc2b5e] to-[#753a88] text-white rounded-full font-semibold hover:from-[#d64371] hover:to-[#8a4b9e] transition-all shadow-md hover:shadow-lg">
+          <button className="px-5 py-2.5 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white rounded-full font-semibold hover:from-[#3dae68] hover:to-[#22c55e] transition-all shadow-md hover:shadow-lg">
             View
           </button>
         </div>

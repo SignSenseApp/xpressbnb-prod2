@@ -86,7 +86,7 @@ export default function PropertyReviews({ property }: PropertyReviewsProps) {
           className="rounded-2xl p-5 sm:p-6 flex flex-col items-start"
           style={{
             background:
-              'linear-gradient(135deg, rgba(244,162,97,0.10) 0%, var(--xpx-surface-light) 100%)',
+              'linear-gradient(135deg, rgba(80,200,120,0.10) 0%, var(--xpx-surface-light) 100%)',
             border: '1px solid var(--xpx-border)',
           }}
         >
@@ -109,7 +109,7 @@ export default function PropertyReviews({ property }: PropertyReviewsProps) {
                   key={n}
                   className="w-4 h-4"
                   style={{
-                    color: filled || half ? 'var(--xpx-warm)' : 'rgba(15,23,42,0.18)',
+                    color: filled || half ? 'var(--xpx-rating)' : 'rgba(15,23,42,0.18)',
                   }}
                   fill={filled ? 'currentColor' : 'none'}
                 />
@@ -186,7 +186,7 @@ export default function PropertyReviews({ property }: PropertyReviewsProps) {
               </p>
             </div>
             <div className="ml-auto flex items-center gap-1 text-sm font-bold text-xpx-text tabular-nums">
-              <Star className="w-4 h-4" style={{ color: 'var(--xpx-warm)' }} fill="currentColor" />
+              <Star className="w-4 h-4" style={{ color: 'var(--xpx-rating)' }} fill="currentColor" />
               {Number(featured.rating).toFixed(1)}
             </div>
           </div>

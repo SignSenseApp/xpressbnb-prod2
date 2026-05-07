@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { XPRESSBNB_LOGO_IMG_CLASS, XPRESSBNB_LOGO_PATH } from '../../lib/branding';
 import { theme } from '../../lib/theme';
 
 interface AuthShellProps {
@@ -15,9 +16,7 @@ interface AuthShellProps {
 }
 
 /**
- * Shared light-mode shell used by every /auth/* page so the brand presents
- * one face. Pastel peach → cream → lavender backdrop with a soft white
- * card that floats above on long-throw shadows.
+ * Shared light-mode shell for /auth/* — white field with soft accent glows.
  */
 export default function AuthShell({ eyebrow, title, subtitle, children, footer }: AuthShellProps) {
   return (
@@ -26,14 +25,14 @@ export default function AuthShell({ eyebrow, title, subtitle, children, footer }
         className="absolute inset-0"
         style={{
           background:
-            'linear-gradient(135deg, #FFEFE0 0%, #F5F2EC 45%, #EAE2F8 100%)',
+            'linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 45%, #F1F5F9 100%)',
         }}
       />
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            'radial-gradient(circle at 80% 10%, rgba(244,162,97,0.32), transparent 55%)',
+            'radial-gradient(circle at 80% 10%, rgba(80,200,120,0.12), transparent 55%)',
         }}
       />
       <div
@@ -50,11 +49,18 @@ export default function AuthShell({ eyebrow, title, subtitle, children, footer }
             window.history.pushState({}, '', '/');
             window.dispatchEvent(new PopStateEvent('popstate'));
           }}
-          className="flex items-center gap-2 mb-8 text-xpx-muted hover:text-xpx-text transition-colors"
+          className="flex items-center gap-2 mb-8 text-lg leading-none text-xpx-muted hover:text-xpx-text transition-colors"
         >
-          <img src="/image.png" alt="XpressBnB" className="h-9 w-9 object-contain" />
-          <span className="text-lg font-extrabold tracking-tight text-xpx-text">
-            Xpress<span style={{ color: theme.warm }}>BnB</span>
+          <img
+            src={XPRESSBNB_LOGO_PATH}
+            alt=""
+            className={XPRESSBNB_LOGO_IMG_CLASS}
+            width={36}
+            height={36}
+            decoding="async"
+          />
+          <span className="font-extrabold tracking-tight text-xpx-text">
+            Xpress<span style={{ color: theme.accent }}>BnB</span>
           </span>
         </button>
 

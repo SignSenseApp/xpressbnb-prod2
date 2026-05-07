@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Home, Compass, Bookmark, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-const WARM = '#F4A261';
+const ACCENT = '#50C878';
 
 interface MobileBottomNavProps {
   currentPath: string;
@@ -121,7 +121,7 @@ export default function MobileBottomNav({ currentPath, onNavigate }: MobileBotto
           background: 'rgba(255,255,255,0.85)',
           backdropFilter: 'blur(24px) saturate(1.8)',
           WebkitBackdropFilter: 'blur(24px) saturate(1.8)',
-          borderTop: '1px solid rgba(15,23,42,0.08)',
+          borderTop: '1px solid var(--xpx-border)',
           boxShadow: '0 -8px 32px rgba(15,23,42,0.04)',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
@@ -136,7 +136,7 @@ export default function MobileBottomNav({ currentPath, onNavigate }: MobileBotto
                 onClick={() => handleTabClick(tab)}
                 className="relative flex-1 flex flex-col items-center justify-center gap-0.5 rounded-2xl active:scale-[0.92] transition-transform"
                 style={{
-                  color: isActive ? WARM : 'rgba(15,23,42,0.55)',
+                  color: isActive ? ACCENT : '#64748B',
                   // Comfortable Apple-grade hit target.
                   minHeight: 56,
                   transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
@@ -149,7 +149,7 @@ export default function MobileBottomNav({ currentPath, onNavigate }: MobileBotto
                 <span
                   className="absolute inset-x-3 top-1.5 bottom-1.5 rounded-2xl transition-all"
                   style={{
-                    background: isActive ? 'rgba(244,162,97,0.14)' : 'transparent',
+                    background: isActive ? 'rgba(80,200,120,0.14)' : 'transparent',
                     transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
                     transitionDuration: '260ms',
                   }}

@@ -5,34 +5,45 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#FAFAF7',
+        background: '#FFFFFF',
         foreground: '#0F172A',
-        primary: '#F4A261',
-        // XpressBnB light Gen Z theme — match constants in src/lib/theme.ts
+        primary: '#50C878',
         xpx: {
-          base: '#FAFAF7',
+          base: '#FFFFFF',
           surface: '#FFFFFF',
-          'surface-light': '#F5F2EC',
-          'surface-elevated': '#EEE9DF',
-          warm: '#F4A261',
-          'warm-dark': '#E08C45',
-          // Secondary playful accent — soft lavender. Pair only with warm.
+          'surface-light': '#F8FAFC',
+          'surface-elevated': '#F1F5F9',
+          slate: '#0F172A',
+          navy: '#0F172A',
+          warm: '#50C878',
+          'warm-dark': '#3dae68',
+          cta: '#FF385C',
+          'cta-dark': '#E11D48',
+          verified: '#50C878',
+          'verified-bg': '#ECFDF5',
+          trust: '#2563EB',
+          'trust-bg': '#EFF6FF',
+          rating: '#D97706',
+          'rating-bg': '#FFFBEB',
           accent2: '#A78BFA',
           'accent2-soft': 'rgba(167,139,250,0.14)',
           text: '#0F172A',
-          muted: 'rgba(15,23,42,0.62)',
-          subtle: 'rgba(15,23,42,0.42)',
-          border: 'rgba(15,23,42,0.08)',
-          'border-strong': 'rgba(15,23,42,0.12)',
+          muted: '#64748B',
+          subtle: '#94A3B8',
+          border: '#E2E8F0',
+          'border-strong': '#CBD5E1',
         },
       },
-      // Apple-grade spring easings. Use as e.g. `transition-[transform] ease-spring`.
+      boxShadow: {
+        'xpx-card':
+          '0 1px 3px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.08)',
+        'xpx-hover': '0 8px 32px rgba(15,23,42,0.14)',
+      },
       transitionTimingFunction: {
         spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
         'spring-soft': 'cubic-bezier(0.16, 1, 0.3, 1)',
         'apple-out': 'cubic-bezier(0.22, 1, 0.36, 1)',
       },
-      // Modern viewport units that respect mobile browser chrome (URL bar resize).
       minHeight: {
         'screen-svh': '100svh',
         'screen-dvh': '100dvh',

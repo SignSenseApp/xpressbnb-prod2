@@ -29,7 +29,7 @@ export default function Router() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-[#cc2b5e] border-t-transparent rounded-full animate-spin" />
+        <div className="w-12 h-12 border-4 border-[#50C878] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }

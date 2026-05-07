@@ -71,7 +71,7 @@ export default function Preloader({ isLoading }: PreloaderProps) {
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: `radial-gradient(ellipse 60% 50% at 80% 0%, rgba(244,162,97,0.35), transparent 65%)`,
+            background: `radial-gradient(ellipse 60% 50% at 80% 0%, rgba(80,200,120,0.35), transparent 65%)`,
             opacity: 0.7,
           }}
         />
@@ -79,7 +79,7 @@ export default function Preloader({ isLoading }: PreloaderProps) {
         <div
           className="absolute left-1/2 -translate-x-1/2 bottom-[35%] w-[480px] h-[180px] pointer-events-none"
           style={{
-            background: `radial-gradient(ellipse at center, rgba(244,162,97,0.32), transparent 70%)`,
+            background: `radial-gradient(ellipse at center, rgba(80,200,120,0.32), transparent 70%)`,
             filter: 'blur(40px)',
             opacity: 0.65,
           }}
@@ -104,7 +104,7 @@ export default function Preloader({ isLoading }: PreloaderProps) {
             </span>
             <span
               className="block text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight xpx-pre-right"
-              style={{ color: theme.warm }}
+              style={{ color: theme.accent }}
             >
               BnB
             </span>
@@ -118,7 +118,7 @@ export default function Preloader({ isLoading }: PreloaderProps) {
             <div
               className="absolute inset-y-0 left-0 xpx-pre-bar"
               style={{
-                background: `linear-gradient(90deg, transparent, ${theme.warm}, transparent)`,
+                background: `linear-gradient(90deg, transparent, ${theme.accent}, transparent)`,
               }}
             />
           </div>

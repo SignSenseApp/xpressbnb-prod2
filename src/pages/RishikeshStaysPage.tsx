@@ -268,7 +268,7 @@ function StayCard({
                 boxShadow: '0 2px 8px rgba(15,23,42,0.10)',
               }}
             >
-              <CheckCircle className="w-3 h-3" style={{ color: '#16A34A' }} /> Verified
+              <CheckCircle className="w-3 h-3" style={{ color: '#50C878' }} /> Verified
             </span>
           )}
         </div>
@@ -291,7 +291,7 @@ function StayCard({
         {stay.discountPercent && stay.discountPercent > 0 && (
           <span
             className="absolute bottom-3 right-3 inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold text-white"
-            style={{ background: '#16A34A' }}
+            style={{ background: '#50C878' }}
           >
             <Tag className="w-3 h-3" /> {stay.discountPercent}% off
           </span>
@@ -338,14 +338,14 @@ function StayCard({
             style={
               isBestPrice
                 ? {
-                    background: 'rgba(22,163,74,0.10)',
-                    color: '#15803D',
-                    border: '1px solid rgba(22,163,74,0.32)',
+                    background: 'rgba(80,200,120,0.10)',
+                    color: '#3dae68',
+                    border: '1px solid rgba(80,200,120,0.32)',
                   }
                 : {
-                    background: 'rgba(244,162,97,0.12)',
+                    background: 'rgba(80,200,120,0.12)',
                     color: 'var(--xpx-warm-dark)',
-                    border: '1px solid rgba(244,162,97,0.36)',
+                    border: '1px solid rgba(80,200,120,0.36)',
                   }
             }
             aria-label={isBestPrice ? 'Best price' : 'Pay later'}
@@ -549,7 +549,7 @@ const RishikeshStaysPage: React.FC = () => {
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(250,250,247,0.78) 70%, var(--xpx-base) 100%)',
+              'linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.88) 70%, var(--xpx-base) 100%)',
           }}
         />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-14 sm:py-20">
@@ -603,7 +603,7 @@ const RishikeshStaysPage: React.FC = () => {
                   WebkitBackdropFilter: 'blur(10px)',
                 }}
               >
-                <CheckCircle className="w-3.5 h-3.5" style={{ color: '#16A34A' }} />
+                <CheckCircle className="w-3.5 h-3.5" style={{ color: '#50C878' }} />
                 {label}
               </span>
             ))}
@@ -625,7 +625,7 @@ const RishikeshStaysPage: React.FC = () => {
               className="min-h-[44px] px-5 py-3 rounded-full text-sm font-bold text-white transition-transform active:scale-95"
               style={{
                 background: 'var(--xpx-warm)',
-                boxShadow: '0 8px 24px rgba(244,162,97,0.36)',
+                boxShadow: '0 8px 24px rgba(80,200,120,0.36)',
               }}
             >
               Explore Stays
@@ -971,7 +971,7 @@ const RishikeshStaysPage: React.FC = () => {
                 <button
                   onClick={() => setFiltersOpen(false)}
                   className="flex-1 min-h-[44px] py-2.5 rounded-full text-sm font-bold text-white transition-transform active:scale-[0.98]"
-                  style={{ background: 'var(--xpx-warm)', boxShadow: '0 6px 18px rgba(244,162,97,0.32)' }}
+                  style={{ background: 'var(--xpx-warm)', boxShadow: '0 6px 18px rgba(80,200,120,0.32)' }}
                 >
                   Apply
                 </button>

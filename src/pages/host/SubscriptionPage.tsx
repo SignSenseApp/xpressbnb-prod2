@@ -174,7 +174,7 @@ export default function SubscriptionPage() {
           contact: host.phone,
         },
         theme: {
-          color: '#cc2b5e',
+          color: '#50C878',
         },
       };
 
@@ -215,7 +215,7 @@ export default function SubscriptionPage() {
       {import.meta.env.VITE_RAZORPAY_KEY_ID === 'rzp_test_your_key_id' && (
         <div
           className="rounded-2xl p-5"
-          style={{ background: 'rgba(244,162,97,0.06)', border: '1px solid rgba(244,162,97,0.30)' }}
+          style={{ background: 'rgba(80,200,120,0.06)', border: '1px solid rgba(80,200,120,0.30)' }}
         >
           <h3 className="font-semibold mb-1 text-xpx-text">Payment system configuration required</h3>
           <p className="text-sm text-xpx-muted">
@@ -238,8 +238,8 @@ export default function SubscriptionPage() {
         className="rounded-2xl p-6"
         style={{
           background:
-            'linear-gradient(135deg, rgba(244,162,97,0.14) 0%, var(--xpx-surface) 70%)',
-          border: '1px solid rgba(244,162,97,0.30)',
+            'linear-gradient(135deg, rgba(80,200,120,0.14) 0%, var(--xpx-surface) 70%)',
+          border: '1px solid rgba(80,200,120,0.30)',
           boxShadow: '0 12px 40px rgba(15,23,42,0.06)',
         }}
       >
@@ -291,7 +291,7 @@ export default function SubscriptionPage() {
                     className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
                     style={
                       sub.subscription_status === 'active'
-                        ? { background: 'rgba(22,163,74,0.10)', color: '#15803D' }
+                        ? { background: 'rgba(80,200,120,0.10)', color: '#3dae68' }
                         : { background: 'var(--xpx-surface-elevated)', color: 'var(--xpx-muted)' }
                     }
                   >
@@ -318,8 +318,8 @@ export default function SubscriptionPage() {
               plan.id === 'paid'
                 ? {
                     background:
-                      'linear-gradient(135deg, rgba(244,162,97,0.10) 0%, var(--xpx-surface) 70%)',
-                    border: '1px solid rgba(244,162,97,0.40)',
+                      'linear-gradient(135deg, rgba(80,200,120,0.10) 0%, var(--xpx-surface) 70%)',
+                    border: '1px solid rgba(80,200,120,0.40)',
                     boxShadow: '0 20px 56px rgba(15,23,42,0.10)',
                   }
                 : { background: 'var(--xpx-surface)', border: '1px solid var(--xpx-border)', boxShadow: '0 12px 40px rgba(15,23,42,0.06)' }
@@ -352,7 +352,7 @@ export default function SubscriptionPage() {
                 <ul className="space-y-2">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-2 text-sm">
-                      <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#16A34A' }} />
+                      <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#50C878' }} />
                       <span className="text-xpx-text">{feature}</span>
                     </li>
                   ))}
@@ -382,7 +382,7 @@ export default function SubscriptionPage() {
               className="w-full py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               style={
                 plan.id === 'paid'
-                  ? { background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 20px rgba(244,162,97,0.35)' }
+                  ? { background: 'var(--xpx-warm)', color: '#ffffff', boxShadow: '0 6px 20px rgba(80,200,120,0.35)' }
                   : { background: 'var(--xpx-surface-light)', color: 'var(--xpx-text)', border: '1px solid var(--xpx-border-strong)' }
               }
             >
