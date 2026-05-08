@@ -1052,49 +1052,47 @@ function HeroSearchBar({
 
   return (
     <>
-      {/* Mobile — Where to? + search only (dates/guests in sheet) */}
+      {/* Mobile — tap opens sheet; height grows with content (no fixed 46px crush) */}
       <div
-        className="md:hidden flex items-center w-full rounded-full overflow-hidden"
+        className="md:hidden flex w-full items-center gap-2 rounded-[26px] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.18)]"
         style={{
-          height: 46,
-          background: '#ffffff',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
-          padding: '0 6px 0 14px',
+          minHeight: 56,
+          padding: '10px 10px 10px 14px',
         }}
       >
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
-          className="flex-1 flex flex-col items-start justify-center min-w-0 py-2 text-left"
+          className="flex min-h-[48px] min-w-0 flex-1 flex-col justify-center gap-1 py-0.5 text-left"
         >
-          <span style={{ fontSize: 11, color: '#717171', fontWeight: 600 }}>Where to?</span>
-          <span style={{ fontSize: 14, color: '#111', fontWeight: 700 }}>{city}</span>
-          {(checkin || checkout || guests) && (
-            <span
-              className="block truncate max-w-[200px] mt-0.5"
-              style={{ fontSize: 11, color: '#717171', fontWeight: 600 }}
-            >
-              {checkin && checkout
-                ? `${formatHeroDisplayDate(checkin)} – ${formatHeroDisplayDate(checkout)}`
-                : checkin
-                  ? `${formatHeroDisplayDate(checkin)} · ${guests} guests`
-                  : `${guests} guests`}
-            </span>
-          )}
+          <span className="text-[11px] font-semibold leading-none text-[#717171]">Where to?</span>
+          <span className="truncate text-[15px] font-bold leading-snug text-[#111]">{city}</span>
+          <span className="line-clamp-2 w-full text-[10px] font-semibold leading-snug text-[#717171]">
+            {(checkin || checkout) && (
+              <>
+                {checkin && checkout
+                  ? `${formatHeroDisplayDate(checkin)} – ${formatHeroDisplayDate(checkout)}`
+                  : checkin
+                    ? formatHeroDisplayDate(checkin)
+                    : checkout
+                      ? formatHeroDisplayDate(checkout)
+                      : ''}
+                {' · '}
+              </>
+            )}
+            {guests} {guests === 1 ? 'guest' : 'guests'}
+          </span>
         </button>
         <button
           type="button"
           onClick={() => onSearch()}
-          className="flex items-center justify-center shrink-0 rounded-full"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full touch-manipulation"
           style={{
             background: CTA_RED,
-            width: 40,
-            height: 40,
-            marginRight: 4,
           }}
           aria-label="Search stays"
         >
-          <Search className="w-5 h-5" style={{ color: '#ffffff' }} />
+          <Search className="h-5 w-5" style={{ color: '#ffffff' }} />
         </button>
       </div>
 
