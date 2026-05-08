@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
-import { ArrowLeft, SlidersHorizontal, X, MapPin, CheckCircle, Clock, Zap, Shield, Star, MessageCircle } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { ArrowLeft, SlidersHorizontal, X, MapPin, CheckCircle, Clock, Zap, Shield, Star, MessageCircle, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import ConversionPropertyCard from '../components/ConversionPropertyCard';
 import SEOHead from '../components/SEOHead';
 import type { Property } from '../lib/database.types';
 import { theme } from '../lib/theme';
 import { buildTeamWhatsAppLink } from '../lib/team';
+import { parseTripFromSearch, formatTripChip } from '../lib/tripSearch';
 
 interface CityListingPageProps {
   city: string;
@@ -71,6 +72,9 @@ export default function CityListingPage({ city }: CityListingPageProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<'recommended' | 'price-low' | 'price-high' | 'rating'>('recommended');
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const [urlSearch, setUrlSearch] = useState(() =>
+    typeof window !== 'undefined' ? window.location.search : ''
+  );
 
   const cityName = CITY_DISPLAY_NAMES[city] || city;
   const cityMeta = CITY_META[cityName];
@@ -83,8 +87,21 @@ export default function CityListingPage({ city }: CityListingPageProps) {
   }, [city]);
 
   useEffect(() => {
+    const sync = () => setUrlSearch(window.location.search);
+    window.addEventListener('popstate', sync);
+    return () => window.removeEventListener('popstate', sync);
+  }, []);
+
+  const trip = useMemo(() => parseTripFromSearch(urlSearch), [urlSearch]);
+  const tripChipLabel = useMemo(() => {
+    if (!trip.checkin && !trip.checkout && trip.guests == null) return null;
+    const g = trip.guests != null && trip.guests > 0 ? trip.guests : 2;
+    return formatTripChip(trip.checkin ?? '', trip.checkout ?? '', g);
+  }, [trip]);
+
+  useEffect(() => {
     applyFiltersAndSort();
-  }, [properties, filters, sortBy]);
+  }, [properties, filters, sortBy, trip.guests]);
 
   const loadProperties = async () => {
     setLoading(true);
@@ -110,6 +127,11 @@ export default function CityListingPage({ city }: CityListingPageProps) {
 
   const applyFiltersAndSort = () => {
     let filtered = [...properties];
+
+    const guestMin = trip.guests;
+    if (guestMin != null && guestMin > 0) {
+      filtered = filtered.filter(p => (p.max_guests ?? 0) >= guestMin);
+    }
 
     if (filters.coupleFriendly) filtered = filtered.filter(p => p.is_couple_friendly);
     if (filters.hourlyStay) filtered = filtered.filter(p => p.hourly_stay_available);
@@ -203,6 +225,16 @@ export default function CityListingPage({ city }: CityListingPageProps) {
             )}
           </button>
         </div>
+
+        {tripChipLabel && (
+          <div
+            className="px-4 pb-2 flex items-center gap-2 text-xs font-medium"
+            style={{ color: 'var(--xpx-muted)' }}
+          >
+            <Calendar className="w-3.5 h-3.5 shrink-0" style={{ color: theme.accent }} aria-hidden />
+            <span>{tripChipLabel}</span>
+          </div>
+        )}
 
         {/* Quick filter chips + sort — momentum-scroll horizontally on mobile */}
         <div className="flex items-center gap-2 px-4 pb-3 overflow-x-auto scrollbar-hide scroll-momentum">
@@ -335,7 +367,11 @@ export default function CityListingPage({ city }: CityListingPageProps) {
                 two columns from sm: up. */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {filteredProperties.map(property => (
-                <ConversionPropertyCard key={property.id} property={property} />
+                <ConversionPropertyCard
+                  key={property.id}
+                  property={property}
+                  tripQuery={urlSearch}
+                />
               ))}
             </div>
           </>

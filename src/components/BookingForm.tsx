@@ -12,6 +12,8 @@ interface BookingFormProps {
   checkInDate: Date | null;
   checkOutDate: Date | null;
   calculatedPrice: number;
+  /** Prefill guest count from search URL */
+  initialNumGuests?: number;
 }
 
 interface HostContact {
@@ -20,14 +22,25 @@ interface HostContact {
   name: string;
 }
 
-export default function BookingForm({ property, onSuccess, checkInDate, checkOutDate, calculatedPrice }: BookingFormProps) {
+export default function BookingForm({
+  property,
+  onSuccess,
+  checkInDate,
+  checkOutDate,
+  calculatedPrice,
+  initialNumGuests,
+}: BookingFormProps) {
   const [includeDecoration, setIncludeDecoration] = useState(false);
-  const [formData, setFormData] = useState({
-    guest_name: '',
-    guest_email: '',
-    guest_phone: '',
-    num_guests: 1,
-    special_requests: '',
+  const [formData, setFormData] = useState(() => {
+    const cap = Math.max(1, property.max_guests || 1);
+    const n = initialNumGuests != null ? initialNumGuests : 1;
+    return {
+      guest_name: '',
+      guest_email: '',
+      guest_phone: '',
+      num_guests: Math.min(Math.max(1, n), cap),
+      special_requests: '',
+    };
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);

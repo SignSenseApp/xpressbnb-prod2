@@ -248,7 +248,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 overflow-y-auto">
       <div className="min-h-screen flex flex-col">
-        <div className="sticky top-0 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex justify-between items-center z-10 shadow-lg">
+        <div className="sticky top-0 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex justify-between items-center z-10 shadow-lg">
           <div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold">{property ? 'Edit Property' : 'List Your Property'}</h2>
             <p className="text-white/90 mt-1 text-sm sm:text-base">{property ? 'Update your property details' : 'Share your space with travelers'}</p>
@@ -577,7 +577,7 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
             <button
               type="submit"
               disabled={loading}
-              className="w-full sm:flex-1 px-6 py-3 sm:py-4 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white font-semibold text-sm sm:text-base rounded-xl hover:from-[#3dae68] hover:to-[#22c55e] transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:flex-1 px-6 py-3 sm:py-4 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white font-semibold text-sm sm:text-base rounded-xl hover:from-[#3dae68] hover:to-[#3dae68] transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (property ? 'Updating...' : 'Creating...') : (property ? 'Update Property' : 'List Property')}
             </button>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -16,12 +16,22 @@ interface BookingCalendarProps {
   propertyId: string;
   basePrice: number;
   onDateRangeSelect?: (checkIn: Date | null, checkOut: Date | null, totalPrice: number) => void;
+  /** ISO `yyyy-mm-dd` from URL search — seeds range once calendar data is ready */
+  initialCheckIn?: string | null;
+  initialCheckOut?: string | null;
 }
 
-export default function BookingCalendar({ propertyId, basePrice, onDateRangeSelect }: BookingCalendarProps) {
+export default function BookingCalendar({
+  propertyId,
+  basePrice,
+  onDateRangeSelect,
+  initialCheckIn,
+  initialCheckOut,
+}: BookingCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [checkInDate, setCheckInDate] = useState<Date | null>(null);
   const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
+  const seededFromUrl = useRef(false);
   const [calendarData, setCalendarData] = useState<Map<string, { isAvailable: boolean; price: number }>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
 
@@ -34,8 +44,40 @@ export default function BookingCalendar({ propertyId, basePrice, onDateRangeSele
   const dayNamesShort = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
   useEffect(() => {
+    seededFromUrl.current = false;
+  }, [propertyId]);
+
+  useEffect(() => {
     fetchCalendarData();
   }, [propertyId, currentMonth]);
+
+  useEffect(() => {
+    if (seededFromUrl.current || isLoading) return;
+    if (!initialCheckIn || !initialCheckOut) return;
+    const inD = new Date(`${initialCheckIn}T12:00:00`);
+    const outD = new Date(`${initialCheckOut}T12:00:00`);
+    if (!(outD > inD)) return;
+    seededFromUrl.current = true;
+    setCheckInDate(inD);
+    setCheckOutDate(outD);
+    setCurrentMonth(inD);
+    let total = 0;
+    const cursor = new Date(inD);
+    while (cursor < outD) {
+      const dateStr = cursor.toISOString().split('T')[0];
+      const calData = calendarData.get(dateStr);
+      total += calData?.price ?? basePrice;
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    onDateRangeSelect?.(inD, outD, total);
+  }, [
+    isLoading,
+    calendarData,
+    basePrice,
+    initialCheckIn,
+    initialCheckOut,
+    onDateRangeSelect,
+  ]);
 
   const fetchCalendarData = async () => {
     setIsLoading(true);

@@ -86,7 +86,7 @@ export default function HostGrowthScore({
                 strokeDasharray={`${(score.overall / 100) * 352} 352`}
                 className={`bg-gradient-to-r ${getScoreGradient(score.overall)}`}
                 style={{
-                  stroke: score.overall >= 70 ? '#22c55e' : score.overall >= 50 ? '#eab308' : '#ef4444',
+                  stroke: score.overall >= 70 ? '#3dae68' : score.overall >= 50 ? '#eab308' : '#ef4444',
                 }}
               />
             </svg>

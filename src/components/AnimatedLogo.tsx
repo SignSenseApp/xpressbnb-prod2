@@ -18,7 +18,7 @@ export default function AnimatedLogo() {
             <defs>
               <linearGradient id="homeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#50C878"/>
-                <stop offset="100%" stopColor="#22c55e"/>
+                <stop offset="100%" stopColor="#3dae68"/>
               </linearGradient>
             </defs>
             <path d="M3 12L12 3L21 12V21H15V15H9V21H3V12Z" stroke="url(#homeGrad)" strokeWidth="2" strokeLinejoin="round" fill="url(#homeGrad)" fillOpacity="0.15"/>
@@ -79,7 +79,7 @@ export default function AnimatedLogo() {
 
         .animated-letter {
           display: inline-block;
-          background: linear-gradient(135deg, #50C878 0%, #22c55e 100%);
+          background: linear-gradient(135deg, #50C878 0%, #3dae68 100%);
           background-clip: text;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
@@ -99,7 +99,7 @@ export default function AnimatedLogo() {
           top: 0;
           transform: translateZ(-2px);
           opacity: 0.1;
-          background: linear-gradient(135deg, #50C878 0%, #22c55e 100%);
+          background: linear-gradient(135deg, #50C878 0%, #3dae68 100%);
           background-clip: text;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;

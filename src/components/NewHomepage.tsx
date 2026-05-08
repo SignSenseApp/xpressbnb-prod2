@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Search,
   ChevronRight,
@@ -17,6 +18,8 @@ import { supabase } from '../lib/supabase';
 import SEOHead from './SEOHead';
 import { generateOrganizationStructuredData } from '../lib/seo';
 import type { Property } from '../lib/database.types';
+import { addDaysIso, parseTripFromSearch } from '../lib/tripSearch';
+import { getLenis, scrollToId } from '../lib/smoothScroll';
 
 // Brand emerald (#50C878) — coral (#FF385C) reserved for Search Stays + Reserve/Book only.
 const ACCENT = '#50C878';
@@ -37,8 +40,9 @@ const VERIFIED_BG = '#ecfdf5';
 const RATING = '#D97706';
 const FOOTER_HEADING = '#FFFFFF';
 const FOOTER_BODY = 'rgba(255,255,255,0.6)';
-const FOOTER_LINK_HOVER = '#6EE7B7';
-const FOOTER_LOGO_ACCENT = '#6EE7B7';
+const FOOTER_LOGO_ACCENT = ACCENT;
+/** Footer link hover — same brand emerald as header accents */
+const FOOTER_LINK_HOVER = ACCENT;
 const FOOTER_DIVIDER = 'rgba(255,255,255,0.08)';
 const FOOTER_COPY = 'rgba(255,255,255,0.35)';
 const INK_FAINT = 'rgba(15,23,42,0.18)';
@@ -203,7 +207,7 @@ export default function NewHomepage() {
   };
 
   const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToId(id, { offset: -88, duration: 1.05 });
   };
 
   const navigate = (path: string) => {
@@ -222,11 +226,48 @@ export default function NewHomepage() {
   const [searchCheckout, setSearchCheckout] = useState<string>('');
   const [searchGuests, setSearchGuests] = useState<number>(2);
 
+  useEffect(() => {
+    if (window.location.pathname !== '/') return;
+    const t = parseTripFromSearch(window.location.search);
+    if (t.checkin) setSearchCheckin(t.checkin);
+    if (t.checkout) setSearchCheckout(t.checkout);
+    if (t.guests != null && t.guests > 0) setSearchGuests(t.guests);
+  }, []);
+
+  const handleSearchCheckin = (v: string) => {
+    setSearchCheckin(v);
+    setSearchCheckout(prev => {
+      if (!v) return prev;
+      if (!prev || prev <= v) return addDaysIso(v, 1);
+      return prev;
+    });
+  };
+
+  const handleSearchCheckout = (v: string) => {
+    if (searchCheckin && v && v <= searchCheckin) {
+      setSearchCheckout(addDaysIso(searchCheckin, 1));
+      return;
+    }
+    setSearchCheckout(v);
+  };
+
   const handleHeroSearch = () => {
+    const today = new Date().toISOString().split('T')[0];
+    let cin = searchCheckin;
+    let cout = searchCheckout;
+    if (cin && cin < today) cin = today;
+    if (cin && !cout) cout = addDaysIso(cin, 1);
+    if (
+      cin &&
+      cout &&
+      new Date(`${cout}T12:00:00`).getTime() <= new Date(`${cin}T12:00:00`).getTime()
+    ) {
+      cout = addDaysIso(cin, 1);
+    }
     const slug = searchCity.toLowerCase().replace(/\s+/g, '-');
     const params = new URLSearchParams();
-    if (searchCheckin) params.set('checkin', searchCheckin);
-    if (searchCheckout) params.set('checkout', searchCheckout);
+    if (cin) params.set('checkin', cin);
+    if (cout) params.set('checkout', cout);
     if (searchGuests) params.set('guests', String(searchGuests));
     const qs = params.toString();
     navigate(`/stays/${slug}${qs ? `?${qs}` : ''}`);
@@ -363,7 +404,7 @@ export default function NewHomepage() {
             at the bottom, so the section seam into the cream Trust Strip is
             seamless. Avoids the old hard cinematic-black handoff. */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 pointer-events-none"
           style={{
             background:
               'linear-gradient(180deg, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0.45) 50%, rgba(13,27,42,0.55) 88%, ' + BASE + ' 100%)',
@@ -413,9 +454,9 @@ export default function NewHomepage() {
                 city={searchCity}
                 onCityChange={setSearchCity}
                 checkin={searchCheckin}
-                onCheckinChange={setSearchCheckin}
+                onCheckinChange={handleSearchCheckin}
                 checkout={searchCheckout}
-                onCheckoutChange={setSearchCheckout}
+                onCheckoutChange={handleSearchCheckout}
                 guests={searchGuests}
                 onGuestsChange={setSearchGuests}
                 onSearch={handleHeroSearch}
@@ -793,6 +834,21 @@ function formatHeroDisplayDate(iso: string): string {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+/** Native date picker — fully invisible inputs (`opacity-0`) often ignore taps in Safari/WebKit. */
+function openHeroDatePicker(input: HTMLInputElement | null) {
+  if (!input) return;
+  try {
+    const el = input as HTMLInputElement & { showPicker?: () => Promise<void> };
+    if (typeof el.showPicker === 'function') {
+      void el.showPicker().catch(() => input.click());
+    } else {
+      input.click();
+    }
+  } catch {
+    input.click();
+  }
+}
+
 function TopDestinationCardInner({
   city,
   propertiesByCity,
@@ -834,7 +890,7 @@ function TopDestinationCardInner({
 }
 
 /**
- * HeroSearchBar — mobile: 46px pill (Where to? + search). Desktop: Airbnb-style pill (no guests row).
+ * HeroSearchBar — mobile sheet has city, dates, guests. Desktop: Airbnb-style pill with guests.
  */
 function HeroSearchBar({
   cities,
@@ -850,6 +906,149 @@ function HeroSearchBar({
 }: HeroSearchBarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const today = new Date().toISOString().split('T')[0];
+  const checkInRef = useRef<HTMLInputElement>(null);
+  const checkOutRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtml = html.style.overflow;
+    const prevBody = body.style.overflow;
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    const lenis = getLenis();
+    lenis?.stop();
+
+    return () => {
+      html.style.overflow = prevHtml;
+      body.style.overflow = prevBody;
+      lenis?.start();
+    };
+  }, [mobileOpen]);
+
+  const mobileSheet =
+    mobileOpen && typeof document !== 'undefined'
+      ? createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="hero-search-sheet-title"
+            className="fixed inset-0 z-[120] flex flex-col justify-end bg-slate-950/45 backdrop-blur-md md:hidden"
+            style={{
+              WebkitTapHighlightColor: 'transparent',
+              overscrollBehavior: 'contain',
+            }}
+            onClick={() => setMobileOpen(false)}
+          >
+            <div
+              className="xpx-hero-search-sheet mx-auto flex max-h-[min(88dvh,640px)] w-full max-w-lg flex-col rounded-t-[28px] shadow-[0_-16px_56px_rgba(15,23,42,0.22)] overflow-hidden"
+              style={{
+                background: SURFACE,
+                borderTop: `1px solid ${BORDER}`,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="shrink-0 flex justify-center bg-[inherit] pt-3 pb-2">
+                <div className="h-1 w-11 rounded-full bg-slate-300/95" aria-hidden />
+              </div>
+              <div
+                className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-1 space-y-4"
+                style={{
+                  WebkitOverflowScrolling: 'touch',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <h3
+                    id="hero-search-sheet-title"
+                    className="text-base font-bold"
+                    style={{ color: TEXT }}
+                  >
+                    Search stays
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex h-10 w-10 items-center justify-center rounded-full text-xl leading-none transition-transform active:scale-95"
+                    style={{ background: SURFACE_LIGHT, color: TEXT }}
+                    aria-label="Close"
+                  >
+                    ×
+                  </button>
+                </div>
+                <label className="block text-xs font-semibold" style={{ color: TEXT_MUTED }}>
+                  City
+                  <select
+                    value={city}
+                    onChange={(e) => onCityChange(e.target.value)}
+                    className="xpx-input mt-1"
+                  >
+                    {cities.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="text-xs font-semibold" style={{ color: TEXT_MUTED }}>
+                    Check-in
+                    <input
+                      type="date"
+                      min={today}
+                      value={checkin}
+                      onChange={(e) => onCheckinChange(e.target.value)}
+                      className="xpx-input mt-1 min-h-[48px]"
+                    />
+                  </label>
+                  <label className="text-xs font-semibold" style={{ color: TEXT_MUTED }}>
+                    Check-out
+                    <input
+                      type="date"
+                      min={checkin || today}
+                      value={checkout}
+                      onChange={(e) => onCheckoutChange(e.target.value)}
+                      className="xpx-input mt-1 min-h-[48px]"
+                    />
+                  </label>
+                </div>
+                <label className="block text-xs font-semibold" style={{ color: TEXT_MUTED }}>
+                  Guests
+                  <select
+                    value={guests}
+                    onChange={(e) => onGuestsChange(Number(e.target.value))}
+                    className="xpx-input mt-1 min-h-[48px]"
+                  >
+                    {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
+                      <option key={n} value={n}>
+                        {n} {n === 1 ? 'guest' : 'guests'}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    onSearch();
+                  }}
+                  className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-base font-bold transition-transform active:scale-[0.98]"
+                  style={{
+                    background: CTA_RED,
+                    color: '#ffffff',
+                    boxShadow: '0 8px 24px rgba(255,56,92,0.32)',
+                    minHeight: 52,
+                  }}
+                >
+                  <Search className="h-4 w-4" />
+                  Search stays
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
 
   return (
     <>
@@ -870,6 +1069,18 @@ function HeroSearchBar({
         >
           <span style={{ fontSize: 11, color: '#717171', fontWeight: 600 }}>Where to?</span>
           <span style={{ fontSize: 14, color: '#111', fontWeight: 700 }}>{city}</span>
+          {(checkin || checkout || guests) && (
+            <span
+              className="block truncate max-w-[200px] mt-0.5"
+              style={{ fontSize: 11, color: '#717171', fontWeight: 600 }}
+            >
+              {checkin && checkout
+                ? `${formatHeroDisplayDate(checkin)} – ${formatHeroDisplayDate(checkout)}`
+                : checkin
+                  ? `${formatHeroDisplayDate(checkin)} · ${guests} guests`
+                  : `${guests} guests`}
+            </span>
+          )}
         </button>
         <button
           type="button"
@@ -887,93 +1098,7 @@ function HeroSearchBar({
         </button>
       </div>
 
-      {mobileOpen && (
-        <div
-          className="md:hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-md flex items-end"
-          onClick={() => setMobileOpen(false)}
-          role="dialog"
-          aria-label="Search stays"
-        >
-          <div
-            className="w-full rounded-t-3xl p-5 space-y-4"
-            style={{ background: SURFACE, borderTop: `1px solid ${BORDER}` }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold" style={{ color: TEXT }}>Search stays</h3>
-              <button
-                onClick={() => setMobileOpen(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center"
-                style={{ background: SURFACE_LIGHT, color: TEXT }}
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-            <label className="block text-xs font-semibold" style={{ color: TEXT_MUTED }}>
-              City
-              <select
-                value={city}
-                onChange={(e) => onCityChange(e.target.value)}
-                className="xpx-input mt-1"
-              >
-                {cities.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="text-xs font-semibold" style={{ color: TEXT_MUTED }}>
-                Check-in
-                <input
-                  type="date"
-                  min={today}
-                  value={checkin}
-                  onChange={(e) => onCheckinChange(e.target.value)}
-                  className="xpx-input mt-1"
-                />
-              </label>
-              <label className="text-xs font-semibold" style={{ color: TEXT_MUTED }}>
-                Check-out
-                <input
-                  type="date"
-                  min={checkin || today}
-                  value={checkout}
-                  onChange={(e) => onCheckoutChange(e.target.value)}
-                  className="xpx-input mt-1"
-                />
-              </label>
-            </div>
-            <label className="block text-xs font-semibold" style={{ color: TEXT_MUTED }}>
-              Guests
-              <select
-                value={guests}
-                onChange={(e) => onGuestsChange(Number(e.target.value))}
-                className="xpx-input mt-1"
-              >
-                {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
-                  <option key={n} value={n}>
-                    {n} {n === 1 ? 'guest' : 'guests'}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              onClick={() => {
-                setMobileOpen(false);
-                onSearch();
-              }}
-              className="w-full mt-2 inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-4 font-bold text-base"
-              style={{ background: CTA_RED, color: '#ffffff', boxShadow: '0 8px 24px rgba(255,56,92,0.32)' }}
-            >
-              <Search className="w-4 h-4" />
-              Search stays
-            </button>
-          </div>
-        </div>
-      )}
+      {mobileSheet}
 
       {/* Desktop — single pill, dividers, icon-only search (no guests in bar) */}
       <div
@@ -984,13 +1109,13 @@ function HeroSearchBar({
           boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
           height: 66,
           padding: '0 8px 0 0',
-          maxWidth: 680,
+          maxWidth: 820,
           width: '100%',
         }}
       >
         <div
           className="flex flex-col justify-center min-w-0"
-          style={{ flex: '1.5', paddingLeft: 24, paddingRight: 24 }}
+          style={{ flex: '1.35', paddingLeft: 24, paddingRight: 16 }}
         >
           <span style={{ fontSize: 11, color: '#717171', fontWeight: 600 }}>Where to?</span>
           <select
@@ -1007,51 +1132,83 @@ function HeroSearchBar({
           </select>
         </div>
         <div style={{ width: 1, height: 32, background: '#ebebeb', flexShrink: 0 }} aria-hidden />
-        <label
-          className="flex flex-col justify-center min-w-0 cursor-pointer"
+        <div
+          className="flex flex-col justify-center min-w-[120px] shrink-0"
           style={{ flex: 1, paddingLeft: 20, paddingRight: 20 }}
         >
           <span style={{ fontSize: 11, color: '#717171', fontWeight: 600 }}>Check-in</span>
-          <div className="relative mt-0.5 h-[22px] flex items-center">
+          <div className="relative mt-0.5 min-h-[44px] w-full flex items-center">
             <input
+              ref={checkInRef}
               type="date"
               min={today}
               value={checkin}
               onChange={(e) => onCheckinChange(e.target.value)}
-              className="absolute inset-0 z-[1] cursor-pointer opacity-0 w-full"
-              style={{ colorScheme: 'light' }}
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden={true}
             />
-            <span
-              className="text-[14px] font-bold pointer-events-none truncate"
-              style={{ color: '#111' }}
+            <button
+              type="button"
+              onClick={() => openHeroDatePicker(checkInRef.current)}
+              className="absolute inset-0 z-10 flex w-full min-h-[44px] items-center rounded-lg border-0 bg-transparent p-0 text-left cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-[#50C878] focus-visible:ring-offset-2"
+              aria-label="Choose check-in date"
             >
-              {checkin ? formatHeroDisplayDate(checkin) : 'Add date'}
-            </span>
+              <span className="text-[14px] font-bold truncate" style={{ color: '#111' }}>
+                {checkin ? formatHeroDisplayDate(checkin) : 'Add date'}
+              </span>
+            </button>
           </div>
-        </label>
+        </div>
         <div style={{ width: 1, height: 32, background: '#ebebeb', flexShrink: 0 }} aria-hidden />
-        <label
-          className="flex flex-col justify-center min-w-0 cursor-pointer"
-          style={{ flex: 1, paddingLeft: 20, paddingRight: 20 }}
+        <div
+          className="flex flex-col justify-center min-w-[120px] shrink-0"
+          style={{ flex: 1, paddingLeft: 16, paddingRight: 16 }}
         >
           <span style={{ fontSize: 11, color: '#717171', fontWeight: 600 }}>Check-out</span>
-          <div className="relative mt-0.5 h-[22px] flex items-center">
+          <div className="relative mt-0.5 min-h-[44px] w-full flex items-center">
             <input
+              ref={checkOutRef}
               type="date"
               min={checkin || today}
               value={checkout}
               onChange={(e) => onCheckoutChange(e.target.value)}
-              className="absolute inset-0 z-[1] cursor-pointer opacity-0 w-full"
-              style={{ colorScheme: 'light' }}
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden={true}
             />
-            <span
-              className="text-[14px] font-bold pointer-events-none truncate"
-              style={{ color: '#111' }}
+            <button
+              type="button"
+              onClick={() => openHeroDatePicker(checkOutRef.current)}
+              className="absolute inset-0 z-10 flex w-full min-h-[44px] items-center rounded-lg border-0 bg-transparent p-0 text-left cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-[#50C878] focus-visible:ring-offset-2"
+              aria-label="Choose check-out date"
             >
-              {checkout ? formatHeroDisplayDate(checkout) : 'Add date'}
-            </span>
+              <span className="text-[14px] font-bold truncate" style={{ color: '#111' }}>
+                {checkout ? formatHeroDisplayDate(checkout) : 'Add date'}
+              </span>
+            </button>
           </div>
-        </label>
+        </div>
+        <div style={{ width: 1, height: 32, background: '#ebebeb', flexShrink: 0 }} aria-hidden />
+        <div
+          className="flex flex-col justify-center min-w-0"
+          style={{ flex: 0.95, paddingLeft: 16, paddingRight: 12 }}
+        >
+          <span style={{ fontSize: 11, color: '#717171', fontWeight: 600 }}>Guests</span>
+          <select
+            value={guests}
+            onChange={(e) => onGuestsChange(Number(e.target.value))}
+            className="mt-0.5 appearance-none bg-transparent border-0 p-0 text-[14px] outline-none cursor-pointer w-full truncate"
+            style={{ color: '#111', fontWeight: 700 }}
+            aria-label="Guests"
+          >
+            {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
+              <option key={n} value={n}>
+                {n} {n === 1 ? 'guest' : 'guests'}
+              </option>
+            ))}
+          </select>
+        </div>
         <button
           type="button"
           onClick={onSearch}

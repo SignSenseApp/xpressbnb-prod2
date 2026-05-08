@@ -102,7 +102,7 @@ export default function PropertyUpgradeModal({ isOpen, onClose, onSelectProperty
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
-        <div className="bg-gradient-to-r from-[#50C878] to-[#22c55e] px-6 py-4 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-[#50C878] to-[#3dae68] px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Crown className="w-6 h-6 text-white" />
             <h2 className="text-2xl font-bold text-white">Select Property to Upgrade</h2>
@@ -208,7 +208,7 @@ export default function PropertyUpgradeModal({ isOpen, onClose, onSelectProperty
             <button
               onClick={handleUpgrade}
               disabled={!selectedPropertyId || loading}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <Crown className="w-5 h-5" />
               Upgrade Selected Property

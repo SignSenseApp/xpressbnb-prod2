@@ -31,7 +31,7 @@ export default function PricingPopup() {
       }`}
     >
       <div className="bg-white rounded-2xl md:rounded-2xl rounded-xl overflow-hidden backdrop-blur-sm" style={{ border: '1px solid var(--xpx-border)', boxShadow: '0 20px 56px rgba(15,23,42,0.10)' }}>
-        <div className="p-3 md:p-4" style={{ background: 'linear-gradient(135deg, #50C878 0%, #22c55e 100%)' }}>
+        <div className="p-3 md:p-4" style={{ background: 'linear-gradient(135deg, #50C878 0%, #3dae68 100%)' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 md:gap-3">
               <div className="w-8 h-8 md:w-10 md:h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">

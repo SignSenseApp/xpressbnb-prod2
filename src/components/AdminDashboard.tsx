@@ -141,7 +141,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md mx-4">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#50C878] to-[#22c55e] rounded-full mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#50C878] to-[#3dae68] rounded-full mb-4">
               <Lock className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Admin Access</h2>
@@ -180,7 +180,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
               </button>
               <button
                 type="submit"
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white font-semibold rounded-xl hover:from-[#3dae68] hover:to-[#22c55e] transition-all shadow-lg"
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white font-semibold rounded-xl hover:from-[#3dae68] hover:to-[#3dae68] transition-all shadow-lg"
               >
                 Login
               </button>
@@ -205,7 +205,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
                 {activeTab === 'properties' && (
                   <button
                     onClick={() => setShowListPropertyForm(true)}
-                    className="px-6 py-3 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+                    className="px-6 py-3 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2"
                   >
                     <Plus className="w-5 h-5" />
                     Add Property
@@ -228,7 +228,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
               onClick={() => setActiveTab('bookings')}
               className={`px-8 py-3 rounded-xl font-semibold transition-all ${
                 activeTab === 'bookings'
-                  ? 'bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white shadow-lg'
+                  ? 'bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white shadow-lg'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -239,7 +239,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
               onClick={() => setActiveTab('properties')}
               className={`px-8 py-3 rounded-xl font-semibold transition-all ${
                 activeTab === 'properties'
-                  ? 'bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white shadow-lg'
+                  ? 'bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white shadow-lg'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -282,7 +282,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
               <p className="text-3xl font-bold text-red-600">{stats.cancelled}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-[#50C878] to-[#22c55e] rounded-2xl p-6 shadow-lg">
+            <div className="bg-gradient-to-br from-[#50C878] to-[#3dae68] rounded-2xl p-6 shadow-lg">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-pink-100 font-semibold">Revenue</h3>
                 <DollarSign className="w-5 h-5 text-white" />
@@ -302,7 +302,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
                       onClick={() => setFilter(status)}
                       className={`px-4 py-2 rounded-full font-semibold text-sm transition-all ${
                         filter === status
-                          ? 'bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white'
+                          ? 'bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >

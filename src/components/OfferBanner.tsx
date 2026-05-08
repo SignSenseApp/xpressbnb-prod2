@@ -80,7 +80,7 @@ export default function OfferBanner({ property, className = '' }: OfferBannerPro
               style={{
                 background: 'rgba(80,200,120,0.12)',
                 border: '1px solid rgba(80,200,120,0.35)',
-                color: '#22c55e',
+                color: '#3dae68',
               }}
             >
               {featuredPromo.code}

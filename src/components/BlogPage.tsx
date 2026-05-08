@@ -10,7 +10,7 @@ export default function BlogPage({ onClose }: BlogPageProps) {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm">
       <div className="min-h-screen flex flex-col">
-        <div className="sticky top-0 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex justify-between items-center z-10 shadow-lg">
+        <div className="sticky top-0 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex justify-between items-center z-10 shadow-lg">
           <div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold">XpressBnB Blog</h2>
             <p className="text-white/90 mt-1 text-sm sm:text-base">Stay Smart with XpressBnB.com</p>
@@ -80,7 +80,7 @@ export default function BlogPage({ onClose }: BlogPageProps) {
 
                   <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 border-2 border-purple-200">
                     <h3 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-[#22c55e]" />
+                      <MapPin className="w-5 h-5 text-[#3dae68]" />
                       2. Gurgaon – Premium Couple Safe Stays
                     </h3>
                     <p className="text-gray-700 leading-relaxed">
@@ -287,7 +287,7 @@ export default function BlogPage({ onClose }: BlogPageProps) {
                 </p>
               </section>
 
-              <section className="bg-gradient-to-r from-[#50C878] to-[#22c55e] rounded-2xl p-6 text-white">
+              <section className="bg-gradient-to-r from-[#50C878] to-[#3dae68] rounded-2xl p-6 text-white">
                 <h2 className="text-2xl font-bold mb-4">Find Your Perfect Stay Today at XpressBnB.com</h2>
                 <p className="leading-relaxed mb-4">
                   Whether it's a weekend trip, business visit, or long-term project stay, your next comfortable home
@@ -321,7 +321,7 @@ export default function BlogPage({ onClose }: BlogPageProps) {
 
                   <a
                     href="mailto:support@xpressbnb.com"
-                    className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white font-semibold rounded-xl hover:from-[#3dae68] hover:to-[#22c55e] transition-all shadow-lg hover:shadow-xl"
+                    className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white font-semibold rounded-xl hover:from-[#3dae68] hover:to-[#3dae68] transition-all shadow-lg hover:shadow-xl"
                   >
                     <Mail className="w-5 h-5" />
                     Email Us
@@ -338,7 +338,7 @@ export default function BlogPage({ onClose }: BlogPageProps) {
               <div className="pt-6 border-t border-gray-200">
                 <button
                   onClick={onClose}
-                  className="w-full px-6 py-4 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white font-semibold rounded-xl hover:from-[#3dae68] hover:to-[#22c55e] transition-all shadow-lg"
+                  className="w-full px-6 py-4 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white font-semibold rounded-xl hover:from-[#3dae68] hover:to-[#3dae68] transition-all shadow-lg"
                 >
                   Back to Properties
                 </button>

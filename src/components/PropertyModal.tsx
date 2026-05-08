@@ -118,7 +118,7 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                   )}
                   {property.images.length > 2 && (
                     <div
-                      className="aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-[#50C878] to-[#22c55e] flex items-center justify-center cursor-pointer hover:from-[#3dae68] hover:to-[#22c55e] transition-all"
+                      className="aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-[#50C878] to-[#3dae68] flex items-center justify-center cursor-pointer hover:from-[#3dae68] hover:to-[#3dae68] transition-all"
                       onClick={() => openLightbox(0)}
                     >
                       <div className="text-center text-white">

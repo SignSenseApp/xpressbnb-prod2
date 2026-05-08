@@ -35,7 +35,7 @@ export default function AboutPage({ onClose }: AboutPageProps) {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm">
       <div className="min-h-screen flex flex-col">
-        <div className="sticky top-0 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex justify-between items-center z-10 shadow-lg">
+        <div className="sticky top-0 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex justify-between items-center z-10 shadow-lg">
           <div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold">About XpressBnB</h2>
             <p className="text-white/90 mt-1 text-sm sm:text-base">Your flexible stay partner</p>
@@ -97,26 +97,26 @@ export default function AboutPage({ onClose }: AboutPageProps) {
 
                   <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 border-2 border-purple-200">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 bg-[#22c55e] rounded-xl flex items-center justify-center">
+                      <div className="w-12 h-12 bg-[#3dae68] rounded-xl flex items-center justify-center">
                         <Clock className="w-6 h-6 text-white" />
                       </div>
                       <h4 className="text-xl font-bold text-gray-900">Half Day Booking</h4>
                     </div>
                     <ul className="space-y-3 text-gray-700">
                       <li className="flex items-start gap-2">
-                        <Star className="w-5 h-5 text-[#22c55e] flex-shrink-0 mt-0.5" />
+                        <Star className="w-5 h-5 text-[#3dae68] flex-shrink-0 mt-0.5" />
                         <span><strong>Duration:</strong> 12 hours of access</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <Star className="w-5 h-5 text-[#22c55e] flex-shrink-0 mt-0.5" />
+                        <Star className="w-5 h-5 text-[#3dae68] flex-shrink-0 mt-0.5" />
                         <span><strong>Morning Slot:</strong> 11:00 AM - 6:30 PM</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <Star className="w-5 h-5 text-[#22c55e] flex-shrink-0 mt-0.5" />
+                        <Star className="w-5 h-5 text-[#3dae68] flex-shrink-0 mt-0.5" />
                         <span><strong>Evening Slot:</strong> 7:30 PM - 10:00 AM (next day)</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <Star className="w-5 h-5 text-[#22c55e] flex-shrink-0 mt-0.5" />
+                        <Star className="w-5 h-5 text-[#3dae68] flex-shrink-0 mt-0.5" />
                         <span><strong>Perfect for:</strong> Day meetings, short stays, budget-friendly options</span>
                       </li>
                     </ul>
@@ -167,7 +167,7 @@ export default function AboutPage({ onClose }: AboutPageProps) {
 
                 <a
                   href="mailto:support@xpressbnb.com"
-                  className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white font-semibold rounded-xl hover:from-[#3dae68] hover:to-[#22c55e] transition-all shadow-lg hover:shadow-xl"
+                  className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white font-semibold rounded-xl hover:from-[#3dae68] hover:to-[#3dae68] transition-all shadow-lg hover:shadow-xl"
                 >
                   <Mail className="w-5 h-5" />
                   Email Us
@@ -181,7 +181,7 @@ export default function AboutPage({ onClose }: AboutPageProps) {
               <div className="pt-6 border-t border-gray-200">
                 <button
                   onClick={onClose}
-                  className="w-full px-6 py-4 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white font-semibold rounded-xl hover:from-[#3dae68] hover:to-[#22c55e] transition-all shadow-lg"
+                  className="w-full px-6 py-4 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white font-semibold rounded-xl hover:from-[#3dae68] hover:to-[#3dae68] transition-all shadow-lg"
                 >
                   Back to Properties
                 </button>

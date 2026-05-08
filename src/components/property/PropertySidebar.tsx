@@ -20,6 +20,10 @@ interface PropertySidebarProps {
    *  exact promo it wants to surface here). */
   promoCode: string | null;
   promoLabel: string | null;
+  /** From hero search URL — seed calendar + guest count */
+  initialCalendarCheckIn?: string | null;
+  initialCalendarCheckOut?: string | null;
+  initialTripGuests?: number;
 }
 
 /**
@@ -46,11 +50,17 @@ export default function PropertySidebar({
   onMakeOffer,
   promoCode,
   promoLabel,
+  initialCalendarCheckIn,
+  initialCalendarCheckOut,
+  initialTripGuests,
 }: PropertySidebarProps) {
   const basePrice = property.price_per_day || property.price_full_day || 0;
   const offer = computeOffer(property, basePrice);
 
-  const [guests, setGuests] = useState<number>(Math.min(2, property.max_guests || 2));
+  const maxG = Math.max(1, property.max_guests || 1);
+  const [guests, setGuests] = useState<number>(() =>
+    Math.min(initialTripGuests != null ? initialTripGuests : 2, maxG)
+  );
 
   const nights = useMemo(() => {
     if (!checkIn || !checkOut) return 0;
@@ -127,6 +137,8 @@ export default function PropertySidebar({
           propertyId={property.id}
           basePrice={basePrice}
           onDateRangeSelect={onDateRangeSelect}
+          initialCheckIn={initialCalendarCheckIn ?? undefined}
+          initialCheckOut={initialCalendarCheckOut ?? undefined}
         />
       </div>
 

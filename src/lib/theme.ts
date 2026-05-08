@@ -43,7 +43,8 @@ export const theme = {
   rating: '#D97706',
   ratingBg: '#FFFBEB',
 
-  mint: '#6EE7B7',
+  /** @deprecated use `accent` — kept for any legacy reference */
+  mint: '#50C878',
 
   accent2: '#A78BFA',
   accent2Soft: 'rgba(167,139,250,0.14)',

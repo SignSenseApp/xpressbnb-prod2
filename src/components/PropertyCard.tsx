@@ -76,7 +76,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
               Lowest Price Guaranteed
             </span>
           </div>
-          <button className="px-5 py-2.5 bg-gradient-to-r from-[#50C878] to-[#22c55e] text-white rounded-full font-semibold hover:from-[#3dae68] hover:to-[#22c55e] transition-all shadow-md hover:shadow-lg">
+          <button className="px-5 py-2.5 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white rounded-full font-semibold hover:from-[#3dae68] hover:to-[#3dae68] transition-all shadow-md hover:shadow-lg">
             View
           </button>
         </div>

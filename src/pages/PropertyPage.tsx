@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   MapPin,
@@ -46,6 +46,8 @@ import {
   getMapLinkUrl,
 } from '../config/propertyDefaults';
 import { safeHostDisplayName } from '../lib/host';
+import { parseTripFromSearch } from '../lib/tripSearch';
+import { scrollToElement } from '../lib/smoothScroll';
 
 /**
  * PropertyPage — redesigned around an Apple / Expedia-grade reading flow:
@@ -68,6 +70,8 @@ export default function PropertyPage() {
   const [totalPrice, setTotalPrice] = useState(0);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [hostName, setHostName] = useState<string | null>(null);
+
+  const tripFromSearch = useMemo(() => parseTripFromSearch(window.location.search), []);
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -206,24 +210,23 @@ export default function PropertyPage() {
     setShowShareMenu(false);
   };
 
-  const handleDateRangeSelect = (
-    checkIn: Date | null,
-    checkOut: Date | null,
-    price: number
-  ) => {
-    setSelectedCheckIn(checkIn);
-    setSelectedCheckOut(checkOut);
-    setTotalPrice(price);
-  };
+  const handleDateRangeSelect = useCallback(
+    (checkIn: Date | null, checkOut: Date | null, price: number) => {
+      setSelectedCheckIn(checkIn);
+      setSelectedCheckOut(checkOut);
+      setTotalPrice(price);
+    },
+    []
+  );
 
   // Smooth-scroll the user from the mobile bottom action bar down to the
   // booking sidebar so they immediately land on the calendar / Reserve
   // section. Falls back to no-op if the sidebar isn't yet rendered.
   const scrollToSidebar = () => {
-    const target = document.getElementById('booking-sidebar');
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    scrollToElement(document.getElementById('booking-sidebar'), {
+      offset: -80,
+      duration: 1.05,
+    });
   };
 
   const handleBookNow = () => {
@@ -854,6 +857,9 @@ export default function PropertyPage() {
                 onMakeOffer={() => setShowOfferModal(true)}
                 promoCode={featuredPromo?.code ?? null}
                 promoLabel={featuredPromo?.label ?? null}
+                initialCalendarCheckIn={tripFromSearch.checkin ?? null}
+                initialCalendarCheckOut={tripFromSearch.checkout ?? null}
+                initialTripGuests={tripFromSearch.guests}
               />
             ) : (
               <div
@@ -879,6 +885,7 @@ export default function PropertyPage() {
                   checkInDate={selectedCheckIn}
                   checkOutDate={selectedCheckOut}
                   calculatedPrice={totalPrice}
+                  initialNumGuests={tripFromSearch.guests}
                 />
               </div>
             )}

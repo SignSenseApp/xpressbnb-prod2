@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Lenis smooth scroll — avoid fighting CSS scroll-behavior */
+html.lenis {
+  height: auto;
+}
+html.lenis body {
+  height: auto;
+}
+
+@keyframes xpx-hero-search-sheet-in {
+  from {
+    transform: translate3d(0, 100%, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.xpx-hero-search-sheet {
+  animation: xpx-hero-search-sheet-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 /* ── XpressBnB theme tokens ── */
 :root {
   --accent: #50c878;

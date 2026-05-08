@@ -4,6 +4,8 @@ import { theme } from '../lib/theme';
 
 interface ConversionPropertyCardProps {
   property: Property;
+  /** Preserve hero search (?checkin=&checkout=&guests=) when opening the listing */
+  tripQuery?: string;
 }
 
 /**
@@ -12,9 +14,13 @@ interface ConversionPropertyCardProps {
  * inside one product, not three. White surface, soft shadow, busy-photo
  * gradient at the bottom of the image keeps top-pinned text legible.
  */
-export default function ConversionPropertyCard({ property }: ConversionPropertyCardProps) {
+export default function ConversionPropertyCard({
+  property,
+  tripQuery = '',
+}: ConversionPropertyCardProps) {
   const handleClick = () => {
-    window.history.pushState({}, '', `/property/${property.id}`);
+    const q = tripQuery.startsWith('?') ? tripQuery : tripQuery ? `?${tripQuery}` : '';
+    window.history.pushState({}, '', `/property/${property.id}${q}`);
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
@@ -84,7 +90,7 @@ export default function ConversionPropertyCard({ property }: ConversionPropertyC
               className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold"
               style={{
                 background: theme.accentLight,
-                color: '#22c55e',
+                color: '#3dae68',
                 border: `1px solid ${theme.accentBorder}`,
               }}
             >
@@ -96,7 +102,7 @@ export default function ConversionPropertyCard({ property }: ConversionPropertyC
               className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold"
               style={{
                 background: theme.accentLight,
-                color: '#22c55e',
+                color: '#3dae68',
                 border: `1px solid ${theme.accentBorder}`,
               }}
             >
