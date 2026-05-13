@@ -3,6 +3,8 @@ import { Calculator, TrendingUp, DollarSign } from 'lucide-react';
 import PremiumFeatureWrapper from './PremiumFeatureWrapper';
 
 interface EarningsSimulatorProps {
+  // Simulator reads only a couple of optional fields with safe fallbacks.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   property: any;
   locked?: boolean;
   onUpgrade?: () => void;

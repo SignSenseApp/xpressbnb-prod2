@@ -202,7 +202,11 @@ export type Database = {
           nights?: number | null;
           source?: string;
         };
-        Update: Partial<Database['public']['Tables']['bookings']['Insert']> & {
+        // The Insert + Update status type intentionally accepts the historical
+        // UI value 'completed' too — the runtime API tolerates the wider set
+        // while the DB enum is being rolled forward. See database.types.ts
+        // Row.status comment for rationale.
+        Update: Omit<Partial<Database['public']['Tables']['bookings']['Insert']>, 'status'> & {
           status?: 'pending' | 'confirmed' | 'cancelled' | 'completed';
         };
         Relationships: [];

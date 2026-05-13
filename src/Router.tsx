@@ -35,7 +35,7 @@ export default function Router() {
   }
 
   if (currentRoute.startsWith('/auth')) {
-    return <AuthRouter onClose={() => navigate('/')} />;
+    return <AuthRouter />;
   }
 
   if (currentRoute.startsWith('/host/') && user && host) {

@@ -3,21 +3,31 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Check, Crown, Zap, Loader2, Building2 } from 'lucide-react';
 import PropertyUpgradeModal from '../../components/PropertyUpgradeModal';
+import type { RazorpayPaymentResponse } from '../../lib/razorpay';
+import '../../lib/razorpay';
 
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
+// Subscription rows joined with the parent property (shape mirrors the
+// `*, properties:property_id(...)` select below). Keep this local — the
+// embedded relation isn't expressible through generated DB types.
+interface PropertySubscriptionWithProperty {
+  id: string;
+  subscription_status: string;
+  subscription_end_date: string | null;
+  properties: {
+    id: string;
+    title: string;
+    city: string;
+    state: string;
+    images: string[] | null;
+  } | null;
 }
 
 export default function SubscriptionPage() {
   const { host } = useAuth();
-  const [selectedPlan, setSelectedPlan] = useState<'free' | 'paid'>('free');
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPropertyModal, setShowPropertyModal] = useState(false);
-  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
-  const [propertySubscriptions, setPropertySubscriptions] = useState<any[]>([]);
+  const [propertySubscriptions, setPropertySubscriptions] = useState<PropertySubscriptionWithProperty[]>([]);
 
   useEffect(() => {
     if (host?.id) {
@@ -45,7 +55,10 @@ export default function SubscriptionPage() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPropertySubscriptions(data || []);
+      // The PostgREST-embedded `properties` relation isn't part of the
+      // generated row types, so we narrow through `unknown` once here rather
+      // than spreading `any` through the component.
+      setPropertySubscriptions((data ?? []) as unknown as PropertySubscriptionWithProperty[]);
     } catch (error) {
       console.error('Error loading subscriptions:', error);
     }
@@ -96,7 +109,6 @@ export default function SubscriptionPage() {
   const handlePropertySelected = async (propertyId: string) => {
     if (!host) return;
 
-    setSelectedPropertyId(propertyId);
     setProcessing(true);
     setError(null);
 
@@ -136,7 +148,7 @@ export default function SubscriptionPage() {
         name: 'XpressBnB',
         description: 'Property Premium Subscription',
         order_id: order.id,
-        handler: async function (razorpayResponse: any) {
+        handler: async function (razorpayResponse: RazorpayPaymentResponse) {
           try {
             const subscriptionEndDate = new Date();
             subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
@@ -190,7 +202,6 @@ export default function SubscriptionPage() {
       setError(errorMessage);
     } finally {
       setProcessing(false);
-      setSelectedPropertyId(null);
     }
   };
 

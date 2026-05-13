@@ -25,44 +25,44 @@ html.lenis body {
 
 /* ── XpressBnB theme tokens ── */
 :root {
-  --accent: #50c878;
-  --accent-dark: #3dae68;
+  --accent: #059669;
+  --accent-dark: #047857;
   --accent-light: #ecfdf5;
-  --accent-border: #bbf7d0;
-  --cta-red: #ff385c;
-  --cta-red-dark: #e11d48;
+  --accent-border: #a7f3d0;
+  --cta-red: #059669;
+  --cta-red-dark: #047857;
 
-  --xpx-base: #ffffff;
+  --xpx-base: #fafaf8;
   --xpx-surface: #ffffff;
   --xpx-surface-light: #f8fafc;
-  --xpx-surface-elevated: #f1f5f9;
+  --xpx-surface-elevated: #f8fafc;
   --xpx-slate: #0f172a;
   --xpx-navy: #0f172a;
 
   /** UI accent. Legacy names map here — not booking coral (below). */
-  --xpx-warm: #50c878;
-  --xpx-warm-dark: #3dae68;
+  --xpx-warm: #059669;
+  --xpx-warm-dark: #047857;
 
   /** Reserve / Book Now — urgency coral */
   --xpx-cta: #ff385c;
   --xpx-cta-dark: #e11d48;
 
-  --xpx-verified: #50c878;
+  --xpx-verified: #059669;
   --xpx-verified-bg: #ecfdf5;
   --xpx-trust: #2563eb;
   --xpx-trust-bg: #eff6ff;
-  --xpx-rating: #d97706;
-  --xpx-rating-bg: #fffbeb;
+  --xpx-rating: #059669;
+  --xpx-rating-bg: #ecfdf5;
 
   --xpx-accent2: #a78bfa;
   --xpx-text: #0f172a;
   --xpx-muted: #64748b;
   --xpx-subtle: #94a3b8;
-  --xpx-border: #e2e8f0;
-  --xpx-border-strong: #cbd5e1;
+  --xpx-border: #e5e7eb;
+  --xpx-border-strong: #d1d5db;
 
-  --xpx-shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 16px rgba(15, 23, 42, 0.08);
-  --xpx-shadow-hover: 0 8px 32px rgba(15, 23, 42, 0.14);
+  --xpx-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 24px rgba(15, 23, 42, 0.06);
+  --xpx-shadow-hover: 0 8px 24px rgba(15, 23, 42, 0.1);
 }
 
 /* ── Keyframes (must live at top level, not inside @layer) ── */
@@ -75,6 +75,11 @@ html.lenis body {
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(30px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes xpx-search-float-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes shimmer {
@@ -108,6 +113,15 @@ html.lenis body {
     text-rendering: optimizeLegibility;
     background: var(--xpx-base);
     color: var(--xpx-text);
+    font-family: Inter, "Avenir Next", "Plus Jakarta Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    line-height: 1.15;
   }
 
   *,
@@ -167,6 +181,20 @@ html.lenis body {
 /* ── Utilities ── */
 
 @layer components {
+  .xpx-container {
+    width: 100%;
+    max-width: 76rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  @media (min-width: 768px) {
+    .xpx-container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
   .xpx-page {
     @apply bg-xpx-base text-xpx-text min-h-screen;
   }
@@ -195,20 +223,20 @@ html.lenis body {
     border: 1px solid var(--xpx-border);
   }
   .xpx-input {
-    @apply w-full rounded-xl px-4 py-3 text-sm text-xpx-text placeholder:text-xpx-subtle outline-none transition-colors;
+    @apply w-full rounded-2xl px-4 py-3 text-sm text-xpx-text placeholder:text-xpx-subtle outline-none transition-colors;
     background: #ffffff;
     border: 1px solid var(--xpx-border-strong);
   }
   .xpx-input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(80, 200, 120, 0.18);
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.14);
   }
   /** Default primary — brand emerald */
   .xpx-btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-bold text-sm transition-all hover:scale-[1.02] active:scale-[0.97];
     background: var(--accent);
     color: #ffffff;
-    box-shadow: 0 8px 24px rgba(80, 200, 120, 0.26);
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.2);
     transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
     min-height: 44px;
     touch-action: manipulation;
@@ -222,7 +250,7 @@ html.lenis body {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-bold text-sm transition-all hover:scale-[1.02] active:scale-[0.97];
     background: var(--cta-red);
     color: #ffffff;
-    box-shadow: 0 8px 24px rgba(255, 56, 92, 0.26);
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.2);
     transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
     min-height: 44px;
     touch-action: manipulation;

@@ -3,6 +3,9 @@ import { generateSmartPricing } from '../../lib/premiumData';
 import PremiumFeatureWrapper from './PremiumFeatureWrapper';
 
 interface SmartPricingProps {
+  // Heuristic display widget; reads several optional property fields with
+  // safe fallbacks in `generateSmartPricing`.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   property: any;
   locked?: boolean;
   onUpgrade?: () => void;

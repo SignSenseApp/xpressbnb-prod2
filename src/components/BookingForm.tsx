@@ -1,25 +1,21 @@
 import { useMemo, useState } from 'react';
-import { Calendar, Users, Mail, Phone, User, MessageSquare, Sparkles, Copy, Check, Tag, X } from 'lucide-react';
+import { Calendar, Users, Mail, Phone, User, MessageSquare, Sparkles, Tag, X } from 'lucide-react';
 import type { Property } from '../lib/database.types';
 import { supabase } from '../lib/supabase';
 import { applyDiscounts, findPromoCode, type PromoCodeDef } from '../lib/offers';
 import { safeHostDisplayName } from '../lib/host';
-import { TEAM_PHONE_DISPLAY, TEAM_PHONE_E164, buildHostWhatsAppLink } from '../lib/team';
+import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
+
+export type BookingFormSuccessDetail = { bookingId: string };
 
 interface BookingFormProps {
   property: Property;
-  onSuccess: () => void;
+  onSuccess: (detail: BookingFormSuccessDetail) => void;
   checkInDate: Date | null;
   checkOutDate: Date | null;
   calculatedPrice: number;
   /** Prefill guest count from search URL */
   initialNumGuests?: number;
-}
-
-interface HostContact {
-  email: string;
-  phone: string;
-  name: string;
 }
 
 export default function BookingForm({
@@ -43,9 +39,6 @@ export default function BookingForm({
     };
   });
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [hostContact, setHostContact] = useState<HostContact | null>(null);
-  const [copiedEmail, setCopiedEmail] = useState(false);
 
   const calculateNumberOfDays = () => {
     if (!checkInDate || !checkOutDate) {
@@ -98,16 +91,6 @@ export default function BookingForm({
     setPromoError(null);
   };
 
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedEmail(true);
-      setTimeout(() => setCopiedEmail(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -141,9 +124,10 @@ export default function BookingForm({
         status: 'confirmed' as const,
         payment_status: 'pending',
         special_requests: formData.special_requests || null,
+        include_decoration: includeDecoration,
       };
 
-      const { error } = await supabase.from('bookings').insert(bookingData);
+      const { data: inserted, error } = await supabase.from('bookings').insert(bookingData).select('id').single();
 
       if (error) {
         console.error('Booking error details:', error);
@@ -152,162 +136,62 @@ export default function BookingForm({
         return;
       }
 
-      // Skip host fetch when host_id is null (orphaned property); UI degrades gracefully.
-      if (!property.host_id) {
-        setSuccess(true);
+      const bookingId = inserted?.id;
+      if (!bookingId) {
+        console.error('Booking insert returned no id');
+        alert('Booking was created but we could not open your confirmation. Please contact support with your email and stay dates.');
         setLoading(false);
         return;
       }
 
-      const { data: hostData, error: hostError } = await supabase
-        .from('hosts')
-        .select('email, phone, name')
-        .eq('id', property.host_id)
-        .maybeSingle();
+      let hostContactName: string | null = null;
+      if (property.host_id) {
+        const { data: hostData, error: hostError } = await supabase
+          .from('hosts')
+          .select('name')
+          .eq('id', property.host_id)
+          .maybeSingle();
 
-      if (hostError) {
-        console.error('Error fetching host contact:', hostError);
+        if (hostError) {
+          console.error('Error fetching host contact:', hostError);
+        } else if (hostData?.name) {
+          hostContactName = safeHostDisplayName(hostData.name, 'Host');
+        }
       }
 
-      if (hostData) {
-        // Sanitize name through safeHostDisplayName so a phone-in-name leak
-        // never reaches the guest. Phone is captured but not displayed.
-        setHostContact({
-          email: hostData.email,
-          phone: hostData.phone || 'Not provided',
-          name: safeHostDisplayName(hostData.name, 'Host'),
-        });
-      }
+      saveBookingConfirmationSnapshot({
+        v: 1,
+        savedAt: Date.now(),
+        bookingId,
+        propertyId: property.id,
+        propertyTitle: property.title,
+        propertyCity: property.city,
+        propertySlug: property.slug ?? null,
+        checkIn: formatDate(checkInDate),
+        checkOut: formatDate(checkOutDate),
+        numGuests: formData.num_guests,
+        estimatedTotal: totalPrice,
+        guestEmail: formData.guest_email,
+        hostContactName,
+        includeDecoration,
+        paymentStatus: 'pending',
+        bookingStatus: 'confirmed',
+      });
 
-      setSuccess(true);
       setLoading(false);
-    } catch (error: any) {
+      onSuccess({ bookingId });
+    } catch (error) {
       console.error('Booking error:', error);
-      alert(`Failed to create booking: ${error.message || 'Please try again.'}`);
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' && error && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : 'Please try again.';
+      alert(`Failed to create booking: ${message}`);
       setLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <div className="space-y-6 py-6">
-        <div className="text-center">
-          <div
-            className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ background: 'rgba(80,200,120,0.12)', border: '1px solid rgba(80,200,120,0.4)' }}
-          >
-            <svg className="w-10 h-10" style={{ color: '#3dae68' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h3 className="text-2xl font-extrabold text-xpx-text mb-2">Booking Request Submitted!</h3>
-          <p className="text-xpx-muted mb-6">Your booking request has been sent to the host. Please contact them directly to confirm and arrange payment.</p>
-        </div>
-
-        {hostContact && (
-          <div
-            className="rounded-2xl p-6"
-            style={{
-              background:
-                'linear-gradient(135deg, rgba(80,200,120,0.10) 0%, var(--xpx-surface-light) 100%)',
-              border: '1px solid var(--xpx-border-strong)',
-            }}
-          >
-            <h4 className="text-lg font-bold text-xpx-text mb-4 flex items-center gap-2">
-              <Mail className="w-5 h-5" style={{ color: 'var(--accent)' }} />
-              Your host
-            </h4>
-
-            <div className="space-y-4">
-              <div className="rounded-xl p-4" style={{ background: 'var(--xpx-surface)' }}>
-                <p className="text-xs uppercase tracking-wide text-xpx-subtle mb-1">Host Name</p>
-                <p className="font-semibold text-xpx-text">{hostContact.name}</p>
-              </div>
-
-              {/* Host's "direct" contact line. Behind the scenes this routes
-                  through the central team line (see src/lib/team.ts). The
-                  guest perceives it as the host's number, the boss receives
-                  the call and brokers the booking. */}
-              <div className="rounded-xl p-4" style={{ background: 'var(--xpx-surface)' }}>
-                <div className="flex items-center justify-between flex-wrap gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs uppercase tracking-wide text-xpx-subtle mb-1">Host&apos;s contact</p>
-                    <p className="font-semibold text-xpx-text">{TEAM_PHONE_DISPLAY}</p>
-                  </div>
-                  <div className="flex items-center gap-2 ml-3">
-                    <a
-                      href={buildHostWhatsAppLink(property.title, hostContact.name.split(' ')[0])}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-lg transition-colors text-xpx-text hover:bg-slate-100"
-                      title="WhatsApp host"
-                    >
-                      <MessageSquare className="w-5 h-5" />
-                    </a>
-                    <a
-                      href={`tel:${TEAM_PHONE_E164}`}
-                      className="p-2 rounded-lg transition-colors text-xpx-text hover:bg-slate-100"
-                      title="Call host"
-                    >
-                      <Phone className="w-5 h-5" />
-                    </a>
-                    <button
-                      onClick={() => copyToClipboard(TEAM_PHONE_DISPLAY)}
-                      className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-xpx-text"
-                      title="Copy number"
-                    >
-                      {copiedEmail ? (
-                        <Check className="w-5 h-5" style={{ color: '#3dae68' }} />
-                      ) : (
-                        <Copy className="w-5 h-5" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div
-              className="mt-6 p-4 rounded-xl"
-              style={{
-                background: 'rgba(37,99,235,0.06)',
-                border: '1px solid rgba(37,99,235,0.25)',
-              }}
-            >
-              <p className="text-sm text-blue-900">
-                <strong>What&apos;s next:</strong> Reach out on WhatsApp or call to confirm dates and arrange payment. Your host typically replies within an hour.
-              </p>
-            </div>
-          </div>
-        )}
-
-        <div
-          className="rounded-xl p-4"
-          style={{ background: 'var(--xpx-surface-light)', border: '1px solid var(--xpx-border)' }}
-        >
-          <h5 className="font-semibold text-xpx-text mb-3">Booking Summary</h5>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-xpx-muted">Property:</span><span className="font-medium text-xpx-text">{property.title}</span></div>
-            <div className="flex justify-between"><span className="text-xpx-muted">Check-in:</span><span className="font-medium text-xpx-text">{checkInDate?.toLocaleDateString()}</span></div>
-            <div className="flex justify-between"><span className="text-xpx-muted">Check-out:</span><span className="font-medium text-xpx-text">{checkOutDate?.toLocaleDateString()}</span></div>
-            <div className="flex justify-between"><span className="text-xpx-muted">Guests:</span><span className="font-medium text-xpx-text">{formData.num_guests}</span></div>
-            <div className="flex justify-between pt-2 xpx-divider">
-              <span className="text-xpx-text font-semibold">Estimated Total:</span>
-              <span className="text-lg font-bold text-xpx-text">₹{totalPrice.toLocaleString()}</span>
-            </div>
-          </div>
-        </div>
-
-        <button
-          onClick={onSuccess}
-          className="w-full py-3 font-semibold rounded-xl transition-all"
-          style={{ background: 'var(--accent)', color: '#ffffff', boxShadow: '0 6px 24px rgba(80,200,120,0.32)' }}
-        >
-          Back to Properties
-        </button>
-      </div>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

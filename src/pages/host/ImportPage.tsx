@@ -1,12 +1,18 @@
 import { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { Download, Upload, Link as LinkIcon, CheckCircle, XCircle, Loader } from 'lucide-react';
 
+interface ImportRecord {
+  id: string;
+  url: string;
+  status: 'success' | 'error';
+  properties: number;
+  timestamp: string;
+}
+
 export default function ImportPage() {
-  const { host } = useAuth();
   const [importing, setImporting] = useState(false);
   const [importUrl, setImportUrl] = useState('');
-  const [importHistory, setImportHistory] = useState<any[]>([]);
+  const [importHistory, setImportHistory] = useState<ImportRecord[]>([]);
 
   const handleImport = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,7 +21,7 @@ export default function ImportPage() {
     setImporting(true);
 
     setTimeout(() => {
-      const newImport = {
+      const newImport: ImportRecord = {
         id: Date.now().toString(),
         url: importUrl,
         status: 'success',

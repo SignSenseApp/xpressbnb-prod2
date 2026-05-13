@@ -18,8 +18,17 @@ export default function AnalyticsPage() {
     popularProperty: '',
   });
   const [loading, setLoading] = useState(true);
-  const [properties, setProperties] = useState<any[]>([]);
-  const [selectedProperty, setSelectedProperty] = useState<any>(null);
+  // Properties here are a minimal projection (id, title, premium fields)
+  // selected for the analytics summary — not the full DB row.
+  interface AnalyticsPropertyRow {
+    id: string;
+    title: string;
+    is_premium: boolean;
+    premium_plan: string;
+    premium_expiry: string | null;
+  }
+  const [properties, setProperties] = useState<AnalyticsPropertyRow[]>([]);
+  const [selectedProperty, setSelectedProperty] = useState<AnalyticsPropertyRow | null>(null);
 
   useEffect(() => {
     if (host?.id) {
@@ -92,7 +101,7 @@ useEffect(() => {
       // Calculate views per property
       const propertyViews = (properties || []).map(p => ({
         name: p.title,
-        views: views.filter((v: any) => v.entity_id === p.id).length,
+        views: views.filter((v) => v.entity_id === p.id).length,
       }));
 
       const popularProperty = propertyViews.sort((a, b) => b.views - a.views)[0]?.name || 'N/A';
@@ -198,7 +207,7 @@ useEffect(() => {
                 value={selectedProperty?.id || ''}
                 onChange={(e) => {
                   const property = properties.find((p) => p.id === e.target.value);
-                  setSelectedProperty(property);
+                  setSelectedProperty(property ?? null);
                 }}
                 className="xpx-input max-w-xs"
               >

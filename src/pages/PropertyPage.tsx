@@ -881,7 +881,10 @@ export default function PropertyPage() {
                 <p className="xpx-eyebrow mb-3">Complete your booking</p>
                 <BookingForm
                   property={property}
-                  onSuccess={navigateHome}
+                  onSuccess={({ bookingId }) => {
+                    window.history.pushState({}, '', `/booking/${bookingId}`);
+                    window.dispatchEvent(new PopStateEvent('popstate'));
+                  }}
                   checkInDate={selectedCheckIn}
                   checkOutDate={selectedCheckOut}
                   calculatedPrice={totalPrice}

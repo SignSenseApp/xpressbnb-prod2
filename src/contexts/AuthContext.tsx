@@ -4,16 +4,19 @@ import type { User, Session } from '@supabase/supabase-js';
 
 interface Host {
   id: string;
-  user_id: string;
+  // DB column allows NULL until a Supabase auth user is linked.
+  user_id: string | null;
   name: string;
   email: string;
   phone: string;
   bio: string;
-  kyc_status: 'unverified' | 'pending' | 'verified';
+  // Stored as a free-form string in DB; UI narrows it where it matters.
+  kyc_status: string;
   rating: number;
   total_bookings: number;
   total_views: number;
-  subscription_status: 'active' | 'paused' | 'cancelled' | 'trial';
+  // Stored as a free-form string in DB; UI narrows it where it matters.
+  subscription_status: string;
   subscription_provider_id: string | null;
   subscription_next_billing: string | null;
   payout_details: {
@@ -72,13 +75,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadHostProfile = async (userId: string) => {
     try {
-      let { data, error } = await supabase
+      // `data` is reassigned below when a host row is auto-provisioned, so
+      // keep it as `let`. `error` is read once and never reassigned.
+      const { data: initialData, error } = await supabase
         .from('hosts')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
 
       if (error) throw error;
+
+      let data = initialData;
 
       if (!data) {
         const { data: userData } = await supabase.auth.getUser();

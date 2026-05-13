@@ -7,12 +7,13 @@ import {
   UtensilsCrossed, Refrigerator, Microwave, Droplets,
   MapPin, Palmtree, Building, DoorOpen, Eye
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 export interface AmenityCategory {
   name: string;
   amenities: {
     name: string;
-    icon: any;
+    icon: LucideIcon;
   }[];
 }
 

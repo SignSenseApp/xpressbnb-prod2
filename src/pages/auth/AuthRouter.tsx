@@ -6,16 +6,15 @@ import ResetPasswordPage from './ResetPasswordPage';
 
 type AuthPage = 'login' | 'register' | 'forgot' | 'reset-password';
 
-interface AuthRouterProps {
-  onClose?: () => void;
-}
-
 /**
  * AuthRouter is a tiny URL-aware router for the /auth/* segment.
  * Picks the initial sub-page from the path so links from emails (recovery flow)
  * land on the correct screen, then keeps internal navigation in component state.
+ *
+ * Currently takes no props — the parent app reserves space for an optional
+ * `onClose` callback in the future, but it is not wired up yet.
  */
-export default function AuthRouter(_props: AuthRouterProps) {
+export default function AuthRouter() {
   const initialPage = (): AuthPage => {
     if (typeof window === 'undefined') return 'login';
     const p = window.location.pathname;

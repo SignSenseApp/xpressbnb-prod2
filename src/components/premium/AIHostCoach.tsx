@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageCircle, Send, Bot, User, Sparkles } from 'lucide-react';
+import { Send, Bot, User, Sparkles } from 'lucide-react';
 import PremiumFeatureWrapper from './PremiumFeatureWrapper';
 
 interface Message {
@@ -10,6 +10,10 @@ interface Message {
 }
 
 interface AIHostCoachProps {
+  // Coach reads dozens of loosely-typed fields from a property record and
+  // gracefully falls back when any are missing — keep it open here so we
+  // don't have to mirror every column twice.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   property: any;
   locked?: boolean;
   onUpgrade?: () => void;

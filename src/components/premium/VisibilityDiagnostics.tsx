@@ -3,6 +3,9 @@ import { generateVisibilityDiagnostics } from '../../lib/premiumData';
 import PremiumFeatureWrapper from './PremiumFeatureWrapper';
 
 interface VisibilityDiagnosticsProps {
+  // Visibility diagnostics is a heuristic display reading several optional
+  // property fields with safe fallbacks in `generateVisibilityDiagnostics`.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   property: any;
   locked?: boolean;
   onUpgrade?: () => void;

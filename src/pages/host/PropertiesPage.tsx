@@ -1,47 +1,13 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { Building2, Plus, CreditCard as Edit, Trash2, Eye, EyeOff, MapPin, IndianRupee, CheckCircle, ChevronDown, ChevronUp, Sparkles, Crown } from 'lucide-react';
+import { Building2, Plus, CreditCard as Edit, Trash2, Eye, EyeOff, MapPin, CheckCircle, ChevronDown, ChevronUp, Sparkles, Crown } from 'lucide-react';
 import PropertyListingForm from '../../components/PropertyListingForm';
 import { hasPremiumAccess, getPremiumBadgeText } from '../../lib/premium';
 import ABTesting from '../../components/premium/ABTesting';
-import PremiumUpgradeCTA from '../../components/premium/PremiumUpgradeCTA';
-
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
-
-interface Property {
-  id: string;
-  title: string;
-  description: string;
-  property_type: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  latitude: number;
-  longitude: number;
-  price_per_day: number;
-  price_full_day?: number;
-  bedrooms: number;
-  bathrooms: number;
-  max_guests: number;
-  amenities: string[];
-  images: string[];
-  is_active: boolean;
-  is_verified: boolean;
-  rating: number;
-  total_reviews: number;
-  is_premium: boolean;
-  premium_plan: string;
-  premium_expiry: string | null;
-  listing_type: string;
-  created_at: string;
-  updated_at: string;
-}
+import type { Property } from '../../lib/database.types';
+import type { RazorpayPaymentResponse } from '../../lib/razorpay';
+import '../../lib/razorpay';
 
 export default function PropertiesPage() {
   const { host } = useAuth();
@@ -163,7 +129,7 @@ export default function PropertiesPage() {
         name: 'XpressBnB',
         description: 'Property Premium Subscription',
         order_id: order.id,
-        handler: async function (razorpayResponse: any) {
+        handler: async function (razorpayResponse: RazorpayPaymentResponse) {
           try {
             const subscriptionEndDate = new Date();
             subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);

@@ -3,9 +3,23 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Star, MessageSquare, User } from 'lucide-react';
 
+// `external_reviews` is in database.types.ts but is currently scoped to a
+// dedicated Insert/Update path. We re-derive the Row shape here for clarity
+// and to keep this page resilient if optional columns drift.
+interface ExternalReviewRow {
+  id: string;
+  reviewer_name: string;
+  rating: number;
+  comment: string;
+  review_date: string;
+  provider: string;
+  source_url: string | null;
+  created_at: string;
+}
+
 export default function ReviewsPage() {
   const { host } = useAuth();
-  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<ExternalReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     avgRating: 0,
@@ -40,7 +54,7 @@ export default function ReviewsPage() {
         const avgRating = sum / total;
 
         const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-        reviewsData.forEach((r: any) => {
+        reviewsData.forEach((r) => {
           const rating = Math.round(r.rating);
           if (rating >= 1 && rating <= 5) {
             breakdown[rating as keyof typeof breakdown]++;
@@ -160,15 +174,19 @@ export default function ReviewsPage() {
                       </div>
                       <div className="flex items-center gap-1">{renderStars(Math.round(review.rating))}</div>
                     </div>
-                    {review.review_text && (
-                      <p className="text-xpx-muted mt-2">{review.review_text}</p>
+                    {/* Column is named `comment` / `provider` in the DB; the
+                        old code referenced `review_text` / `platform`, which
+                        never resolved at runtime and silently hid review
+                        content. */}
+                    {review.comment && (
+                      <p className="text-xpx-muted mt-2">{review.comment}</p>
                     )}
-                    {review.platform && (
+                    {review.provider && (
                       <span
                         className="inline-block mt-2 px-2 py-1 text-[10px] uppercase tracking-wider rounded-full font-bold"
                         style={{ background: 'rgba(37,99,235,0.10)', color: '#2563EB', border: '1px solid rgba(37,99,235,0.30)' }}
                       >
-                        From {review.platform}
+                        From {review.provider}
                       </span>
                     )}
                   </div>

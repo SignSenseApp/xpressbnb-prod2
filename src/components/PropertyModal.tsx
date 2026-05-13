@@ -2,7 +2,7 @@ import { X, MapPin, Users, Bed, Bath, ChevronLeft, ChevronRight, Share2, Copy, C
 import type { Property } from '../lib/database.types';
 import BookingForm from './BookingForm';
 import PropertyMapView from './PropertyMapView';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { getAmenityIcon } from '../lib/amenities';
 
 interface PropertyModalProps {
@@ -11,6 +11,17 @@ interface PropertyModalProps {
 }
 
 export default function PropertyModal({ property, onClose }: PropertyModalProps) {
+  const defaultCheckIn = useMemo(() => new Date(), []);
+  const defaultCheckOut = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d;
+  }, []);
+  const modalTripPrice = useMemo(
+    () => Math.max(0, (property.price_per_day || 0) * 1),
+    [property.price_per_day],
+  );
+
   const [showBooking, setShowBooking] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -274,9 +285,6 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                         <span className="text-4xl font-bold text-gray-900">₹{property.price_full_day?.toLocaleString() || 0}</span>
                         <span className="text-gray-600">/full day</span>
                       </div>
-                      <p className="text-gray-600 mt-2">
-                        ₹{property.price_half_day?.toLocaleString() || 0} for half day
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -291,7 +299,17 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                 ) : (
                   <div>
                     <h3 className="font-bold text-xl mb-4 text-gray-900">Complete Your Booking</h3>
-                    <BookingForm property={property} onSuccess={onClose} />
+                    <BookingForm
+                      property={property}
+                      onSuccess={({ bookingId }) => {
+                        onClose();
+                        window.history.pushState({}, '', `/booking/${bookingId}`);
+                        window.dispatchEvent(new PopStateEvent('popstate'));
+                      }}
+                      checkInDate={defaultCheckIn}
+                      checkOutDate={defaultCheckOut}
+                      calculatedPrice={modalTripPrice}
+                    />
                   </div>
                 )}
               </div>

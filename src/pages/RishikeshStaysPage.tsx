@@ -380,11 +380,16 @@ const RishikeshStaysPage: React.FC = () => {
         // (discount_percent, offer_label, etc.) have been added to the DB yet.
         // Prefer active listings first. If none are marked active yet, gracefully
         // fall back to all city listings so uploaded inventory still appears.
-        let { data, error: dbError } = await supabase
+        // `data` is reassigned below on the fallback query. `dbError` is
+        // read once and never reassigned (prefer-const).
+        const initialResult = await supabase
           .from('properties')
           .select('*')
           .ilike('city', 'rishikesh')
           .eq('is_active', true);
+
+        const dbError = initialResult.error;
+        let data = initialResult.data;
 
         if (dbError) throw dbError;
 

@@ -100,6 +100,9 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
         throw new Error('You must be logged in as a host to create a property');
       }
 
+      // `rating` and `total_reviews` are managed by the reviews pipeline, not
+      // the listing form, so they are intentionally excluded from the Insert
+      // payload (they are also not part of the properties Insert contract).
       const propertyData: PropertyInsert = {
         host_id: host.id,
         title: formData.title,
@@ -117,8 +120,6 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
         max_guests: formData.max_guests,
         amenities: formData.amenities,
         images: formData.images,
-        rating: formData.rating,
-        total_reviews: formData.total_reviews,
         is_active: formData.is_active
       };
 

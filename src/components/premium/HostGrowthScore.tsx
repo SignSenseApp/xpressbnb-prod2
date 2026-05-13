@@ -3,6 +3,9 @@ import { generateGrowthScore } from '../../lib/premiumData';
 import PremiumFeatureWrapper from './PremiumFeatureWrapper';
 
 interface HostGrowthScoreProps {
+  // Growth score works off many loosely-typed property fields with safe
+  // fallbacks for missing data, so a precise type would be over-specified.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   property: any;
   locked?: boolean;
   onUpgrade?: () => void;
@@ -14,12 +17,6 @@ export default function HostGrowthScore({
   onUpgrade,
 }: HostGrowthScoreProps) {
   const score = generateGrowthScore(property);
-
-  const getScoreColor = (value: number) => {
-    if (value >= 70) return 'text-green-600 bg-green-100 border-green-300';
-    if (value >= 50) return 'text-yellow-600 bg-yellow-100 border-yellow-300';
-    return 'text-red-600 bg-red-100 border-red-300';
-  };
 
   const getScoreGradient = (value: number) => {
     if (value >= 70) return 'from-green-500 to-emerald-500';

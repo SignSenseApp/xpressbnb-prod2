@@ -1,5 +1,16 @@
 import { xpLogoAbsoluteUrl } from './branding';
 
+// Loose JSON-LD payload: schema.org documents contain arbitrarily nested
+// strings/numbers/arrays/objects, so we model it as a JSON-shaped record.
+export type JsonLdValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonLdValue[]
+  | { [key: string]: JsonLdValue | undefined };
+export type JsonLdRecord = { [key: string]: JsonLdValue | undefined };
+
 export interface SEOConfig {
   title: string;
   description: string;
@@ -10,7 +21,7 @@ export interface SEOConfig {
   ogImage?: string;
   ogType?: string;
   twitterCard?: string;
-  structuredData?: Record<string, any>;
+  structuredData?: JsonLdRecord;
 }
 
 export const defaultSEO: SEOConfig = {
@@ -81,7 +92,7 @@ function updateOrCreateLink(rel: string, href: string) {
   element.setAttribute('href', href);
 }
 
-function updateStructuredData(data: Record<string, any>) {
+function updateStructuredData(data: JsonLdRecord) {
   const existingScript = document.querySelector('script[type="application/ld+json"]');
   if (existingScript) {
     existingScript.remove();
@@ -93,6 +104,9 @@ function updateStructuredData(data: Record<string, any>) {
   document.head.appendChild(script);
 }
 
+// Property here is intentionally a loose record — different callers pass
+// rows from Supabase, manually composed objects, or partial cached data.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function generatePropertyStructuredData(property: any) {
   return {
     '@context': 'https://schema.org',

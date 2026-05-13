@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Plus, DollarSign } from 'lucide-react';
+import { Calendar, DollarSign } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import HostCalendarManager from '../../components/HostCalendarManager';
 
+// Aligned with the `properties` row shape: `price_full_day` is nullable when
+// the host has only set a per-day price (legacy column kept for back-compat).
 interface Property {
   id: string;
   title: string;
   price_per_day: number;
-  price_full_day: number;
+  price_full_day: number | null;
   city: string;
   state: string;
 }
@@ -43,7 +45,7 @@ export default function CalendarPage({ hostId }: CalendarPageProps) {
       setProperties(data || []);
       if (data && data.length > 0 && !selectedProperty) {
         setSelectedProperty(data[0]);
-        setNewBasePrice((data[0].price_per_day || data[0].price_full_day).toString());
+        setNewBasePrice((data[0].price_per_day || data[0].price_full_day || 0).toString());
       }
     } catch (error) {
       console.error('Error fetching properties:', error);
@@ -124,7 +126,7 @@ export default function CalendarPage({ hostId }: CalendarPageProps) {
               const property = properties.find((p) => p.id === e.target.value);
               if (property) {
                 setSelectedProperty(property);
-                setNewBasePrice((property.price_per_day || property.price_full_day).toString());
+                setNewBasePrice((property.price_per_day || property.price_full_day || 0).toString());
               }
             }}
             className="xpx-input"
@@ -151,7 +153,7 @@ export default function CalendarPage({ hostId }: CalendarPageProps) {
                 <p className="xpx-eyebrow">Base Price Per Night</p>
                 <div className="flex items-baseline gap-2 mt-1">
                   <span className="text-2xl sm:text-3xl font-extrabold text-xpx-text">
-                    ₹{(selectedProperty.price_per_day || selectedProperty.price_full_day).toLocaleString()}
+                    ₹{(selectedProperty.price_per_day || selectedProperty.price_full_day || 0).toLocaleString()}
                   </span>
                   <span className="text-xpx-muted">/night</span>
                 </div>
@@ -185,7 +187,7 @@ export default function CalendarPage({ hostId }: CalendarPageProps) {
                   <button
                     onClick={() => {
                       setShowPriceEditor(false);
-                      setNewBasePrice((selectedProperty.price_per_day || selectedProperty.price_full_day).toString());
+                      setNewBasePrice((selectedProperty.price_per_day || selectedProperty.price_full_day || 0).toString());
                     }}
                     className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors text-xpx-text"
                     style={{ background: 'var(--xpx-surface)', border: '1px solid var(--xpx-border-strong)' }}
@@ -220,7 +222,7 @@ export default function CalendarPage({ hostId }: CalendarPageProps) {
 
           <HostCalendarManager
             propertyId={selectedProperty.id}
-            basePrice={selectedProperty.price_per_day || selectedProperty.price_full_day}
+            basePrice={selectedProperty.price_per_day || selectedProperty.price_full_day || 0}
             onUpdateBasePrice={(newPrice) => {
               setSelectedProperty({ ...selectedProperty, price_per_day: newPrice });
             }}

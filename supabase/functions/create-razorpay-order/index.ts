@@ -34,7 +34,13 @@ Deno.serve(async (req: Request) => {
       key_secret: razorpayKeySecret,
     });
 
-    const { amount, currency = 'INR', receipt, notes = {} }: OrderRequest = await req.json();
+    // `currency` and `notes` are accepted by the client (see OrderRequest) but
+    // are currently ignored — the order body below pins INR and a hard-coded
+    // receipt. Destructured with leading underscores to mark them as
+    // intentionally unused.
+    const { amount, receipt, currency: _currency = 'INR', notes: _notes = {} }: OrderRequest = await req.json();
+    void _currency;
+    void _notes;
 
     if (!amount || !receipt) {
       return new Response(
@@ -82,10 +88,19 @@ const order = await razorpay.orders.create({
     }
 
     if (error && typeof error === 'object') {
+      // Razorpay error objects ship as `{ statusCode, error: { description, ... } }`.
+      // We narrow with an inline structural type rather than `any` so each
+      // access is type-checked.
+      type RazorpayErrorLike = {
+        statusCode?: number;
+        description?: string;
+        error?: { description?: string; code?: string } | unknown;
+      };
+      const e = error as RazorpayErrorLike;
       errorDetails = {
-        statusCode: (error as any).statusCode,
-        description: (error as any).description,
-        error: (error as any).error,
+        statusCode: e.statusCode,
+        description: e.description,
+        error: e.error,
       };
     }
 

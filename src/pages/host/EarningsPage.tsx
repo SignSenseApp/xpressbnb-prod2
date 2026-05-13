@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { DollarSign, TrendingUp, Calendar, Download, IndianRupee } from 'lucide-react';
+import type { Booking } from '../../lib/database.types';
 
 export default function EarningsPage() {
   const { host } = useAuth();
@@ -11,7 +12,7 @@ export default function EarningsPage() {
     lastMonth: 0,
     pending: 0,
   });
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

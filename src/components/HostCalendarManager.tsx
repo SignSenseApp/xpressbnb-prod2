@@ -97,7 +97,7 @@ export default function HostCalendarManager({ propertyId, basePrice }: HostCalen
         .from('bookings')
         .select('check_in_date, check_out_date, status')
         .eq('property_id', propertyId)
-        .in('status', ['confirmed', 'paid'])
+        .in('status', ['confirmed', 'completed'])
         .gte('check_in_date', startDate.toISOString().split('T')[0])
         .lte('check_out_date', endDate.toISOString().split('T')[0]);
 
@@ -106,6 +106,11 @@ export default function HostCalendarManager({ propertyId, basePrice }: HostCalen
       const bookingMap = new Map<string, boolean>();
 
       data?.forEach(booking => {
+        // `check_out_date` is nullable in the schema (single-night/half-day
+        // bookings don't always set it). Skip those: they only block their
+        // check-in date, which the property_calendar entries already cover.
+        if (!booking.check_out_date) return;
+
         const start = new Date(booking.check_in_date);
         const end = new Date(booking.check_out_date);
         const current = new Date(start);

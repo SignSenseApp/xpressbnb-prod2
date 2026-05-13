@@ -4,61 +4,61 @@
  */
 
 export const theme = {
-  base: '#FFFFFF',
+  base: '#FAFAF8',
   surfaceLight: '#F8FAFC',
   surface: '#FFFFFF',
-  surfaceElevated: '#F1F5F9',
+  surfaceElevated: '#F8FAFC',
 
   text: '#0F172A',
   textMuted: '#64748B',
   textSubtle: '#94A3B8',
 
-  border: '#E2E8F0',
-  borderStrong: '#CBD5E1',
+  border: '#E5E7EB',
+  borderStrong: '#D1D5DB',
 
   /** Brand accent (navbar, chips, labels, icons) */
-  accent: '#50C878',
-  accentDark: '#3dae68',
-  accentLight: '#ecfdf5',
-  accentBorder: '#bbf7d0',
+  accent: '#059669',
+  accentDark: '#047857',
+  accentLight: '#ECFDF5',
+  accentBorder: '#A7F3D0',
 
   /** Conversion CTAs only */
-  cta: '#FF385C',
-  ctaDark: '#E11D48',
+  cta: '#059669',
+  ctaDark: '#047857',
 
   /** @deprecated prefer `accent` — kept for gradual migration */
-  warm: '#50C878',
-  warmDark: '#3dae68',
-  warmGlow: 'rgba(80,200,120,0.22)',
+  warm: '#059669',
+  warmDark: '#047857',
+  warmGlow: 'rgba(5,150,105,0.20)',
 
   slate: '#0F172A',
   navy: '#0F172A',
 
-  verified: '#50C878',
-  verifiedBg: '#ecfdf5',
+  verified: '#059669',
+  verifiedBg: '#ECFDF5',
 
   trust: '#2563EB',
   trustBg: '#EFF6FF',
 
-  rating: '#D97706',
-  ratingBg: '#FFFBEB',
+  rating: '#059669',
+  ratingBg: '#ECFDF5',
 
   /** @deprecated use `accent` — kept for any legacy reference */
-  mint: '#50C878',
+  mint: '#059669',
 
   accent2: '#A78BFA',
   accent2Soft: 'rgba(167,139,250,0.14)',
 
-  success: '#50C878',
-  warning: '#D97706',
+  success: '#059669',
+  warning: '#64748B',
   danger: '#DC2626',
   info: '#2563EB',
 } as const;
 
 export const fx = {
   cardShadow:
-    '0 1px 3px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.08)',
-  hoverShadow: '0 8px 32px rgba(15,23,42,0.14)',
+    '0 1px 2px rgba(15,23,42,0.05), 0 8px 24px rgba(15,23,42,0.06)',
+  hoverShadow: '0 8px 24px rgba(15,23,42,0.10)',
   glassBg: 'rgba(255,255,255,0.72)',
   glassBgStrong: 'rgba(255,255,255,0.88)',
   glassBlur: 'blur(20px) saturate(1.6)',

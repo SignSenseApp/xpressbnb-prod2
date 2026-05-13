@@ -52,6 +52,10 @@ export interface DemandForecast {
   }>;
 }
 
+// These generators read fragmented property fields straight from Supabase
+// rows (which include open JSON columns like `stats`). The `any` is a
+// pragmatic boundary; field accesses are individually defaulted below.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function generateVisibilityDiagnostics(property: any): VisibilityDiagnostics {
   const stats = property?.stats || {};
   const totalViews = stats.total_views || 0;
@@ -121,6 +125,7 @@ export function generateVisibilityDiagnostics(property: any): VisibilityDiagnost
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function generateSmartPricing(property: any): SmartPricing {
   const currentPrice = property?.price_per_day || 2000;
   const location = property?.location || '';
@@ -173,6 +178,7 @@ export function generateSmartPricing(property: any): SmartPricing {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function generateGrowthScore(property: any): GrowthScore {
   const stats = property?.stats || {};
   const images = property?.images?.length || 0;

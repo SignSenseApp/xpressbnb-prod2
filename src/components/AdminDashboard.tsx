@@ -55,7 +55,10 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBookings(data as any);
+      // Supabase's auto-inferred join return shape collapses to a union with
+      // an error variant; we know the relation exists at runtime, so narrow it
+      // by going through `unknown` to the local view type.
+      setBookings((data ?? []) as unknown as BookingWithProperty[]);
     } catch (error) {
       console.error('Error loading bookings:', error);
     } finally {
@@ -466,10 +469,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
                           </div>
 
                           <div className="flex items-center gap-6 mt-3 text-sm text-gray-600">
-                            <span>₹{property.price_full_day}/day</span>
-                            {property.price_half_day > 0 && (
-                              <span>₹{property.price_half_day}/half day</span>
-                            )}
+                            <span>₹{property.price_full_day ?? property.price_per_day}/day</span>
                             <span>{property.bedrooms} bed</span>
                             <span>{property.bathrooms} bath</span>
                             <span>{property.max_guests} guests</span>

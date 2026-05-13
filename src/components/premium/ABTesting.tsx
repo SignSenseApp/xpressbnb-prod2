@@ -23,6 +23,8 @@ interface ABTest {
 }
 
 interface ABTestingProps {
+  // A/B test variants accept any loose property record for header text only.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   property: any;
   locked?: boolean;
   onUpgrade?: () => void;

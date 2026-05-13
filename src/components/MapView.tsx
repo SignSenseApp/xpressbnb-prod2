@@ -8,9 +8,15 @@ interface MapViewProps {
   onPropertyClick: (property: Property) => void;
 }
 
+// Google Maps' full type surface lives in `@types/google.maps`, which we
+// don't depend on. We only touch a tiny slice of the SDK here, so we model
+// just the bits we use (see `src/types/google-maps.d.ts`). The global
+// `window.google` declaration in that file is picked up by `tsc` because
+// `tsconfig.app.json` includes the whole `src` tree.
+import type { GoogleMapsInfoWindow, GoogleMapsMarker } from '../types/google-maps';
+
 declare global {
   interface Window {
-    google: any;
     initMap: () => void;
   }
 }
@@ -66,9 +72,9 @@ function buildPinSvg(price: number, selected: boolean): string {
 
 export default function MapView({ properties, selectedProperty, onPropertyClick }: MapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const googleMapRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
-  const infoWindowRef = useRef<any>(null);
+  const googleMapRef = useRef<unknown>(null);
+  const markersRef = useRef<GoogleMapsMarker[]>([]);
+  const infoWindowRef = useRef<GoogleMapsInfoWindow | null>(null);
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -81,7 +87,10 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
     if (!apiKey || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') return;
 
     const initMap = () => {
-      if (!mapRef.current || !window.google) return;
+      // Pin the SDK reference up front so TS keeps the narrowed type across
+      // inner callbacks (forEach/addListener) without repeated null checks.
+      const gmaps = window.google?.maps;
+      if (!mapRef.current || !gmaps) return;
 
       const centerLat = properties.length > 0
         ? properties.reduce((sum, p) => sum + p.latitude, 0) / properties.length
@@ -90,20 +99,20 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
         ? properties.reduce((sum, p) => sum + p.longitude, 0) / properties.length
         : 77.3910;
 
-      const map = new window.google.maps.Map(mapRef.current, {
+      const map = new gmaps.Map(mapRef.current, {
         center: { lat: centerLat, lng: centerLng },
         zoom: 12,
         styles: MAP_STYLES,
         disableDefaultUI: true,
         zoomControl: true,
         zoomControlOptions: {
-          position: window.google.maps.ControlPosition.RIGHT_CENTER,
+          position: gmaps.ControlPosition.RIGHT_CENTER,
         },
         gestureHandling: 'greedy',
       });
 
       googleMapRef.current = map;
-      infoWindowRef.current = new window.google.maps.InfoWindow();
+      infoWindowRef.current = new gmaps.InfoWindow();
 
       markersRef.current.forEach(m => m.setMap(null));
       markersRef.current = [];
@@ -115,11 +124,11 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
 
         const icon = {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
-          scaledSize: new window.google.maps.Size(120, 56),
-          anchor: new window.google.maps.Point(60, 50),
+          scaledSize: new gmaps.Size(120, 56),
+          anchor: new gmaps.Point(60, 50),
         };
 
-        const marker = new window.google.maps.Marker({
+        const marker = new gmaps.Marker({
           position: { lat: property.latitude, lng: property.longitude },
           map,
           title: property.title,
@@ -136,12 +145,12 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
               <p style="color:#50C878;font-weight:700;font-size:14px;margin:0;">${formatPrice(price)}<span style="color:#9ca3af;font-weight:400;font-size:11px;">/night</span></p>
             </div>
           `;
-          infoWindowRef.current.setContent(infoContent);
-          infoWindowRef.current.open(map, marker);
+          infoWindowRef.current?.setContent(infoContent);
+          infoWindowRef.current?.open(map, marker);
         });
 
         marker.addListener('mouseout', () => {
-          infoWindowRef.current.close();
+          infoWindowRef.current?.close();
         });
 
         marker.addListener('click', () => {
@@ -175,7 +184,8 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
   }, [apiKey, properties]);
 
   useEffect(() => {
-    if (!googleMapRef.current || !window.google) return;
+    const gmaps = window.google?.maps;
+    if (!googleMapRef.current || !gmaps) return;
 
     markersRef.current.forEach((marker, index) => {
       const property = properties[index];
@@ -186,8 +196,8 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
 
       marker.setIcon({
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
-        scaledSize: new window.google.maps.Size(120, 56),
-        anchor: new window.google.maps.Point(60, 50),
+        scaledSize: new gmaps.Size(120, 56),
+        anchor: new gmaps.Point(60, 50),
       });
       marker.setZIndex(isSelected ? 999 : 1);
     });

@@ -80,10 +80,17 @@ export default function Header({
             decoding="async"
           />
           <span
-            className={`font-extrabold tracking-tight truncate ${brandTextClass}`}
-            style={{ textShadow: transparentTextShadow }}
+            className={`truncate ${brandTextClass}`}
+            style={{
+              fontSize: 'clamp(20px, 2.2vw, 24px)',
+              letterSpacing: '-0.03em',
+              fontWeight: 800,
+              textShadow: transparentTextShadow,
+              lineHeight: 1,
+            }}
           >
-            Xpress<span style={{ color: theme.accent }}>BnB</span>
+            <span>Xpress</span>
+            <span style={{ color: '#34D399' }}>BnB</span>
           </span>
         </button>
 
@@ -135,7 +142,7 @@ export default function Header({
               onClick={onHostLoginClick}
               className="rounded-full px-3.5 sm:px-5 md:px-6 py-2 md:py-2.5 font-bold text-xs sm:text-sm transition-all hover:scale-[1.03] whitespace-nowrap bg-xpx-warm hover:bg-xpx-warm-dark text-white shadow-md"
               style={{
-                boxShadow: '0 6px 18px rgba(80,200,120,0.28)',
+                boxShadow: '0 6px 16px rgba(5,150,105,0.22)',
               }}
             >
               Host Login

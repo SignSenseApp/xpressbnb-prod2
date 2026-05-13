@@ -4,13 +4,15 @@ import { generateDemandForecast } from '../../lib/premiumData';
 import PremiumFeatureWrapper from './PremiumFeatureWrapper';
 
 interface DemandForecastProps {
-  property: any;
+  // Kept for API compatibility with the other premium cards. The current
+  // forecast doesn't read property fields, so the parameter is unused.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  property?: any;
   locked?: boolean;
   onUpgrade?: () => void;
 }
 
 export default function DemandForecast({
-  property,
   locked = false,
   onUpgrade,
 }: DemandForecastProps) {

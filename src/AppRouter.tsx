@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import PublicSite from './PublicSite';
 import PropertyPage from './pages/PropertyPage';
+import BookingConfirmationPage from './pages/BookingConfirmationPage';
 import CityListingPage from './pages/CityListingPage';
 import RishikeshStaysPage from './pages/RishikeshStaysPage';
 import NewHomepage from './components/NewHomepage';
@@ -81,7 +82,11 @@ export default function AppRouter() {
 
   const renderContent = () => {
     if (currentPath.startsWith('/auth')) {
-      return <AuthRouter onClose={() => {}} />;
+      return <AuthRouter />;
+    }
+
+    if (currentPath.startsWith('/booking/')) {
+      return <BookingConfirmationPage />;
     }
 
     if (currentPath.startsWith('/property/')) {

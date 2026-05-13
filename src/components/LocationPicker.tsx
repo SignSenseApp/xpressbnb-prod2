@@ -24,10 +24,18 @@ export default function LocationPicker({
   longitude,
   onLocationChange,
 }: LocationPickerProps) {
+  // Subset of the Nominatim search response we actually read. The API
+  // returns many more fields; we keep this narrow on purpose.
+  interface NominatimResult {
+    display_name: string;
+    lat: string;
+    lon: string;
+  }
+
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const [suggestions, setSuggestions] = useState<NominatimResult[]>([]);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const searchLocation = async (query: string) => {
     if (!query || query.length < 3) {
@@ -68,7 +76,7 @@ export default function LocationPicker({
     };
   }, [searchQuery]);
 
-  const handleSelectLocation = (location: any) => {
+  const handleSelectLocation = (location: NominatimResult) => {
     const addressParts = location.display_name.split(', ');
 
     onLocationChange({

@@ -2,10 +2,17 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Calendar, Link as LinkIcon, Plus, Trash2, RefreshCw, Copy, Check } from 'lucide-react';
+import type { Property } from '../../lib/database.types';
+
+// Shape of each entry in `properties.external_calendars` (a JSONB array).
+interface ExternalCalendarEntry {
+  name?: string;
+  url?: string;
+}
 
 export default function CalendarSyncPage() {
   const { host } = useAuth();
-  const [properties, setProperties] = useState<any[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -136,7 +143,7 @@ export default function CalendarSyncPage() {
                   </h4>
                   {property.external_calendars && property.external_calendars.length > 0 ? (
                     <div className="space-y-2">
-                      {property.external_calendars.map((cal: any, index: number) => (
+                      {(property.external_calendars as unknown as ExternalCalendarEntry[]).map((cal, index) => (
                         <div
                           key={index}
                           className="flex items-center justify-between p-3 rounded-xl gap-3"

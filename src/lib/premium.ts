@@ -1,11 +1,16 @@
 import { supabase } from './supabase';
 
+// `premium_plan` is currently stored as a free-form string in the DB (see
+// database.types.ts → properties.premium_plan: string). Keep this contract
+// permissive so the premium helpers work with rows that haven't been
+// constrained to the FREE/PAID literal set yet. We deliberately omit
+// `listing_type` here — the helpers below never read it — so any minimal
+// projection of a property row can be passed in.
 export interface Property {
   id: string;
   is_premium: boolean;
-  premium_plan: 'FREE' | 'PAID';
+  premium_plan: string;
   premium_expiry: string | null;
-  listing_type: 'free' | 'paid';
 }
 
 export const PREMIUM_PRICE = 999;

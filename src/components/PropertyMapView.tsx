@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { Property } from '../lib/database.types';
+// `window.google` is typed in src/types/google-maps.d.ts and is picked up
+// by `tsc` via the `include: ["src"]` setting in tsconfig.app.json.
 
 interface PropertyMapViewProps {
   property: Property;
@@ -7,7 +9,6 @@ interface PropertyMapViewProps {
 
 declare global {
   interface Window {
-    google: any;
     initPropertyMap: () => void;
   }
 }
@@ -31,16 +32,17 @@ export default function PropertyMapView({ property }: PropertyMapViewProps) {
     if (!apiKey || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') return;
 
     const initMap = () => {
-      if (!mapRef.current || !window.google) return;
+      const gmaps = window.google?.maps;
+      if (!mapRef.current || !gmaps) return;
 
-      const map = new window.google.maps.Map(mapRef.current, {
+      const map = new gmaps.Map(mapRef.current, {
         center: { lat: property.latitude, lng: property.longitude },
         zoom: 15,
         styles: MAP_STYLES,
         disableDefaultUI: true,
         zoomControl: true,
         zoomControlOptions: {
-          position: window.google.maps.ControlPosition.RIGHT_CENTER,
+          position: gmaps.ControlPosition.RIGHT_CENTER,
         },
         gestureHandling: 'cooperative',
       });
@@ -75,11 +77,11 @@ export default function PropertyMapView({ property }: PropertyMapViewProps) {
 
       const markerIcon = {
         url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(pinSvg),
-        scaledSize: new window.google.maps.Size(120, 56),
-        anchor: new window.google.maps.Point(60, 50),
+        scaledSize: new gmaps.Size(120, 56),
+        anchor: new gmaps.Point(60, 50),
       };
 
-      const marker = new window.google.maps.Marker({
+      const marker = new gmaps.Marker({
         position: { lat: property.latitude, lng: property.longitude },
         map,
         title: property.title,
@@ -93,7 +95,7 @@ export default function PropertyMapView({ property }: PropertyMapViewProps) {
           <p style="color:#50C878;font-weight:600;font-size:13px;margin:0;">${formattedPrice}/night</p>
         </div>
       `;
-      const infoWindow = new window.google.maps.InfoWindow({ content: infoContent });
+      const infoWindow = new gmaps.InfoWindow({ content: infoContent });
 
       marker.addListener('click', () => {
         infoWindow.open(map, marker);
