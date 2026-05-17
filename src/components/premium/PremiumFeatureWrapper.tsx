@@ -25,7 +25,7 @@ export default function PremiumFeatureWrapper({
 
       <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm">
         <div className="text-center p-6 max-w-sm">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full mb-3">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-full mb-3">
             <Lock className="w-6 h-6 text-white" />
           </div>
 
@@ -42,7 +42,7 @@ export default function PremiumFeatureWrapper({
 
           <button
             onClick={onUpgrade}
-            className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-md hover:shadow-lg"
+            className="px-6 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-semibold rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md hover:shadow-lg"
           >
             Upgrade Now
           </button>

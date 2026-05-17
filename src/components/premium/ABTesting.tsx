@@ -82,8 +82,8 @@ export default function ABTesting({ property, locked = false, onUpgrade }: ABTes
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-100 rounded-lg">
-            <FlaskConical className="w-6 h-6 text-purple-600" />
+          <div className="p-2 bg-emerald-100 rounded-lg">
+            <FlaskConical className="w-6 h-6 text-emerald-600" />
           </div>
           <div>
             <h3 className="text-lg font-bold text-gray-900">A/B Testing</h3>
@@ -93,14 +93,14 @@ export default function ABTesting({ property, locked = false, onUpgrade }: ABTes
 
         <button
           onClick={() => setShowCreateTest(!showCreateTest)}
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+          className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium"
         >
           {showCreateTest ? 'Cancel' : '+ New Test'}
         </button>
       </div>
 
       {showCreateTest && (
-        <div className="mb-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+        <div className="mb-6 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
           <h4 className="font-semibold text-gray-900 mb-3">Create New A/B Test</h4>
 
           <div className="space-y-3">
@@ -111,7 +111,7 @@ export default function ABTesting({ property, locked = false, onUpgrade }: ABTes
                   onClick={() => setNewTestType('title')}
                   className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     newTestType === 'title'
-                      ? 'bg-purple-600 text-white'
+                      ? 'bg-emerald-600 text-white'
                       : 'bg-white text-gray-700 border border-gray-300'
                   }`}
                 >
@@ -121,7 +121,7 @@ export default function ABTesting({ property, locked = false, onUpgrade }: ABTes
                   onClick={() => setNewTestType('cover_image')}
                   className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     newTestType === 'cover_image'
-                      ? 'bg-purple-600 text-white'
+                      ? 'bg-emerald-600 text-white'
                       : 'bg-white text-gray-700 border border-gray-300'
                   }`}
                 >
@@ -141,7 +141,7 @@ export default function ABTesting({ property, locked = false, onUpgrade }: ABTes
                 placeholder={
                   newTestType === 'title' ? 'Current title' : 'Current image URL'
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
@@ -156,13 +156,13 @@ export default function ABTesting({ property, locked = false, onUpgrade }: ABTes
                 placeholder={
                   newTestType === 'title' ? 'New title to test' : 'New image URL'
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
             <button
               disabled={!variantAValue || !variantBValue}
-              className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               Start Test
             </button>
@@ -179,7 +179,7 @@ export default function ABTesting({ property, locked = false, onUpgrade }: ABTes
           </p>
           <button
             onClick={() => setShowCreateTest(true)}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
           >
             Create Test
           </button>
@@ -285,11 +285,11 @@ export default function ABTesting({ property, locked = false, onUpgrade }: ABTes
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-200">
+                <div className="bg-gradient-to-r from-emerald-50 to-emerald-50 rounded-lg p-3 border border-emerald-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-purple-600" />
-                      <span className="text-sm font-medium text-purple-900">
+                      <TrendingUp className="w-4 h-4 text-emerald-600" />
+                      <span className="text-sm font-medium text-emerald-900">
                         {test.winner
                           ? `Variant ${test.winner} is performing ${Math.abs(
                               test.variantB.ctr - test.variantA.ctr
@@ -297,7 +297,7 @@ export default function ABTesting({ property, locked = false, onUpgrade }: ABTes
                           : 'Test in progress, collecting data...'}
                       </span>
                     </div>
-                    <span className="text-xs text-purple-700 font-medium">
+                    <span className="text-xs text-emerald-700 font-medium">
                       {test.confidence}% confidence
                     </span>
                   </div>

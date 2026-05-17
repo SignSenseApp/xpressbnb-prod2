@@ -121,7 +121,7 @@ export default function PropertyMapView({ property }: PropertyMapViewProps) {
 
   if (!apiKey || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
     return (
-      <div className="w-full h-full bg-gradient-to-br from-pink-50 via-rose-50 to-pink-100 flex items-center justify-center">
+      <div className="w-full h-full bg-gradient-to-br from-emerald-50 via-rose-50 to-pink-100 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600 font-semibold">Map view unavailable</p>
           <p className="text-sm text-gray-500 mt-1">Configure Google Maps API key</p>

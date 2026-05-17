@@ -21,7 +21,7 @@ export default function HostGrowthScore({
   const getScoreGradient = (value: number) => {
     if (value >= 70) return 'from-green-500 to-emerald-500';
     if (value >= 50) return 'from-yellow-500 to-orange-500';
-    return 'from-red-500 to-pink-500';
+    return 'from-red-500 to-emerald-500';
   };
 
   const getTrendIcon = () => {
@@ -163,7 +163,7 @@ export default function HostGrowthScore({
           {score.suggestions.map((suggestion, index) => (
             <div
               key={index}
-              className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200"
+              className="p-4 bg-gradient-to-r from-blue-50 to-emerald-50 rounded-lg border border-blue-200"
             >
               <div className="flex items-start justify-between mb-2">
                 <h5 className="font-semibold text-gray-900">{suggestion.title}</h5>

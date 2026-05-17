@@ -26,7 +26,7 @@ export default function DemandForecast({
       case 'medium':
         return 'from-yellow-500 to-orange-500';
       case 'low':
-        return 'from-red-500 to-pink-500';
+        return 'from-red-500 to-emerald-500';
       default:
         return 'from-gray-500 to-gray-600';
     }
@@ -62,8 +62,8 @@ export default function DemandForecast({
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-100 rounded-lg">
-            <Calendar className="w-6 h-6 text-indigo-600" />
+          <div className="p-2 bg-emerald-100 rounded-lg">
+            <Calendar className="w-6 h-6 text-emerald-600" />
           </div>
           <div>
             <h3 className="text-lg font-bold text-gray-900">Demand Forecast</h3>
@@ -76,7 +76,7 @@ export default function DemandForecast({
             onClick={() => setSelectedPeriod('7_day')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               selectedPeriod === '7_day'
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-emerald-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -86,7 +86,7 @@ export default function DemandForecast({
             onClick={() => setSelectedPeriod('30_day')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               selectedPeriod === '30_day'
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-emerald-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -127,16 +127,16 @@ export default function DemandForecast({
 
       <div className="mb-6">
         <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-indigo-600" />
+          <TrendingUp className="w-4 h-4 text-emerald-600" />
           Key Factors
         </h4>
         <div className="space-y-2">
           {forecast.reasons.map((reason, index) => (
             <div
               key={index}
-              className="flex items-start gap-2 p-3 bg-indigo-50 rounded-lg border border-indigo-200"
+              className="flex items-start gap-2 p-3 bg-emerald-50 rounded-lg border border-emerald-200"
             >
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 flex-shrink-0" />
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0" />
               <p className="text-sm text-gray-700">{reason}</p>
             </div>
           ))}

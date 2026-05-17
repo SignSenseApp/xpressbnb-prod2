@@ -94,14 +94,14 @@ export default function AIHostCoach({ property, locked = false, onUpgrade }: AIH
 
   const content = (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-4">
+      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 p-4">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-white/20 rounded-lg">
             <Sparkles className="w-6 h-6 text-white" />
           </div>
           <div>
             <h3 className="text-lg font-bold text-white">AI Host Coach</h3>
-            <p className="text-sm text-purple-100">24/7 personalized guidance for your property</p>
+            <p className="text-sm text-emerald-100">24/7 personalized guidance for your property</p>
           </div>
         </div>
       </div>
@@ -114,7 +114,7 @@ export default function AIHostCoach({ property, locked = false, onUpgrade }: AIH
               className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {message.role === 'assistant' && (
-                <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
+                <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-full flex items-center justify-center">
                   <Bot className="w-5 h-5 text-white" />
                 </div>
               )}
@@ -122,14 +122,14 @@ export default function AIHostCoach({ property, locked = false, onUpgrade }: AIH
               <div
                 className={`max-w-[80%] rounded-lg p-3 ${
                   message.role === 'user'
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
+                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white'
                     : 'bg-white border border-gray-200 text-gray-900'
                 }`}
               >
                 <p className="text-sm whitespace-pre-line">{message.content}</p>
                 <p
                   className={`text-xs mt-1 ${
-                    message.role === 'user' ? 'text-purple-100' : 'text-gray-500'
+                    message.role === 'user' ? 'text-emerald-100' : 'text-gray-500'
                   }`}
                 >
                   {message.timestamp.toLocaleTimeString([], {
@@ -149,7 +149,7 @@ export default function AIHostCoach({ property, locked = false, onUpgrade }: AIH
 
           {isTyping && (
             <div className="flex gap-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
+              <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-full flex items-center justify-center">
                 <Bot className="w-5 h-5 text-white" />
               </div>
               <div className="bg-white border border-gray-200 rounded-lg p-3">
@@ -172,7 +172,7 @@ export default function AIHostCoach({ property, locked = false, onUpgrade }: AIH
               <button
                 key={index}
                 onClick={() => handleQuickQuestion(question)}
-                className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-medium rounded-full border border-purple-200 transition-colors"
+                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full border border-emerald-200 transition-colors"
               >
                 {question}
               </button>
@@ -189,12 +189,12 @@ export default function AIHostCoach({ property, locked = false, onUpgrade }: AIH
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Ask me anything about improving your listing..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim()}
-            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             <Send className="w-5 h-5" />
           </button>

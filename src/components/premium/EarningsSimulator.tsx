@@ -214,9 +214,9 @@ export default function EarningsSimulator({
             ).toLocaleString()}
           </div>
         </div>
-        <div className="p-3 bg-purple-50 rounded-lg border border-purple-200 text-center">
-          <div className="text-xs text-purple-700 mb-1">Annual Projection</div>
-          <div className="text-lg font-bold text-purple-900">
+        <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-center">
+          <div className="text-xs text-emerald-700 mb-1">Annual Projection</div>
+          <div className="text-lg font-bold text-emerald-900">
             ₹{(netEarnings * 12).toLocaleString()}
           </div>
         </div>

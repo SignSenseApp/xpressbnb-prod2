@@ -19,19 +19,32 @@ import ReviewsPage from './pages/host/ReviewsPage';
 import SubscriptionPage from './pages/host/SubscriptionPage';
 import SupportPage from './pages/host/SupportPage';
 import ImportPage from './pages/host/ImportPage';
+import AboutPage from './components/AboutPage';
+import BlogPage from './components/BlogPage';
 import Preloader from './components/Preloader';
 import MobileBottomNav from './components/MobileBottomNav';
+import { closeHomeOverlay, getHomeOverlayPage } from './lib/navigation';
+
+function syncLocation() {
+  return {
+    path: window.location.pathname,
+    key: `${window.location.pathname}${window.location.search}`,
+  };
+}
 
 export default function AppRouter() {
   const { user, host, loading } = useAuth();
-  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  const [currentPath, setCurrentPath] = useState(() => syncLocation().path);
+  const [locationKey, setLocationKey] = useState(() => syncLocation().key);
   const [isRouteLoading, setIsRouteLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     const handlePopState = () => {
       setIsRouteLoading(true);
-      setCurrentPath(window.location.pathname);
+      const loc = syncLocation();
+      setCurrentPath(loc.path);
+      setLocationKey(loc.key);
       setTimeout(() => setIsRouteLoading(false), 300);
     };
     window.addEventListener('popstate', handlePopState);
@@ -54,7 +67,7 @@ export default function AppRouter() {
       const timer = setTimeout(() => setIsRouteLoading(false), 300);
       return () => clearTimeout(timer);
     }
-  }, [currentPath, isInitialLoad]);
+  }, [currentPath, locationKey, isInitialLoad]);
 
   useEffect(() => {
     if (!loading && user && host) {
@@ -62,30 +75,20 @@ export default function AppRouter() {
       // creates a temporary session for PASSWORD_RECOVERY and we must let the
       // user complete the form before redirecting anywhere else.
       const isResettingPassword = currentPath.startsWith('/auth/reset-password');
+      const homeOverlay = getHomeOverlayPage();
       const shouldRedirectToDashboard =
         !isResettingPassword &&
+        !homeOverlay &&
         (currentPath.startsWith('/auth') || currentPath === '/' || currentPath === '/host');
       if (shouldRedirectToDashboard) {
         const dashboardPath = `/host/${host.id}/dashboard/overview`;
-        // #region agent log
-        fetch('http://127.0.0.1:7309/ingest/3b31d44b-bafe-4429-b25d-b5d1550a4355', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'adac9b' },
-          body: JSON.stringify({
-            sessionId: 'adac9b',
-            hypothesisId: 'B',
-            location: 'AppRouter.tsx:auth-redirect-effect',
-            message: 'redirecting authenticated host to dashboard',
-            data: { fromPath: currentPath, toPath: dashboardPath },
-            timestamp: Date.now(),
-          }),
-        }).catch(() => {});
-        // #endregion
         window.history.pushState({}, '', dashboardPath);
-        setCurrentPath(dashboardPath);
+        const loc = syncLocation();
+        setCurrentPath(loc.path);
+        setLocationKey(loc.key);
       }
     }
-  }, [user, host, loading, currentPath]);
+  }, [user, host, loading, currentPath, locationKey]);
 
   const showPreloader = loading || isRouteLoading;
 
@@ -94,37 +97,7 @@ export default function AppRouter() {
   }
 
   const renderContent = () => {
-    // #region agent log
-    const resolveRouteBranch = (): string => {
-      if (currentPath.startsWith('/auth')) return 'auth';
-      if (currentPath.startsWith('/booking/')) return 'booking';
-      if (currentPath.startsWith('/property/')) return 'property';
-      if (currentPath.startsWith('/stays/')) return 'stays';
-      if (user && host && currentPath.startsWith('/host/')) return 'host-dashboard';
-      if (currentPath === '/' || currentPath === '') return 'new-homepage';
-      return 'new-homepage-fallback';
-    };
-    const routeBranch = resolveRouteBranch();
-    fetch('http://127.0.0.1:7309/ingest/3b31d44b-bafe-4429-b25d-b5d1550a4355', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'adac9b' },
-      body: JSON.stringify({
-        sessionId: 'adac9b',
-        hypothesisId: 'A',
-        location: 'AppRouter.tsx:renderContent',
-        message: 'route branch resolved',
-        data: {
-          routeBranch,
-          currentPath,
-          pathname: typeof window !== 'undefined' ? window.location.pathname : '',
-          hasUser: Boolean(user),
-          hasHost: Boolean(host),
-          loading,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
+    void locationKey;
 
     if (currentPath.startsWith('/auth')) {
       return <AuthRouter />;
@@ -178,13 +151,23 @@ export default function AppRouter() {
       }
     }
 
+    const homeOverlay = getHomeOverlayPage();
+    if (homeOverlay === 'about') {
+      return <AboutPage onClose={closeHomeOverlay} />;
+    }
+    if (homeOverlay === 'blog') {
+      return <BlogPage onClose={closeHomeOverlay} />;
+    }
+
     return <NewHomepage />;
   };
 
   const handleNavigate = (path: string) => {
     setIsRouteLoading(true);
     window.history.pushState({}, '', path);
-    setCurrentPath(path);
+    const loc = syncLocation();
+    setCurrentPath(loc.path);
+    setLocationKey(loc.key);
     setTimeout(() => setIsRouteLoading(false), 300);
   };
 

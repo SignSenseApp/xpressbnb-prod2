@@ -1,5 +1,3 @@
-import { xpLogoAbsoluteUrl } from './branding';
-
 // Loose JSON-LD payload: schema.org documents contain arbitrarily nested
 // strings/numbers/arrays/objects, so we model it as a JSON-shaped record.
 export type JsonLdValue =

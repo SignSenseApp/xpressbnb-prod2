@@ -385,7 +385,7 @@ export default function PropertyPage() {
                     onClick={handleInstagramShare}
                     className="w-full px-4 py-3 text-left hover:bg-slate-100 transition-colors flex items-center gap-3"
                   >
-                    <div className="w-9 h-9 bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 rounded-full flex items-center justify-center">
+                    <div className="w-9 h-9 bg-gradient-to-br from-emerald-600 via-emerald-700 to-orange-500 rounded-full flex items-center justify-center">
                       <svg
                         className="w-4 h-4 text-white"
                         fill="currentColor"

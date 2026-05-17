@@ -46,8 +46,8 @@ export const theme = {
   /** @deprecated use `accent` — kept for any legacy reference */
   mint: '#059669',
 
-  accent2: '#A78BFA',
-  accent2Soft: 'rgba(167,139,250,0.14)',
+  accent2: '#059669',
+  accent2Soft: 'rgba(5,150,105,0.14)',
 
   success: '#059669',
   warning: '#64748B',

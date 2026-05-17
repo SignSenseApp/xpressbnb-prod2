@@ -67,12 +67,12 @@ export default function VisibilityDiagnostics({
           </div>
         </div>
 
-        <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-200">
-          <div className="text-sm text-purple-700 font-medium mb-1">Conversion Rate</div>
-          <div className="text-3xl font-bold text-purple-600">
+        <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg border border-emerald-200">
+          <div className="text-sm text-emerald-700 font-medium mb-1">Conversion Rate</div>
+          <div className="text-3xl font-bold text-emerald-600">
             {diagnostics.conversionRate}%
           </div>
-          <div className="mt-2 text-xs text-purple-600">Views to bookings</div>
+          <div className="mt-2 text-xs text-emerald-600">Views to bookings</div>
         </div>
 
         <div

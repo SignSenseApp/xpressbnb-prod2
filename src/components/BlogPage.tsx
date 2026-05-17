@@ -1,4 +1,5 @@
-import { X, MapPin, Clock, Shield, Home, Sparkles, TrendingUp, MessageCircle, Mail } from 'lucide-react';
+import { MapPin, Clock, Shield, Home, Sparkles, TrendingUp, MessageCircle, Mail } from 'lucide-react';
+import InfoOverlayShell from './InfoOverlayShell';
 
 interface BlogPageProps {
   onClose: () => void;
@@ -8,24 +9,9 @@ export default function BlogPage({ onClose }: BlogPageProps) {
   const whatsappLink = 'https://wa.me/message/NA2UB7SED5B3G1';
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm">
-      <div className="min-h-screen flex flex-col">
-        <div className="sticky top-0 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex justify-between items-center z-10 shadow-lg">
-          <div>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold">XpressBnB Blog</h2>
-            <p className="text-white/90 mt-1 text-sm sm:text-base">Stay Smart with XpressBnB.com</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-white/20 rounded-full transition-colors flex-shrink-0"
-          >
-            <X className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
-        </div>
+    <InfoOverlayShell title="XpressBnB Blog" subtitle="Stay smart with verified stays" onClose={onClose}>
+      <article className="space-y-8">
 
-        <div className="flex-1 flex items-start justify-center p-4">
-          <article className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl my-8">
-            <div className="p-4 sm:p-6 lg:p-8 space-y-8">
               <header className="space-y-4 border-b border-gray-200 pb-6">
                 <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
                   Couple Friendly Hourly Stays in Delhi NCR - Safe & Private Short-Term Rentals
@@ -66,9 +52,9 @@ export default function BlogPage({ onClose }: BlogPageProps) {
                 </p>
 
                 <div className="grid gap-6">
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 border-2 border-blue-200">
+                  <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl p-6 border-2 border-emerald-200">
                     <h3 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-blue-600" />
+                      <MapPin className="w-5 h-5 text-emerald-600" />
                       1. Delhi - Couple Friendly Hourly Hotels
                     </h3>
                     <p className="text-gray-700 leading-relaxed">
@@ -78,7 +64,7 @@ export default function BlogPage({ onClose }: BlogPageProps) {
                     </p>
                   </div>
 
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 border-2 border-purple-200">
+                  <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl p-6 border-2 border-emerald-200">
                     <h3 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
                       <MapPin className="w-5 h-5 text-[#3dae68]" />
                       2. Gurgaon – Premium Couple Safe Stays
@@ -237,48 +223,48 @@ export default function BlogPage({ onClose }: BlogPageProps) {
                 </p>
               </section>
 
-              <section className="bg-blue-50 rounded-2xl p-6 border-2 border-blue-200">
+              <section className="bg-emerald-50 rounded-2xl p-6 border-2 border-emerald-200">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Popular Searches (That Lead You Here)</h2>
                 <p className="text-gray-700 mb-4">Many couples find XpressBnB.com by searching for:</p>
                 <div className="grid sm:grid-cols-2 gap-2 text-sm text-gray-700">
                   <div className="flex items-center gap-2">
-                    <span className="text-blue-600">•</span>
+                    <span className="text-emerald-600">•</span>
                     <span>"Couple friendly stays Delhi NCR"</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-blue-600">•</span>
+                    <span className="text-emerald-600">•</span>
                     <span>"Couple safe stays Delhi"</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-blue-600">•</span>
+                    <span className="text-emerald-600">•</span>
                     <span>"Hourly stays for couples"</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-blue-600">•</span>
+                    <span className="text-emerald-600">•</span>
                     <span>"Hourly hotels Delhi"</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-blue-600">•</span>
+                    <span className="text-emerald-600">•</span>
                     <span>"Couple friendly hotels Gurgaon"</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-blue-600">•</span>
+                    <span className="text-emerald-600">•</span>
                     <span>"Private stays for couples Noida"</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-blue-600">•</span>
+                    <span className="text-emerald-600">•</span>
                     <span>"Hourly booking Noida"</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-blue-600">•</span>
+                    <span className="text-emerald-600">•</span>
                     <span>"Safe couple accommodation Delhi NCR"</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-blue-600">•</span>
+                    <span className="text-emerald-600">•</span>
                     <span>"Couple hotels Greater Noida"</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-blue-600">•</span>
+                    <span className="text-emerald-600">•</span>
                     <span>"Short stay for couples Delhi"</span>
                   </div>
                 </div>
@@ -335,18 +321,12 @@ export default function BlogPage({ onClose }: BlogPageProps) {
                 </div>
               </section>
 
-              <div className="pt-6 border-t border-gray-200">
-                <button
-                  onClick={onClose}
-                  className="w-full px-6 py-4 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white font-semibold rounded-xl hover:from-[#3dae68] hover:to-[#3dae68] transition-all shadow-lg"
-                >
-                  Back to Properties
-                </button>
-              </div>
-            </div>
-          </article>
+        <div className="pt-6 border-t border-xpx-border">
+          <button type="button" onClick={onClose} className="xpx-btn-primary w-full">
+            Back to home
+          </button>
         </div>
-      </div>
-    </div>
+      </article>
+    </InfoOverlayShell>
   );
 }

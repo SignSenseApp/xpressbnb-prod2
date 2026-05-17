@@ -88,7 +88,7 @@ export default function Preloader({ isLoading }: PreloaderProps) {
         <div
           className="absolute left-[8%] top-[18%] w-[320px] h-[320px] pointer-events-none"
           style={{
-            background: `radial-gradient(ellipse at center, rgba(167,139,250,0.18), transparent 70%)`,
+            background: `radial-gradient(ellipse at center, rgba(5,150,105,0.12), transparent 70%)`,
             filter: 'blur(48px)',
           }}
         />
