@@ -4,6 +4,7 @@ import PropertyPage from './pages/PropertyPage';
 import BookingConfirmationPage from './pages/BookingConfirmationPage';
 import CityListingPage from './pages/CityListingPage';
 import RishikeshStaysPage from './pages/RishikeshStaysPage';
+import ExploreCitiesPage from './pages/ExploreCitiesPage';
 import NewHomepage from './components/NewHomepage';
 import AuthRouter from './pages/auth/AuthRouter';
 import HostDashboardLayout from './pages/host/HostDashboardLayout';
@@ -96,6 +97,15 @@ export default function AppRouter() {
     return <Preloader isLoading={true} />;
   }
 
+  const handleNavigate = (path: string) => {
+    setIsRouteLoading(true);
+    window.history.pushState({}, '', path);
+    const loc = syncLocation();
+    setCurrentPath(loc.path);
+    setLocationKey(loc.key);
+    setTimeout(() => setIsRouteLoading(false), 300);
+  };
+
   const renderContent = () => {
     void locationKey;
 
@@ -109,6 +119,10 @@ export default function AppRouter() {
 
     if (currentPath.startsWith('/property/')) {
       return <PropertyPage />;
+    }
+
+    if (currentPath === '/explore' || currentPath === '/explore/') {
+      return <ExploreCitiesPage onNavigate={handleNavigate} />;
     }
 
     if (currentPath.startsWith('/stays/')) {
@@ -160,15 +174,6 @@ export default function AppRouter() {
     }
 
     return <NewHomepage />;
-  };
-
-  const handleNavigate = (path: string) => {
-    setIsRouteLoading(true);
-    window.history.pushState({}, '', path);
-    const loc = syncLocation();
-    setCurrentPath(loc.path);
-    setLocationKey(loc.key);
-    setTimeout(() => setIsRouteLoading(false), 300);
   };
 
   return (

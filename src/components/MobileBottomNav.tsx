@@ -10,7 +10,7 @@ interface MobileBottomNavProps {
 
 const TABS = [
   { id: 'home', label: 'Home', icon: Home, path: '/' },
-  { id: 'explore', label: 'Explore', icon: Compass, path: '/stays/delhi' },
+  { id: 'explore', label: 'Explore', icon: Compass, path: '/explore' },
   { id: 'saved', label: 'Saved', icon: Bookmark, path: '/' },
   { id: 'profile', label: 'Profile', icon: User, path: '/auth/login' },
 ] as const;
@@ -28,7 +28,7 @@ export default function MobileBottomNav({ currentPath, onNavigate }: MobileBotto
 
   const getActiveTab = () => {
     if (currentPath === '/' || currentPath === '') return 'home';
-    if (currentPath.startsWith('/stays/')) return 'explore';
+    if (currentPath === '/explore' || currentPath.startsWith('/stays/')) return 'explore';
     return 'home';
   };
 
