@@ -954,7 +954,7 @@ export default function NewHomepage() {
           borderTop: `1px solid ${FOOTER_DIVIDER}`,
         }}
       >
-        <div className="xpx-container pt-14 md:pt-16 pb-8 md:pb-9">
+        <div className="xpx-container pt-14 md:pt-16 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-9">
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))] gap-10 md:gap-10 mb-10 md:mb-11">
             <div>
               <div className="flex items-center gap-2.5 text-lg leading-none min-h-[40px]">
@@ -1038,8 +1038,6 @@ export default function NewHomepage() {
           </div>
         </div>
       </footer>
-
-      <div className="h-16 md:hidden" />
     </div>
   );
 }

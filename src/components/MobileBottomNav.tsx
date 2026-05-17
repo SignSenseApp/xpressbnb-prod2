@@ -1,4 +1,3 @@
-import { useEffect, useState, useRef } from 'react';
 import { Home, Compass, Bookmark, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -18,57 +17,6 @@ const TABS = [
 
 export default function MobileBottomNav({ currentPath, onNavigate }: MobileBottomNavProps) {
   const { user, host } = useAuth();
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastScrollTime = useRef(Date.now());
-  const rafRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        rafRef.current = window.requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-          const currentTime = Date.now();
-          const timeDiff = currentTime - lastScrollTime.current;
-
-          if (timeDiff > 50) {
-            lastScrollTime.current = currentTime;
-
-            if (currentScrollY > lastScrollY && currentScrollY > 50) {
-              setIsVisible(false);
-            } else if (currentScrollY < lastScrollY) {
-              setIsVisible(true);
-            }
-
-            setLastScrollY(currentScrollY);
-
-            if (scrollTimeoutRef.current) {
-              clearTimeout(scrollTimeoutRef.current);
-            }
-
-            scrollTimeoutRef.current = setTimeout(() => {
-              setIsVisible(true);
-            }, 300);
-          }
-
-          ticking = false;
-        });
-
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-      if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
-    };
-  }, [lastScrollY]);
 
   const shouldHide =
     currentPath.startsWith('/auth') ||
@@ -106,12 +54,7 @@ export default function MobileBottomNav({ currentPath, onNavigate }: MobileBotto
 
   return (
     <nav
-      className={`
-        fixed bottom-0 left-0 right-0 z-40 md:hidden
-        transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
-        ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}
-      `}
-      style={{ willChange: 'transform, opacity' }}
+      className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
       aria-label="Primary"
     >
       <div

@@ -8,6 +8,13 @@ import { setLenisInstance } from '../lib/smoothScroll';
  */
 export default function SmoothScrollRoot({ children }: { children: React.ReactNode }) {
   useEffect(() => {
+    const isNarrow = window.matchMedia('(max-width: 768px)').matches;
+
+    if (isNarrow) {
+      setLenisInstance(null);
+      return;
+    }
+
     const lenis = new Lenis({
       autoRaf: true,
       smoothWheel: true,
