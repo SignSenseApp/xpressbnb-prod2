@@ -19,7 +19,7 @@ export const LIVE_EXPLORE_CITIES: ExploreCity[] = [
     name: 'Delhi',
     slug: 'delhi',
     status: 'live',
-    tagline: 'Capital stays · couple-friendly',
+    tagline: 'Couple-friendly stays in the capital',
     vibe: 'Metro & business',
     hook: 'Hourly & full-day — no brokerage',
     image:
@@ -30,7 +30,7 @@ export const LIVE_EXPLORE_CITIES: ExploreCity[] = [
     name: 'Gurgaon',
     slug: 'gurgaon',
     status: 'live',
-    tagline: 'Millennium City premium',
+    tagline: 'Premium homes across Gurgaon',
     vibe: 'Corporate · nightlife',
     hook: 'Verified homes in Sector corridors',
     image:
@@ -41,7 +41,7 @@ export const LIVE_EXPLORE_CITIES: ExploreCity[] = [
     name: 'Noida',
     slug: 'noida',
     status: 'live',
-    tagline: 'Tech hub stays',
+    tagline: 'Modern verified apartments',
     vibe: 'Modern · spacious',
     hook: 'Direct from hosts — best price',
     image:
@@ -52,7 +52,7 @@ export const LIVE_EXPLORE_CITIES: ExploreCity[] = [
     name: 'Greater Noida',
     slug: 'greater-noida',
     status: 'live',
-    tagline: 'Wide roads, calm stays',
+    tagline: 'Spacious stays for families',
     vibe: 'Family · weekend',
     hook: 'Spacious flats & retreats',
     image:
@@ -63,7 +63,7 @@ export const LIVE_EXPLORE_CITIES: ExploreCity[] = [
     name: 'Rishikesh',
     slug: 'rishikesh',
     status: 'live',
-    tagline: 'Ganga views & yoga retreats',
+    tagline: 'Riverside retreats & yoga stays',
     vibe: 'Spiritual · nature',
     hook: 'Riverside cottages & boutique hotels',
     image:
