@@ -6,13 +6,17 @@ import pngToIco from 'png-to-ico';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
-const src = path.join(root, 'public', 'main-xpx-logo.png');
-const out = path.join(root, 'public', 'favicon.ico');
-const appleOut = path.join(root, 'public', 'apple-touch-icon.png');
+const publicDir = path.join(root, 'public');
+const src = path.join(publicDir, 'main-xpx-logo.png');
 
-const sizes = [16, 32, 48];
+if (!fs.existsSync(src)) {
+  console.error('Missing', src, '— add the XpressBnB logo PNG to public/ first.');
+  process.exit(1);
+}
+
+const icoSizes = [16, 32, 48];
 const pngBuffers = await Promise.all(
-  sizes.map((s) =>
+  icoSizes.map((s) =>
     sharp(src)
       .resize(s, s, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
       .png()
@@ -20,12 +24,25 @@ const pngBuffers = await Promise.all(
   )
 );
 
-const buf = await pngToIco(pngBuffers);
-fs.writeFileSync(out, buf);
-console.log('Wrote', out, `(${buf.length} bytes) from`, src);
+fs.writeFileSync(path.join(publicDir, 'favicon.ico'), await pngToIco(pngBuffers));
 
-await sharp(src)
-  .resize(180, 180, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } })
-  .png()
-  .toFile(appleOut);
-console.log('Wrote', appleOut);
+const exports = [
+  { name: 'favicon-48.png', size: 48 },
+  { name: 'favicon-192.png', size: 192 },
+  { name: 'apple-touch-icon.png', size: 180 },
+  { name: 'icon-512.png', size: 512 },
+];
+
+for (const { name, size } of exports) {
+  const out = path.join(publicDir, name);
+  await sharp(src)
+    .resize(size, size, {
+      fit: 'contain',
+      background: { r: 255, g: 255, b: 255, alpha: name.includes('apple') ? 1 : 0 },
+    })
+    .png()
+    .toFile(out);
+  console.log('Wrote', out);
+}
+
+console.log('Wrote', path.join(publicDir, 'favicon.ico'));

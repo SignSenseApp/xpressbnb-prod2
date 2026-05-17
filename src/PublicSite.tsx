@@ -9,6 +9,7 @@ import SEOHead from './components/SEOHead';
 import { supabase } from './lib/supabase';
 import { generateOrganizationStructuredData } from './lib/seo';
 import type { Property } from './lib/database.types';
+import { normalizeCityBucket } from './lib/cityBuckets';
 
 export default function PublicSite() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -79,10 +80,15 @@ export default function PublicSite() {
     let filtered = properties;
 
     if (selectedCity === 'Delhi NCR') {
-      const ncrCities = ['Delhi', 'Gurgaon', 'Noida', 'Greater Noida', 'Ghaziabad'];
-      filtered = filtered.filter(property => ncrCities.includes(property.city));
+      const ncrBuckets = new Set(['Delhi', 'Gurgaon', 'Noida', 'Greater Noida', 'Ghaziabad']);
+      filtered = filtered.filter(property => {
+        const bucket = normalizeCityBucket(property.city);
+        return bucket != null && ncrBuckets.has(bucket);
+      });
     } else if (selectedCity !== 'all') {
-      filtered = filtered.filter(property => property.city === selectedCity);
+      filtered = filtered.filter(
+        property => normalizeCityBucket(property.city) === selectedCity
+      );
     }
 
     setFilteredProperties(filtered);

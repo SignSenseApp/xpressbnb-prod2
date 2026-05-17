@@ -7,6 +7,7 @@ import type { Property } from '../lib/database.types';
 import { theme } from '../lib/theme';
 import { buildTeamWhatsAppLink } from '../lib/team';
 import { parseTripFromSearch, formatTripChip } from '../lib/tripSearch';
+import { cityDbInList } from '../lib/cityBuckets';
 
 interface CityListingPageProps {
   city: string;
@@ -106,13 +107,12 @@ export default function CityListingPage({ city }: CityListingPageProps) {
   const loadProperties = async () => {
     setLoading(true);
     try {
-      // ilike is case/whitespace tolerant — protects against rows where the
-      // city was entered as "rishikesh", " Delhi ", etc.
+      // Match canonical city + legacy spellings (e.g. Gurugram vs Gurgaon, New Delhi).
       const { data, error } = await supabase
         .from('properties')
         .select('*')
         .eq('is_active', true)
-        .ilike('city', cityName)
+        .in('city', cityDbInList(cityName))
         .order('is_verified', { ascending: false })
         .order('rating', { ascending: false });
 
@@ -188,7 +188,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
         }}
       >
         {/* Top bar */}
-        <div className="flex items-center gap-3 px-4 py-3">
+        <div className="xpx-container flex items-center gap-3 py-3.5 sm:py-4">
           <button
             onClick={() => window.history.back()}
             className="p-2 -ml-1 hover:bg-slate-100 rounded-full transition-colors active:scale-95 text-xpx-text"
@@ -228,7 +228,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
 
         {tripChipLabel && (
           <div
-            className="px-4 pb-2 flex items-center gap-2 text-xs font-medium"
+            className="xpx-container pb-2.5 flex items-center gap-2 text-xs font-medium"
             style={{ color: 'var(--xpx-muted)' }}
           >
             <Calendar className="w-3.5 h-3.5 shrink-0" style={{ color: theme.accent }} aria-hidden />
@@ -237,7 +237,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
         )}
 
         {/* Quick filter chips + sort — momentum-scroll horizontally on mobile */}
-        <div className="flex items-center gap-2 px-4 pb-3 overflow-x-auto scrollbar-hide scroll-momentum">
+        <div className="xpx-container flex items-center gap-2.5 pb-3.5 sm:pb-4 overflow-x-auto scrollbar-hide scroll-momentum">
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value as typeof sortBy)}
@@ -280,7 +280,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
       {/* City hero banner */}
       {!loading && properties.length > 0 && (
         <div
-          className="px-4 py-5"
+          className="xpx-container py-6 sm:py-7"
           style={{
             background:
               'linear-gradient(120deg, rgba(80,200,120,0.16) 0%, var(--xpx-surface-light) 60%, var(--xpx-base) 100%)',
@@ -313,7 +313,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
       )}
 
       {/* Grid */}
-      <div className="max-w-7xl mx-auto px-4 pt-5 pb-28">
+      <div className="xpx-container pt-6 sm:pt-8 pb-28">
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             {Array.from({ length: 8 }).map((_, i) => (

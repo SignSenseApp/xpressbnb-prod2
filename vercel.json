@@ -12,6 +12,15 @@
   ],
   "headers": [
     {
+      "source": "/(favicon\\.ico|favicon-48\\.png|favicon-192\\.png|icon-512\\.png|apple-touch-icon\\.png|main-xpx-logo\\.png|favicon\\.svg|site\\.webmanifest)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, must-revalidate"
+        }
+      ]
+    },
+    {
       "source": "/assets/(.*)",
       "headers": [
         {

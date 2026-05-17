@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from './contexts/AuthContext';
-import PublicSite from './PublicSite';
 import PropertyPage from './pages/PropertyPage';
 import BookingConfirmationPage from './pages/BookingConfirmationPage';
 import CityListingPage from './pages/CityListingPage';
@@ -68,6 +67,20 @@ export default function AppRouter() {
         (currentPath.startsWith('/auth') || currentPath === '/' || currentPath === '/host');
       if (shouldRedirectToDashboard) {
         const dashboardPath = `/host/${host.id}/dashboard/overview`;
+        // #region agent log
+        fetch('http://127.0.0.1:7309/ingest/3b31d44b-bafe-4429-b25d-b5d1550a4355', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'adac9b' },
+          body: JSON.stringify({
+            sessionId: 'adac9b',
+            hypothesisId: 'B',
+            location: 'AppRouter.tsx:auth-redirect-effect',
+            message: 'redirecting authenticated host to dashboard',
+            data: { fromPath: currentPath, toPath: dashboardPath },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
         window.history.pushState({}, '', dashboardPath);
         setCurrentPath(dashboardPath);
       }
@@ -81,6 +94,38 @@ export default function AppRouter() {
   }
 
   const renderContent = () => {
+    // #region agent log
+    const resolveRouteBranch = (): string => {
+      if (currentPath.startsWith('/auth')) return 'auth';
+      if (currentPath.startsWith('/booking/')) return 'booking';
+      if (currentPath.startsWith('/property/')) return 'property';
+      if (currentPath.startsWith('/stays/')) return 'stays';
+      if (user && host && currentPath.startsWith('/host/')) return 'host-dashboard';
+      if (currentPath === '/' || currentPath === '') return 'new-homepage';
+      return 'new-homepage-fallback';
+    };
+    const routeBranch = resolveRouteBranch();
+    fetch('http://127.0.0.1:7309/ingest/3b31d44b-bafe-4429-b25d-b5d1550a4355', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'adac9b' },
+      body: JSON.stringify({
+        sessionId: 'adac9b',
+        hypothesisId: 'A',
+        location: 'AppRouter.tsx:renderContent',
+        message: 'route branch resolved',
+        data: {
+          routeBranch,
+          currentPath,
+          pathname: typeof window !== 'undefined' ? window.location.pathname : '',
+          hasUser: Boolean(user),
+          hasHost: Boolean(host),
+          loading,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+
     if (currentPath.startsWith('/auth')) {
       return <AuthRouter />;
     }
@@ -133,11 +178,7 @@ export default function AppRouter() {
       }
     }
 
-    if (currentPath === '/' || currentPath === '') {
-      return <NewHomepage />;
-    }
-
-    return <PublicSite />;
+    return <NewHomepage />;
   };
 
   const handleNavigate = (path: string) => {

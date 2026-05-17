@@ -4,6 +4,11 @@ export const XPRESSBNB_LOGO_PATH = '/main-xpx-logo.png' as const;
 export const xpLogoAbsoluteUrl = (origin = 'https://xpressbnb.com') =>
   `${origin}${XPRESSBNB_LOGO_PATH}`;
 
+/** Square logo for Google Search / Open Graph (48×48+ required for favicon in SERP). */
+export const XPRESSBNB_SEO_LOGO_PATH = '/favicon-192.png' as const;
+export const xpSeoLogoAbsoluteUrl = (origin = 'https://xpressbnb.com') =>
+  `${origin}${XPRESSBNB_SEO_LOGO_PATH}`;
+
 /**
  * Icon size tracks the wordmark: set font-size on the flex row that wraps
  * `<img>` + text (e.g. `text-base md:text-xl`), then apply this class to the image.

@@ -20,7 +20,7 @@ interface AuthShellProps {
  */
 export default function AuthShell({ eyebrow, title, subtitle, children, footer }: AuthShellProps) {
   return (
-    <div className="relative min-h-screen overflow-hidden xpx-page flex items-center justify-center px-4 py-12">
+    <div className="relative min-h-screen-safe overflow-hidden xpx-page flex items-center justify-center px-5 sm:px-6 py-10 sm:py-14 pt-safe pb-safe">
       <div
         className="absolute inset-0"
         style={{
@@ -73,7 +73,7 @@ export default function AuthShell({ eyebrow, title, subtitle, children, footer }
         </div>
 
         <div
-          className="rounded-3xl p-8"
+          className="rounded-3xl p-6 sm:p-8"
           style={{
             background: '#FFFFFF',
             border: '1px solid var(--xpx-border)',

@@ -170,7 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/host`,
+          redirectTo: `${window.location.origin}/`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -187,8 +187,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7309/ingest/3b31d44b-bafe-4429-b25d-b5d1550a4355', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'adac9b' },
+      body: JSON.stringify({
+        sessionId: 'adac9b',
+        hypothesisId: 'C',
+        location: 'AuthContext.tsx:signOut',
+        message: 'signOut called',
+        data: { pathname: typeof window !== 'undefined' ? window.location.pathname : '' },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     await supabase.auth.signOut();
     setHost(null);
+    // #region agent log
+    fetch('http://127.0.0.1:7309/ingest/3b31d44b-bafe-4429-b25d-b5d1550a4355', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'adac9b' },
+      body: JSON.stringify({
+        sessionId: 'adac9b',
+        hypothesisId: 'C',
+        location: 'AuthContext.tsx:signOut',
+        message: 'signOut completed',
+        data: { pathname: typeof window !== 'undefined' ? window.location.pathname : '' },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
   };
 
   const resetPassword = async (email: string) => {

@@ -63,6 +63,16 @@ html.lenis body {
 
   --xpx-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 24px rgba(15, 23, 42, 0.06);
   --xpx-shadow-hover: 0 8px 24px rgba(15, 23, 42, 0.1);
+
+  /** Layout rhythm — 8pt grid, Apple-like section breathing room */
+  --xpx-nav-height: 72px;
+  --xpx-gutter: 1.25rem;
+  --xpx-gutter-md: 2rem;
+  --xpx-section-y: 4rem;
+  --xpx-section-y-lg: 5.5rem;
+  --xpx-stack-sm: 0.75rem;
+  --xpx-stack: 1rem;
+  --xpx-stack-lg: 1.5rem;
 }
 
 /* ── Keyframes (must live at top level, not inside @layer) ── */
@@ -183,16 +193,52 @@ html.lenis body {
 @layer components {
   .xpx-container {
     width: 100%;
-    max-width: 76rem;
+    max-width: 80rem;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: max(var(--xpx-gutter), env(safe-area-inset-left));
+    padding-right: max(var(--xpx-gutter), env(safe-area-inset-right));
   }
   @media (min-width: 768px) {
     .xpx-container {
-      padding-left: 2rem;
-      padding-right: 2rem;
+      padding-left: max(var(--xpx-gutter-md), env(safe-area-inset-left));
+      padding-right: max(var(--xpx-gutter-md), env(safe-area-inset-right));
+    }
+  }
+  .xpx-section {
+    padding-top: var(--xpx-section-y);
+    padding-bottom: var(--xpx-section-y);
+  }
+  @media (min-width: 768px) {
+    .xpx-section {
+      padding-top: var(--xpx-section-y-lg);
+      padding-bottom: var(--xpx-section-y-lg);
+    }
+  }
+  .xpx-section-tight {
+    padding-top: calc(var(--xpx-section-y) * 0.65);
+    padding-bottom: calc(var(--xpx-section-y) * 0.65);
+  }
+  @media (min-width: 768px) {
+    .xpx-section-tight {
+      padding-top: calc(var(--xpx-section-y-lg) * 0.55);
+      padding-bottom: calc(var(--xpx-section-y-lg) * 0.55);
+    }
+  }
+  .xpx-section-head {
+    margin-bottom: 2.5rem;
+  }
+  @media (min-width: 768px) {
+    .xpx-section-head {
+      margin-bottom: 3rem;
+    }
+  }
+  .xpx-nav-offset {
+    padding-top: calc(var(--xpx-nav-height) + env(safe-area-inset-top, 0px) + 1.25rem);
+  }
+  @media (min-width: 768px) {
+    .xpx-nav-offset {
+      padding-top: calc(var(--xpx-nav-height) + env(safe-area-inset-top, 0px) + 1.5rem);
     }
   }
   .xpx-page {

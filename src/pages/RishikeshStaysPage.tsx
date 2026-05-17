@@ -20,6 +20,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { cityDbInList } from '../lib/cityBuckets';
 import Header from '../components/Header';
 import BookArtistSection from '../components/BookArtistSection';
 import RishikeshTrustRow from '../components/RishikeshTrustRow';
@@ -385,7 +386,7 @@ const RishikeshStaysPage: React.FC = () => {
         const initialResult = await supabase
           .from('properties')
           .select('*')
-          .ilike('city', 'rishikesh')
+          .in('city', cityDbInList('Rishikesh'))
           .eq('is_active', true);
 
         const dbError = initialResult.error;
@@ -397,7 +398,7 @@ const RishikeshStaysPage: React.FC = () => {
           const { data: anyStatusRows, error: anyStatusError } = await supabase
             .from('properties')
             .select('*')
-            .ilike('city', 'rishikesh');
+            .in('city', cityDbInList('Rishikesh'));
           if (anyStatusError) throw anyStatusError;
           if ((anyStatusRows?.length ?? 0) > 0) {
             data = anyStatusRows;

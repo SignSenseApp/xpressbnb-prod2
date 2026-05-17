@@ -27,6 +27,7 @@ import { generateOrganizationStructuredData } from '../lib/seo';
 import type { Property } from '../lib/database.types';
 import { addDaysIso, parseTripFromSearch } from '../lib/tripSearch';
 import { scrollToId } from '../lib/smoothScroll';
+import { normalizeCityBucket } from '../lib/cityBuckets';
 
 // Global brand system (premium minimal emerald scale).
 const ACCENT = '#059669';
@@ -213,7 +214,7 @@ export default function NewHomepage() {
       setProperties(data || []);
       const grouped: Record<string, Property[]> = {};
       CITIES.forEach(c => {
-        grouped[c] = (data || []).filter(p => p.city === c);
+        grouped[c] = (data || []).filter(p => normalizeCityBucket(p.city) === c);
       });
       setPropertiesByCity(grouped);
     } catch (err) {
@@ -316,7 +317,7 @@ export default function NewHomepage() {
           boxShadow: 'none',
         }}
       >
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 min-h-[72px] h-[72px] grid grid-cols-[auto_1fr_auto] lg:grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
+        <div className="xpx-container min-h-[var(--xpx-nav-height)] h-[var(--xpx-nav-height)] grid grid-cols-[auto_1fr_auto] lg:grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
           <button
             type="button"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -419,7 +420,7 @@ export default function NewHomepage() {
               borderColor: BORDER,
             }}
           >
-            <nav className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 py-3 flex flex-col">
+            <nav className="xpx-container py-3 flex flex-col">
               {['Stays', 'Experiences', 'Host', 'About'].map(label => (
                 <button
                   key={label}
@@ -501,7 +502,7 @@ export default function NewHomepage() {
           }}
         />
 
-        <div className="relative z-[1] h-full max-w-7xl mx-auto px-4 md:px-8 pt-[104px] md:pt-[112px] pb-6 md:pb-8">
+        <div className="relative z-[1] h-full xpx-container xpx-nav-offset pb-8 md:pb-10">
           <div className="h-full flex flex-col justify-center">
             <div
               className="max-w-3xl"
@@ -547,7 +548,7 @@ export default function NewHomepage() {
         className="relative z-[2] -mt-7 md:-mt-10"
         style={{ background: SURFACE_LIGHT, borderBottom: `1px solid ${BORDER}` }}
       >
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
+        <div className="xpx-container">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-3 py-5 md:py-6">
             {TRUST_BADGES.map(({ icon: Icon, label, subtext }) => (
               <div
@@ -580,8 +581,8 @@ export default function NewHomepage() {
       </section>
 
       {/* ──── Featured Stays ──── */}
-      <section id="listings" className="scroll-mt-24" style={{ background: BASE }}>
-        <div className="max-w-7xl mx-auto px-4 md:px-8 pt-14 md:pt-20 pb-14 md:pb-16">
+      <section id="listings" className="scroll-mt-28 xpx-section" style={{ background: BASE }}>
+        <div className="xpx-container">
           <SectionHeader
             label="HANDPICKED FOR YOU"
             title="Featured Stays"
@@ -610,8 +611,8 @@ export default function NewHomepage() {
       </section>
 
       {/* ──── Top Cities ──── */}
-      <section style={{ background: SURFACE_LIGHT }}>
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-14 md:py-20">
+      <section className="xpx-section" style={{ background: SURFACE_LIGHT }}>
+        <div className="xpx-container">
           <SectionHeader
             label="EXPLORE"
             title="Top Destinations"
@@ -652,7 +653,7 @@ export default function NewHomepage() {
           </div>
 
           {/* Mobile: premium 2-column cards with generous heights */}
-          <div className="grid md:hidden grid-cols-2 gap-3.5">
+          <div className="grid md:hidden grid-cols-2 gap-4">
             {CITIES.map(city => (
               <button
                 key={city}
@@ -669,9 +670,9 @@ export default function NewHomepage() {
       </section>
 
       {/* ──── Social Proof ──── */}
-      <section style={{ background: BASE }}>
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-14 md:py-20">
-          <div className="text-center mb-9 md:mb-10">
+      <section className="xpx-section" style={{ background: BASE }}>
+        <div className="xpx-container">
+          <div className="text-center mb-10 md:mb-12">
             <div className="inline-flex items-center gap-2 mb-4">
               <div className="flex">
                 {[1, 2, 3, 4, 5].map(i => (
@@ -729,12 +730,12 @@ export default function NewHomepage() {
       {/* ──── Host CTA ──── */}
       <section
         id="host"
-        className="relative"
+        className="relative xpx-section"
         style={{
           background: BASE,
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-14 md:py-20">
+        <div className="xpx-container">
           <div
             className="relative overflow-hidden rounded-[24px] px-5 py-8 sm:px-7 md:px-10 md:py-11 lg:px-12 lg:py-12"
             style={{
@@ -888,8 +889,8 @@ export default function NewHomepage() {
       </section>
 
       {/* ──── Why XpressBnB ──── */}
-      <section id="why" className="scroll-mt-24 relative z-[1]" style={{ background: SURFACE_LIGHT }}>
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-14 md:py-20">
+      <section id="why" className="scroll-mt-28 xpx-section relative z-[1]" style={{ background: SURFACE_LIGHT }}>
+        <div className="xpx-container">
           <SectionHeader
             label="WHY XPRESSBNB"
             title="The premium way to book stays"
@@ -953,7 +954,7 @@ export default function NewHomepage() {
           borderTop: `1px solid ${FOOTER_DIVIDER}`,
         }}
       >
-        <div className="max-w-7xl mx-auto px-5 md:px-8 pt-14 md:pt-16 pb-8 md:pb-9">
+        <div className="xpx-container pt-14 md:pt-16 pb-8 md:pb-9">
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))] gap-10 md:gap-10 mb-10 md:mb-11">
             <div>
               <div className="flex items-center gap-2.5 text-lg leading-none min-h-[40px]">
@@ -1455,12 +1456,12 @@ function SectionHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-end justify-between gap-4 mb-8 md:mb-10">
-      <div>
+    <div className="xpx-section-head flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-6">
+      <div className="min-w-0">
         <span className="text-[11px] font-bold tracking-[0.2em]" style={{ color: ACCENT }}>
           {label}
         </span>
-        <h2 className="mt-2 text-[28px] md:text-3xl font-extrabold tracking-tight leading-tight" style={{ color: TEXT }}>
+        <h2 className="mt-2.5 text-[26px] sm:text-[28px] md:text-3xl font-extrabold tracking-tight leading-[1.12]" style={{ color: TEXT }}>
           {title}
         </h2>
         <p className="text-sm md:text-[15px] mt-1.5" style={{ color: TEXT_MUTED }}>{subtitle}</p>
@@ -1549,7 +1550,8 @@ function FeaturedCard({ property }: { property: Property }) {
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
   const price = (property.price_per_day || property.price_full_day || 0).toLocaleString();
-  const reviews = Math.max(40, Math.round((property.rating || 4.8) * 25));
+  const reviewCount = Number(property.total_reviews) || 0;
+  const rating = Number(property.rating) || 0;
 
   return (
     <article
@@ -1615,10 +1617,20 @@ function FeaturedCard({ property }: { property: Property }) {
           <MapPin className="w-3.5 h-3.5 shrink-0" />
           <span className="line-clamp-1">{property.city}</span>
         </div>
-        <div className="flex items-center gap-1.5 mt-2.5 text-sm">
-          <Star className="w-4 h-4" style={{ color: RATING }} fill={RATING} />
-          <span className="font-semibold" style={{ color: TEXT }}>{property.rating?.toFixed(1) || '4.8'}</span>
-          <span style={{ color: TEXT_SUBTLE }}>({reviews} reviews)</span>
+        <div className="flex items-center gap-1.5 mt-2.5 text-sm flex-wrap">
+          {rating > 0 && (
+            <>
+              <Star className="w-4 h-4" style={{ color: RATING }} fill={RATING} />
+              <span className="font-semibold" style={{ color: TEXT }}>{rating.toFixed(1)}</span>
+            </>
+          )}
+          {reviewCount > 0 ? (
+            <span style={{ color: TEXT_SUBTLE }}>
+              ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
+            </span>
+          ) : (
+            <span style={{ color: TEXT_SUBTLE }}>No reviews yet</span>
+          )}
         </div>
         <div className="mt-auto pt-3 border-t flex items-center gap-1.5 text-xs font-semibold" style={{ borderColor: BORDER, color: ACCENT_DARK }}>
           <ShieldCheck className="w-3.5 h-3.5" style={{ color: ACCENT }} />

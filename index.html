@@ -12,13 +12,18 @@
     </script>
 
     <meta charset="UTF-8" />
-    <!-- Favicons: Bing/Google often request /favicon.ico first -->
-    <link rel="icon" href="/favicon.ico" sizes="48x48" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" type="image/png" href="/main-xpx-logo.png" sizes="32x32" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Favicons: Google crawls /favicon.ico and rel=icon (48×48+). See developers.google.com/search/docs/appearance/favicon-in-search -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" href="/favicon-48.png" sizes="48x48" />
+    <link rel="icon" type="image/png" href="/favicon-192.png" sizes="192x192" />
+    <link rel="icon" type="image/png" href="/main-xpx-logo.png" sizes="512x512" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta name="theme-color" content="#059669" />
+    <meta name="application-name" content="XpressBnB" />
 
     <title>XpressBnB - Couple Friendly Hourly Stays in Delhi NCR | Safe & Private</title>
     <meta name="description" content="Book couple-friendly hourly stays in Delhi NCR. Safe, private, and verified properties perfect for couples. Flexible hourly bookings starting from ₹499. Available in Delhi, Gurgaon, Noida." />
@@ -31,27 +36,46 @@
     <meta property="og:description" content="Book couple-friendly hourly stays in Delhi NCR. Safe, private, and verified properties perfect for couples. Flexible hourly bookings." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://xpressbnb.com" />
-    <meta property="og:image" content="https://xpressbnb.com/apple-touch-icon.png" />
+    <meta property="og:image" content="https://xpressbnb.com/favicon-192.png" />
+    <meta property="og:image:width" content="192" />
+    <meta property="og:image:height" content="192" />
+    <meta property="og:image:alt" content="XpressBnB logo" />
     <meta property="og:site_name" content="XpressBnB" />
     <meta property="og:locale" content="en_IN" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="XpressBnB - Couple Friendly Hourly Stays in Delhi NCR" />
     <meta name="twitter:description" content="Book couple-friendly hourly stays in Delhi NCR. Safe, private, and verified properties." />
-    <meta name="twitter:image" content="https://xpressbnb.com/apple-touch-icon.png" />
+    <meta name="twitter:image" content="https://xpressbnb.com/favicon-192.png" />
 
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "XpressBnB",
-      "url": "https://xpressbnb.com",
-      "description": "Leading platform for couple-friendly hourly stays in Delhi NCR. Safe, verified, and private properties.",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://xpressbnb.com/search?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
+      "@graph": [
+        {
+          "@type": "Organization",
+          "name": "XpressBnB",
+          "url": "https://xpressbnb.com",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://xpressbnb.com/favicon-192.png",
+            "width": 192,
+            "height": 192
+          }
+        },
+        {
+          "@type": "WebSite",
+          "name": "XpressBnB",
+          "url": "https://xpressbnb.com",
+          "description": "Verified stays in Delhi NCR, Gurgaon, Noida and Rishikesh. Book directly from hosts with zero commission.",
+          "publisher": { "@type": "Organization", "name": "XpressBnB", "url": "https://xpressbnb.com" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://xpressbnb.com/stays/delhi?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ]
     }
     </script>
 
