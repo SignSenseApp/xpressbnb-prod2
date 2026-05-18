@@ -374,7 +374,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      is_property_available: {
+        Args: {
+          p_property_id: string;
+          p_check_in: string;
+          p_check_out: string;
+        };
+        Returns: boolean;
+      };
     };
     Enums: {
       [_ in never]: never;

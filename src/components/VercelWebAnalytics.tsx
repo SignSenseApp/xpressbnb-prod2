@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 function subscribe(onStoreChange: () => void) {
   window.addEventListener('popstate', onStoreChange);
@@ -28,11 +29,17 @@ function getPathSnapshot() {
 }
 
 /**
- * Vercel Web Analytics for this Vite SPA.
- * Passes `route` + `path` so client-side navigations (history.pushState) are tracked.
+ * Vercel Web Analytics + Speed Insights for this Vite SPA.
+ * Passes `route` so client-side navigations (history.pushState) are attributed correctly.
+ * Neither package records data in local dev — deploy to Vercel to see metrics.
  */
 export default function VercelWebAnalytics() {
   const path = useSyncExternalStore(subscribe, getPathSnapshot, () => '/');
 
-  return <Analytics route={path} path={path} />;
+  return (
+    <>
+      <Analytics route={path} path={path} />
+      <SpeedInsights route={path} />
+    </>
+  );
 }

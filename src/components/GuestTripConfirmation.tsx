@@ -50,9 +50,23 @@ export default function GuestTripConfirmation({
   const waSupport = buildTeamWhatsAppLink(
     `Hi XpressBnB, I need help with my booking.\nReference: ${snapshot.bookingId}\nProperty: ${snapshot.propertyTitle}`,
   );
-  const waHost = snapshot.hostContactName
-    ? buildHostWhatsAppLink(snapshot.propertyTitle, snapshot.hostContactName.split(/\s+/)[0])
-    : buildHostWhatsAppLink(snapshot.propertyTitle);
+  const hostPhoneDigits = snapshot.hostContactPhone?.replace(/\D/g, '') ?? '';
+  const hostPhoneDisplay = hostPhoneDigits
+    ? hostPhoneDigits.length === 10
+      ? hostPhoneDigits
+      : hostPhoneDigits
+    : '';
+  const hostPhoneE164 = hostPhoneDigits
+    ? hostPhoneDigits.startsWith('91')
+      ? `+${hostPhoneDigits}`
+      : `+91${hostPhoneDigits.slice(-10)}`
+    : null;
+
+  const waHost = hostPhoneDigits
+    ? `https://wa.me/91${hostPhoneDigits.replace(/^91/, '').slice(-10)}`
+    : snapshot.hostContactName
+      ? buildHostWhatsAppLink(snapshot.propertyTitle, snapshot.hostContactName.split(/\s+/)[0])
+      : buildHostWhatsAppLink(snapshot.propertyTitle);
 
   const copyRef = async () => {
     try {
@@ -149,7 +163,7 @@ export default function GuestTripConfirmation({
             <span className="text-xl font-extrabold tabular-nums">₹{total.toLocaleString('en-IN')}</span>
           </div>
           <p className="text-xs text-xpx-subtle">
-            Payment is coordinated directly with the host unless you&apos;re told otherwise. Status:{' '}
+            Payment status:{' '}
             <span className="font-medium text-xpx-muted">{snapshot.paymentStatus}</span>
           </p>
         </div>
@@ -192,22 +206,30 @@ export default function GuestTripConfirmation({
           Host contact
         </h2>
         <p className="text-sm text-xpx-muted leading-relaxed mb-4">
-          {snapshot.hostContactName ? (
+          {snapshot.paymentStatus === 'paid' && hostPhoneDisplay ? (
             <>
-              Your host is <span className="font-semibold text-xpx-text">{snapshot.hostContactName}</span>. Use the
-              number below to confirm timing, directions, or payment — hosts usually reply within an hour during the
-              day.
+              Your host is{' '}
+              <span className="font-semibold text-xpx-text">
+                {snapshot.hostContactName ?? 'Verified Host'}
+              </span>
+              . Use the number below to confirm timing and directions.
+            </>
+          ) : snapshot.hostContactName ? (
+            <>
+              Your host is <span className="font-semibold text-xpx-text">{snapshot.hostContactName}</span>. Host
+              contact will appear here once payment is confirmed.
             </>
           ) : (
-            <>
-              This listing doesn&apos;t show a named host profile yet. Use the number below for WhatsApp or calls —
-              our team helps route your message so nothing gets lost.
-            </>
+            <>Host contact will appear here once payment is confirmed. For urgent help, use support below.</>
           )}
         </p>
         <div className="rounded-xl p-4 bg-slate-50 border border-slate-200/80">
-          <p className="text-xs font-semibold uppercase tracking-wide text-xpx-subtle mb-1">Phone (host line)</p>
-          <p className="text-lg font-bold text-xpx-text tabular-nums">{TEAM_PHONE_DISPLAY}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-xpx-subtle mb-1">
+            {snapshot.paymentStatus === 'paid' && hostPhoneDisplay ? 'Phone (host)' : 'Phone (support line)'}
+          </p>
+          <p className="text-lg font-bold text-xpx-text tabular-nums">
+            {snapshot.paymentStatus === 'paid' && hostPhoneDisplay ? hostPhoneDisplay : TEAM_PHONE_DISPLAY}
+          </p>
         </div>
         <div className="mt-4 flex flex-col sm:flex-row gap-3">
           <a
@@ -221,9 +243,13 @@ export default function GuestTripConfirmation({
             WhatsApp
           </a>
           <a
-            href={`tel:${TEAM_PHONE_E164}`}
+            href={
+              snapshot.paymentStatus === 'paid' && hostPhoneE164
+                ? `tel:${hostPhoneE164}`
+                : `tel:${TEAM_PHONE_E164}`
+            }
             className="inline-flex items-center justify-center gap-2 min-h-12 flex-1 rounded-xl font-semibold border-2 border-slate-200 text-xpx-text bg-white hover:bg-slate-50 transition-colors"
-            aria-label="Call host line"
+            aria-label="Call host"
           >
             <Phone className="w-5 h-5" aria-hidden />
             Call

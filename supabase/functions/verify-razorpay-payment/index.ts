@@ -3,8 +3,9 @@ import { createHmac } from 'node:crypto';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
 interface VerifyPaymentRequest {
@@ -16,10 +17,7 @@ interface VerifyPaymentRequest {
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
@@ -47,35 +45,7 @@ Deno.serve(async (req: Request) => {
 
     const isValid = expectedSignature === razorpay_signature;
 
-    if (isValid) {
-      const { error: updateError } = await supabase
-        .from('bookings')
-        .update({
-          payment_status: 'paid',
-          razorpay_payment_id,
-          razorpay_order_id,
-          status: 'confirmed',
-        })
-        .eq('id', booking_id);
-
-      if (updateError) {
-        throw updateError;
-      }
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: 'Payment verified successfully',
-        }),
-        {
-          status: 200,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-    } else {
+    if (!isValid) {
       const { error: updateError } = await supabase
         .from('bookings')
         .update({
@@ -85,7 +55,7 @@ Deno.serve(async (req: Request) => {
         .eq('id', booking_id);
 
       if (updateError) {
-        console.error('Error updating booking:', updateError);
+        console.error('Error updating booking after failed verify:', updateError);
       }
 
       return new Response(
@@ -95,27 +65,70 @@ Deno.serve(async (req: Request) => {
         }),
         {
           status: 400,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-          },
-        }
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       );
     }
+
+    const { error: updateError } = await supabase
+      .from('bookings')
+      .update({
+        payment_status: 'paid',
+        razorpay_payment_id,
+        razorpay_order_id,
+        status: 'confirmed',
+        paid_at: new Date().toISOString(),
+        payment_method: 'razorpay',
+      })
+      .eq('id', booking_id);
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    // TODO: invoke send-booking-email edge function when it exists (not shipped yet).
+
+    let host: { name: string; phone: string } | null = null;
+    const { data: bookingRow } = await supabase
+      .from('bookings')
+      .select('host_id')
+      .eq('id', booking_id)
+      .maybeSingle();
+
+    if (bookingRow?.host_id) {
+      const { data: hostRow } = await supabase
+        .from('hosts')
+        .select('name, phone')
+        .eq('id', bookingRow.host_id)
+        .maybeSingle();
+      if (hostRow) {
+        host = { name: hostRow.name, phone: hostRow.phone };
+      }
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'Payment verified successfully',
+        host,
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
+    );
   } catch (error) {
     console.error('Error verifying payment:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({
         error: 'Failed to verify payment',
-        message: error.message,
+        message,
       }),
       {
         status: 500,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
-      }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     );
   }
 });

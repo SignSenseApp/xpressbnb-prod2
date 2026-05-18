@@ -24,6 +24,7 @@ export type BookingConfirmationSnapshot = {
   estimatedTotal: number;
   guestEmail: string;
   hostContactName: string | null;
+  hostContactPhone?: string | null;
   includeDecoration: boolean;
   paymentStatus: string;
   bookingStatus: string;
