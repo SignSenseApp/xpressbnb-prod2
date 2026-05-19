@@ -8,6 +8,7 @@ import HostGrowthScore from '../../components/premium/HostGrowthScore';
 import DemandForecast from '../../components/premium/DemandForecast';
 import PremiumUpgradeCTA from '../../components/premium/PremiumUpgradeCTA';
 import RealtimeToast, { type ToastPayload } from '../../components/RealtimeToast';
+import HostValueProp from '../../components/host/HostValueProp';
 
 type PropertyRow = Database['public']['Tables']['properties']['Row'];
 
@@ -199,8 +200,16 @@ export default function OverviewPage({ onNavigate }: OverviewPageProps = {}) {
         <h1 className="text-2xl sm:text-3xl font-extrabold text-xpx-text tracking-tight mt-1">
           Welcome back, {host?.name?.split(' ')[0] ?? 'host'}
         </h1>
-        <p className="text-xpx-muted mt-2">Supply health at a glance — listings on air and recent booking flow.</p>
+        <p className="text-xpx-muted mt-2">
+          0% commission on bookings — guests pay you directly. Supply health at a glance below.
+        </p>
       </div>
+
+      <HostValueProp
+        variant="compact"
+        showComparison={false}
+        onUpgradeClick={() => onNavigate?.('subscription')}
+      />
 
       {/* Supply KPIs */}
       {loading ? (
@@ -378,10 +387,13 @@ export default function OverviewPage({ onNavigate }: OverviewPageProps = {}) {
             boxShadow: '0 12px 40px rgba(15,23,42,0.06)',
           }}
         >
-          <p className="xpx-eyebrow">On trial</p>
-          <h3 className="text-2xl font-extrabold text-xpx-text mt-1 mb-2">Upgrade to Paid Listing</h3>
-          <p className="mb-4 text-xpx-muted">
-            Unlock calendar sync, analytics, verified badge and more for just ₹999/month per property.
+          <p className="xpx-eyebrow">Optional upgrade</p>
+          <h3 className="text-2xl font-extrabold text-xpx-text mt-1 mb-2">
+            First listing free — add tools when you need them
+          </h3>
+          <p className="mb-4 text-xpx-muted leading-relaxed">
+            Calendar sync, analytics, and verified badge from ₹999/month per property. Still 0% commission on
+            what guests pay you.
           </p>
           <button
             onClick={() => onNavigate?.('subscription')}

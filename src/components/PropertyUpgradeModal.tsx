@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Building2, X, Crown, Loader2, Check } from 'lucide-react';
+import {
+  formatInr,
+  subscriptionAmountInr,
+  type HostBillingCycle,
+  type HostPlanTier,
+} from '../lib/hostSubscriptionPricing';
 
 interface Property {
   id: string;
@@ -16,20 +22,33 @@ interface Property {
 interface PropertySubscription {
   subscription_status: string;
   subscription_end_date: string | null;
+  plan_tier?: string;
 }
 
 interface PropertyUpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectProperty: (propertyId: string) => void;
+  planTier: HostPlanTier;
+  billingCycle: HostBillingCycle;
 }
 
-export default function PropertyUpgradeModal({ isOpen, onClose, onSelectProperty }: PropertyUpgradeModalProps) {
+export default function PropertyUpgradeModal({
+  isOpen,
+  onClose,
+  onSelectProperty,
+  planTier,
+  billingCycle,
+}: PropertyUpgradeModalProps) {
   const { host } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [subscriptions, setSubscriptions] = useState<Record<string, PropertySubscription>>({});
   const [loading, setLoading] = useState(true);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+
+  const planLabel = planTier === 'premium_2999' ? 'Premium' : 'Standard';
+  const amountInr = subscriptionAmountInr(planTier, billingCycle);
+  const cadenceLabel = billingCycle === 'yearly' ? 'year' : 'month';
 
   useEffect(() => {
     if (isOpen && host?.id) {
@@ -57,20 +76,23 @@ export default function PropertyUpgradeModal({ isOpen, onClose, onSelectProperty
 
         const { data: subscriptionsData, error: subscriptionsError } = await supabase
           .from('property_subscriptions')
-          .select('property_id, subscription_status, subscription_end_date')
+          .select('property_id, subscription_status, subscription_end_date, plan_tier')
           .eq('host_id', host.id)
-          .in('property_id', propertiesData.map(p => p.id));
+          .in('property_id', propertiesData.map((p) => p.id));
 
         if (!subscriptionsError && subscriptionsData) {
           const subsMap: Record<string, PropertySubscription> = {};
-          subscriptionsData.forEach(sub => {
+          subscriptionsData.forEach((sub) => {
             subsMap[sub.property_id] = {
               subscription_status: sub.subscription_status,
               subscription_end_date: sub.subscription_end_date,
+              plan_tier: sub.plan_tier,
             };
           });
           setSubscriptions(subsMap);
         }
+      } else {
+        setProperties([]);
       }
     } catch (error) {
       console.error('Error loading properties:', error);
@@ -86,15 +108,11 @@ export default function PropertyUpgradeModal({ isOpen, onClose, onSelectProperty
     }
   };
 
-  const getSubscriptionStatus = (propertyId: string) => {
+  const isPropertyOnPlan = (propertyId: string) => {
     const sub = subscriptions[propertyId];
-    if (!sub) return 'trial';
-    return sub.subscription_status;
-  };
-
-  const isPropertyPremium = (propertyId: string) => {
-    const status = getSubscriptionStatus(propertyId);
-    return status === 'active';
+    if (!sub || sub.subscription_status !== 'active') return false;
+    if (planTier === 'premium_2999') return sub.plan_tier === 'premium_2999';
+    return sub.plan_tier === 'standard_999' || sub.plan_tier === 'premium_2999';
   };
 
   if (!isOpen) return null;
@@ -105,9 +123,10 @@ export default function PropertyUpgradeModal({ isOpen, onClose, onSelectProperty
         <div className="bg-gradient-to-r from-[#50C878] to-[#3dae68] px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Crown className="w-6 h-6 text-white" />
-            <h2 className="text-2xl font-bold text-white">Select Property to Upgrade</h2>
+            <h2 className="text-2xl font-bold text-white">Select property — {planLabel}</h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
           >
@@ -117,7 +136,8 @@ export default function PropertyUpgradeModal({ isOpen, onClose, onSelectProperty
 
         <div className="p-6">
           <p className="text-gray-600 mb-6">
-            Choose which property you want to upgrade to premium. Premium costs ₹999/month per property.
+            ₹{formatInr(amountInr)}/{cadenceLabel} per property ({billingCycle} billing). Choose a
+            property to open Razorpay checkout.
           </p>
 
           {loading ? (
@@ -128,25 +148,26 @@ export default function PropertyUpgradeModal({ isOpen, onClose, onSelectProperty
             <div className="text-center py-12">
               <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">No active properties found</p>
-              <p className="text-sm text-gray-500 mt-2">Add a property first to upgrade to premium</p>
+              <p className="text-sm text-gray-500 mt-2">Add a property first to upgrade</p>
             </div>
           ) : (
             <div className="space-y-4 max-h-[50vh] overflow-y-auto">
               {properties.map((property) => {
-                const isPremium = isPropertyPremium(property.id);
+                const onPlan = isPropertyOnPlan(property.id);
                 const isSelected = selectedPropertyId === property.id;
 
                 return (
                   <button
                     key={property.id}
-                    onClick={() => !isPremium && setSelectedPropertyId(property.id)}
-                    disabled={isPremium}
+                    type="button"
+                    onClick={() => !onPlan && setSelectedPropertyId(property.id)}
+                    disabled={onPlan}
                     className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                      isPremium
+                      onPlan
                         ? 'border-green-200 bg-green-50 cursor-not-allowed opacity-60'
                         : isSelected
-                        ? 'border-[#50C878] bg-pink-50'
-                        : 'border-gray-200 hover:border-[#50C878] hover:bg-pink-50/50'
+                          ? 'border-[#50C878] bg-pink-50'
+                          : 'border-gray-200 hover:border-[#50C878] hover:bg-pink-50/50'
                     }`}
                   >
                     <div className="flex gap-4">
@@ -166,28 +187,23 @@ export default function PropertyUpgradeModal({ isOpen, onClose, onSelectProperty
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <h3 className="font-semibold text-gray-900 truncate">{property.title}</h3>
-                          {isPremium && (
+                          {onPlan && (
                             <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium whitespace-nowrap">
                               <Check className="w-3 h-3" />
-                              Premium Active
+                              Active plan
                             </span>
                           )}
                         </div>
                         <p className="text-sm text-gray-600 mt-1">
                           {property.city}, {property.state}
                         </p>
-                        {isPremium && property.premium_expiry && (
-                          <p className="text-xs text-gray-500 mt-2">
-                            Premium until: {new Date(property.premium_expiry).toLocaleDateString()}
-                          </p>
-                        )}
                       </div>
-                      {!isPremium && (
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                          isSelected
-                            ? 'border-[#50C878] bg-[#50C878]'
-                            : 'border-gray-300'
-                        }`}>
+                      {!onPlan && (
+                        <div
+                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                            isSelected ? 'border-[#50C878] bg-[#50C878]' : 'border-gray-300'
+                          }`}
+                        >
                           {isSelected && <Check className="w-4 h-4 text-white" />}
                         </div>
                       )}
@@ -200,18 +216,20 @@ export default function PropertyUpgradeModal({ isOpen, onClose, onSelectProperty
 
           <div className="mt-6 flex gap-3">
             <button
+              type="button"
               onClick={onClose}
               className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
             >
               Cancel
             </button>
             <button
+              type="button"
               onClick={handleUpgrade}
               disabled={!selectedPropertyId || loading}
               className="flex-1 px-6 py-3 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <Crown className="w-5 h-5" />
-              Upgrade Selected Property
+              Pay with Razorpay
             </button>
           </div>
         </div>

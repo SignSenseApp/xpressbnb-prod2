@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { X, Tag, MessageCircle, Mail, User, ArrowDown, CheckCircle, Sparkles } from 'lucide-react';
+import { X, Tag, MessageCircle, Mail, User, ArrowDown, Sparkles } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { theme } from '../lib/theme';
 import type { Property } from '../lib/database.types';
+import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
+import { parseInquirySubmitResult } from '../lib/inquiryHostContact';
+import GuestPhoneOtpStep from './GuestPhoneOtpStep';
+import InquirySuccessModal from './InquirySuccessModal';
+import type { BookingOtpVerifyResult } from '../lib/bookingOtp';
+import { normalizePhoneDigits } from '../lib/bookingOtp';
 
 interface OfferModalProps {
   open: boolean;
@@ -44,10 +50,17 @@ export default function OfferModal({
   const [offer, setOffer] = useState<number>(defaultOffer);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [phoneVerification, setPhoneVerification] = useState<BookingOtpVerifyResult | null>(
+    null,
+  );
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [completedBookingId, setCompletedBookingId] = useState<string | null>(null);
+  const [inquiryHostName, setInquiryHostName] = useState<string | null>(null);
+  const [inquiryHostPhone, setInquiryHostPhone] = useState<string | null>(null);
 
   // Whenever the modal re-opens or the listing changes, reset the suggested
   // offer back to a sensible default.
@@ -56,6 +69,10 @@ export default function OfferModal({
       setOffer(defaultOffer);
       setError(null);
       setSuccess(false);
+      setCompletedBookingId(null);
+      setInquiryHostName(null);
+      setInquiryHostPhone(null);
+      setPhoneVerification(null);
     }
   }, [open, defaultOffer]);
 
@@ -87,6 +104,15 @@ export default function OfferModal({
       setError(`Offer must be between ₹${minOffer.toLocaleString()} and ₹${maxOffer.toLocaleString()} per night.`);
       return;
     }
+    const phoneDigits = normalizePhoneDigits(phone);
+    if (phoneDigits.length !== 10) {
+      setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+    if (!phoneVerification || phoneVerification.phoneDigits !== phoneDigits) {
+      setError('Please verify your mobile number with the OTP before sending your offer.');
+      return;
+    }
 
     setSubmitting(true);
 
@@ -98,33 +124,24 @@ export default function OfferModal({
         ? fmt(checkOutDate)
         : fmt(new Date(today.getTime() + inferredNights * 24 * 60 * 60 * 1000));
 
-    // Record the offer as a pending booking with a structured prefix so the
-    // host's existing Bookings page surfaces it without any new UI.
-    const offerNote = `[OFFER ₹${offer}/night × ${inferredNights} nights = ₹${totalOffer.toLocaleString()}] ${
-      message.trim() ? `Message: ${message.trim()}` : ''
-    }`.trim();
+    if (!property.host_id) {
+      setError('This listing is missing host details. Please try again later.');
+      setSubmitting(false);
+      return;
+    }
 
-    const offerInsert = {
-      property_id: property.id,
-      host_id: property.host_id,
-      guest_name: name.trim(),
-      guest_email: email.trim(),
-      guest_phone: '',
-      check_in_date: checkin,
-      check_out_date: checkout,
-      checkin,
-      checkout,
-      num_guests: 1,
-      booking_type: 'full_day' as const,
-      amount_total: totalOffer,
-      total_price: totalOffer,
-      status: 'pending' as const,
-      payment_status: 'offer_pending',
-      special_requests: offerNote,
-      source: 'xpressbnb',
-    };
-
-    const { error: insertError } = await supabase.from('bookings').insert(offerInsert);
+    const { data: rpcData, error: insertError } = await supabase.rpc('create_make_offer_inquiry', {
+      p_property_id: property.id,
+      p_host_id: property.host_id,
+      p_guest_name: name.trim(),
+      p_guest_email: email.trim(),
+      p_check_in: checkin,
+      p_check_out: checkout,
+      p_offer_amount: offer,
+      p_guest_phone: phoneDigits,
+      p_otp_verification_token: phoneVerification.verificationToken,
+      p_offer_message: message.trim() || null,
+    });
 
     if (insertError) {
       console.error('Offer insert failed', insertError);
@@ -133,8 +150,45 @@ export default function OfferModal({
       return;
     }
 
+    const inquiry = parseInquirySubmitResult(rpcData);
+    if (!inquiry) {
+      setError('Offer sent, but host contact could not be loaded. Please try again.');
+      setSubmitting(false);
+      return;
+    }
+
+    saveBookingConfirmationSnapshot({
+      v: 1,
+      savedAt: Date.now(),
+      bookingId: inquiry.bookingId,
+      propertyId: property.id,
+      propertyTitle: property.title,
+      propertyCity: property.city,
+      propertySlug: property.slug ?? null,
+      checkIn: checkin,
+      checkOut: checkout,
+      numGuests: 1,
+      estimatedTotal: totalOffer,
+      guestEmail: email.trim(),
+      hostContactName: inquiry.hostName,
+      hostContactPhone: inquiry.hostPhone,
+      includeDecoration: false,
+      paymentStatus: 'offer_pending',
+      bookingStatus: 'pending_host',
+    });
+
+    setCompletedBookingId(inquiry.bookingId);
+    setInquiryHostName(inquiry.hostName);
+    setInquiryHostPhone(inquiry.hostPhone);
     setSubmitting(false);
     setSuccess(true);
+  };
+
+  const goToConfirmation = () => {
+    if (!completedBookingId) return;
+    window.history.pushState({}, '', `/booking/${completedBookingId}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    onClose();
   };
 
   return (
@@ -190,45 +244,31 @@ export default function OfferModal({
             submit button — the form scrolls inside the sheet. */}
         <div className="overflow-y-auto overscroll-contain flex-1" style={{ WebkitOverflowScrolling: 'touch' }}>
 
-        {success ? (
-          <div className="px-6 pb-6 pt-4 space-y-5 text-center">
-            <div
-              className="w-16 h-16 rounded-full mx-auto flex items-center justify-center"
-              style={{ background: 'rgba(80,200,120,0.12)', border: '1px solid rgba(80,200,120,0.4)' }}
-            >
-              <CheckCircle className="w-8 h-8" style={{ color: '#3dae68' }} />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-xpx-text">Offer sent</h3>
-              <p className="text-sm text-xpx-muted mt-1">
-                The host typically replies within an hour. We&apos;ll email you at{' '}
-                <span className="text-xpx-text font-semibold">{email}</span> with their response.
-              </p>
-            </div>
-            <div
-              className="rounded-2xl p-4 text-left"
-              style={{ background: 'var(--xpx-surface-light)', border: '1px solid var(--xpx-border)' }}
-            >
-              <div className="flex justify-between text-sm">
-                <span className="text-xpx-muted">Your offer</span>
-                <span className="font-bold text-xpx-text">
-                  ₹{offer.toLocaleString()}/night
-                </span>
-              </div>
-              <div className="flex justify-between text-sm mt-1">
-                <span className="text-xpx-muted">Total ({inferredNights} {inferredNights === 1 ? 'night' : 'nights'})</span>
-                <span className="font-bold" style={{ color: theme.accentDark }}>
-                  ₹{totalOffer.toLocaleString()}
-                </span>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="w-full py-3 rounded-2xl font-bold transition-all"
-              style={{ background: theme.accent, color: '#ffffff', boxShadow: '0 8px 24px rgba(80,200,120,0.32)' }}
-            >
-              Done
-            </button>
+        {success && inquiryHostName && inquiryHostPhone ? (
+          <div className="px-5 sm:px-6 pb-6 pt-2">
+            <InquirySuccessModal
+              variant="offer"
+              hostName={inquiryHostName}
+              hostPhone={inquiryHostPhone}
+              propertyTitle={property.title}
+              checkInLabel={
+                checkInDate
+                  ? checkInDate.toLocaleDateString('en-IN')
+                  : new Date().toLocaleDateString('en-IN')
+              }
+              checkOutLabel={
+                checkOutDate
+                  ? checkOutDate.toLocaleDateString('en-IN')
+                  : new Date(
+                      Date.now() + inferredNights * 24 * 60 * 60 * 1000,
+                    ).toLocaleDateString('en-IN')
+              }
+              estimatedTotal={totalOffer}
+              offerPerNight={offer}
+              onViewConfirmation={goToConfirmation}
+              onDismiss={onClose}
+              dismissLabel="Band karein"
+            />
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="px-5 sm:px-6 pb-6 pt-2 space-y-5">
@@ -333,6 +373,15 @@ export default function OfferModal({
                 </div>
               </div>
             </div>
+
+            <GuestPhoneOtpStep
+              phone={phone}
+              onPhoneChange={setPhone}
+              verified={phoneVerification}
+              onVerified={setPhoneVerification}
+              onClearVerification={() => setPhoneVerification(null)}
+              disabled={submitting}
+            />
 
             {/* Contact details */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Mail, Lock, User, Phone, AlertCircle, ArrowRight } from 'lucide-react';
 import AuthShell from './AuthShell';
 import { theme } from '../../lib/theme';
+import HostValueProp from '../../components/host/HostValueProp';
 
 interface RegisterPageProps {
   onNavigate: (page: 'login') => void;
@@ -57,8 +58,8 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
   return (
     <AuthShell
       eyebrow="Become a host"
-      title="Create your hosting account"
-      subtitle="Start earning by listing your property in under 5 minutes."
+      title="0% commission — guests pay you directly"
+      subtitle="List your first property free. Upgrade later for calendar sync and a verified badge."
       footer={
         <>
           Already have an account?{' '}
@@ -181,6 +182,16 @@ export default function RegisterPage({ onNavigate }: RegisterPageProps) {
         </svg>
         {googleLoading ? 'Connecting…' : 'Sign up with Google'}
       </button>
+
+      <div className="mt-6 -mx-2 sm:-mx-0">
+        <HostValueProp
+          variant="minimal"
+          showHeader={false}
+          showComparison
+          showSocialProof={false}
+          showUpgradeNudge={false}
+        />
+      </div>
     </AuthShell>
   );
 }

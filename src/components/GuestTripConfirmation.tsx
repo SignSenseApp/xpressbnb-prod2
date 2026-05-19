@@ -14,10 +14,14 @@ import {
 } from 'lucide-react';
 import type { BookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
 import {
+  buildHostDirectWhatsAppLink,
+  formatHostPhoneDisplay,
+  hostPhoneToE164,
+} from '../lib/inquiryHostContact';
+import {
   TEAM_EMAIL,
   TEAM_PHONE_DISPLAY,
   TEAM_PHONE_E164,
-  buildHostWhatsAppLink,
   buildTeamWhatsAppLink,
 } from '../lib/team';
 
@@ -50,23 +54,24 @@ export default function GuestTripConfirmation({
   const waSupport = buildTeamWhatsAppLink(
     `Hi XpressBnB, I need help with my booking.\nReference: ${snapshot.bookingId}\nProperty: ${snapshot.propertyTitle}`,
   );
-  const hostPhoneDigits = snapshot.hostContactPhone?.replace(/\D/g, '') ?? '';
-  const hostPhoneDisplay = hostPhoneDigits
-    ? hostPhoneDigits.length === 10
-      ? hostPhoneDigits
-      : hostPhoneDigits
-    : '';
-  const hostPhoneE164 = hostPhoneDigits
-    ? hostPhoneDigits.startsWith('91')
-      ? `+${hostPhoneDigits}`
-      : `+91${hostPhoneDigits.slice(-10)}`
-    : null;
+  const hostPhoneDigits = snapshot.hostContactPhone?.replace(/\D/g, '').slice(-10) ?? '';
+  const showHostDirect =
+    Boolean(hostPhoneDigits) &&
+    (snapshot.paymentStatus === 'paid' ||
+      snapshot.paymentStatus === 'inquiry' ||
+      snapshot.paymentStatus === 'offer_pending');
+  const hostPhoneDisplay = showHostDirect ? formatHostPhoneDisplay(hostPhoneDigits) : '';
+  const hostPhoneE164 = showHostDirect ? hostPhoneToE164(hostPhoneDigits) : null;
 
-  const waHost = hostPhoneDigits
-    ? `https://wa.me/91${hostPhoneDigits.replace(/^91/, '').slice(-10)}`
-    : snapshot.hostContactName
-      ? buildHostWhatsAppLink(snapshot.propertyTitle, snapshot.hostContactName.split(/\s+/)[0])
-      : buildHostWhatsAppLink(snapshot.propertyTitle);
+  const waHost = showHostDirect
+    ? buildHostDirectWhatsAppLink(
+        hostPhoneDigits,
+        snapshot.propertyTitle,
+        snapshot.hostContactName?.split(/\s+/)[0],
+      )
+    : buildTeamWhatsAppLink(
+        `Hi XpressBnB, I need help with my booking.\nReference: ${snapshot.bookingId}\nProperty: ${snapshot.propertyTitle}`,
+      );
 
   const copyRef = async () => {
     try {
@@ -206,29 +211,29 @@ export default function GuestTripConfirmation({
           Host contact
         </h2>
         <p className="text-sm text-xpx-muted leading-relaxed mb-4">
-          {snapshot.paymentStatus === 'paid' && hostPhoneDisplay ? (
+          {showHostDirect ? (
             <>
               Your host is{' '}
               <span className="font-semibold text-xpx-text">
                 {snapshot.hostContactName ?? 'Verified Host'}
               </span>
-              . Use the number below to confirm timing and directions.
+              . Inquiry bhej di hai — seedha call ya WhatsApp karein. Usually reply kuch minutes mein.
             </>
           ) : snapshot.hostContactName ? (
             <>
-              Your host is <span className="font-semibold text-xpx-text">{snapshot.hostContactName}</span>. Host
-              contact will appear here once payment is confirmed.
+              Your host is <span className="font-semibold text-xpx-text">{snapshot.hostContactName}</span>.
+              Host number is saved on the device where you submitted this inquiry.
             </>
           ) : (
-            <>Host contact will appear here once payment is confirmed. For urgent help, use support below.</>
+            <>Open this page from the same browser where you sent your inquiry, or use support below.</>
           )}
         </p>
         <div className="rounded-xl p-4 bg-slate-50 border border-slate-200/80">
           <p className="text-xs font-semibold uppercase tracking-wide text-xpx-subtle mb-1">
-            {snapshot.paymentStatus === 'paid' && hostPhoneDisplay ? 'Phone (host)' : 'Phone (support line)'}
+            {showHostDirect ? 'Phone (host)' : 'Phone (support line)'}
           </p>
           <p className="text-lg font-bold text-xpx-text tabular-nums">
-            {snapshot.paymentStatus === 'paid' && hostPhoneDisplay ? hostPhoneDisplay : TEAM_PHONE_DISPLAY}
+            {showHostDirect ? `+91 ${hostPhoneDisplay}` : TEAM_PHONE_DISPLAY}
           </p>
         </div>
         <div className="mt-4 flex flex-col sm:flex-row gap-3">
@@ -243,11 +248,7 @@ export default function GuestTripConfirmation({
             WhatsApp
           </a>
           <a
-            href={
-              snapshot.paymentStatus === 'paid' && hostPhoneE164
-                ? `tel:${hostPhoneE164}`
-                : `tel:${TEAM_PHONE_E164}`
-            }
+            href={showHostDirect && hostPhoneE164 ? `tel:${hostPhoneE164}` : `tel:${TEAM_PHONE_E164}`}
             className="inline-flex items-center justify-center gap-2 min-h-12 flex-1 rounded-xl font-semibold border-2 border-slate-200 text-xpx-text bg-white hover:bg-slate-50 transition-colors"
             aria-label="Call host"
           >

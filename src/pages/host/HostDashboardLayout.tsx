@@ -43,7 +43,7 @@ export default function HostDashboardLayout({
     { id: 'overview', name: 'Overview', icon: Home, path: `/host/${hostId}/dashboard/overview` },
     { id: 'properties', name: 'Properties', icon: Building2, path: `/host/${hostId}/dashboard/properties` },
     { id: 'calendar', name: 'Calendar', icon: Calendar, path: `/host/${hostId}/dashboard/calendar` },
-    { id: 'bookings', name: 'Bookings', icon: BookOpen, path: `/host/${hostId}/dashboard/bookings` },
+    { id: 'bookings', name: 'Inquiries', icon: BookOpen, path: `/host/${hostId}/dashboard/bookings` },
     { id: 'earnings', name: 'Earnings', icon: DollarSign, path: `/host/${hostId}/dashboard/earnings` },
     { id: 'realtime', name: 'Analytics', icon: Activity, path: `/host/${hostId}/dashboard/realtime` },
     { id: 'reviews', name: 'Reviews', icon: Star, path: `/host/${hostId}/dashboard/reviews` },

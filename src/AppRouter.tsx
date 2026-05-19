@@ -151,7 +151,7 @@ export default function AppRouter() {
             {page === 'overview' && <OverviewPage onNavigate={handleNavigate} />}
             {page === 'properties' && <PropertiesPage />}
             {page === 'calendar' && <CalendarPage hostId={host.id} />}
-            {page === 'bookings' && <BookingsPage />}
+            {page === 'bookings' && <BookingsPage onNavigate={handleNavigate} />}
             {page === 'calendar-sync' && <CalendarSyncPage />}
             {page === 'import' && <ImportPage />}
             {page === 'earnings' && <EarningsPage />}

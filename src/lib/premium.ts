@@ -13,7 +13,10 @@ export interface Property {
   premium_expiry: string | null;
 }
 
-export const PREMIUM_PRICE = 999;
+export const STANDARD_PRICE_INR = 999;
+export const PREMIUM_PRICE_INR = 2999;
+/** @deprecated Use STANDARD_PRICE_INR */
+export const PREMIUM_PRICE = STANDARD_PRICE_INR;
 
 export function hasPremiumAccess(property: Property | null | undefined): boolean {
   if (!property) return false;
@@ -73,6 +76,6 @@ export function shouldShowPremiumFeature(property: Property | null | undefined):
   return {
     show: true,
     locked: true,
-    message: `Upgrade to Paid Listing (₹${PREMIUM_PRICE}/month)`,
+    message: `Upgrade to Standard (₹${STANDARD_PRICE_INR}/mo) or Premium (₹${PREMIUM_PRICE_INR}/mo)`,
   };
 }

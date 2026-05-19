@@ -878,7 +878,7 @@ export default function PropertyPage() {
                   <ArrowLeft className="w-3.5 h-3.5" />
                   Back to availability
                 </button>
-                <p className="xpx-eyebrow mb-3">Complete your booking</p>
+                <p className="xpx-eyebrow mb-3">Request to book</p>
                 <BookingForm
                   property={property}
                   onSuccess={({ bookingId }) => {

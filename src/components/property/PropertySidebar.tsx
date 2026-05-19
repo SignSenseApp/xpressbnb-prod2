@@ -228,7 +228,7 @@ export default function PropertySidebar({
       >
         <span className="inline-flex items-center justify-center gap-2">
           <Sparkles className="w-4 h-4" />
-          Book Now &amp; Pay Later
+          Request to book
         </span>
       </button>
 
@@ -251,7 +251,7 @@ export default function PropertySidebar({
         className="mt-3 text-[11px] text-xpx-subtle text-center inline-flex items-center justify-center gap-1.5 w-full"
       >
         <Shield className="w-3 h-3" style={{ color: 'var(--accent-dark)' }} />
-        Secure booking. No hidden fees. Free cancellation up to 24 h.
+        Send an inquiry — no online payment on this step. Host confirms directly.
       </p>
 
       {/* When the user hasn't picked dates yet, give a soft prompt so the

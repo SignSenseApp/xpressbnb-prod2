@@ -36,6 +36,52 @@ export default function BookingConfirmationPage() {
     window.dispatchEvent(new PopStateEvent('popstate'));
   }, []);
 
+  // Live host decisions: when the host accepts/rejects, push the new
+  // status + payment_status into the active snapshot so the guest sees
+  // the update without reloading. RLS still scopes this to authenticated
+  // guests whose JWT email matches guest_email — anon guests fall back
+  // to the WhatsApp notification dispatched by the booking_notification_queue.
+  useEffect(() => {
+    if (!bookingId || !UUID_RE.test(bookingId)) return;
+
+    const channel = supabase
+      .channel(`booking-${bookingId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'bookings',
+          filter: `id=eq.${bookingId}`,
+        },
+        (payload) => {
+          const next = payload.new as
+            | { status?: string; payment_status?: string }
+            | undefined;
+          if (!next) return;
+          setState((prev) => {
+            if (prev.status !== 'ready') return prev;
+            return {
+              status: 'ready',
+              source: prev.source,
+              snapshot: {
+                ...prev.snapshot,
+                bookingStatus: String(next.status ?? prev.snapshot.bookingStatus),
+                paymentStatus: String(
+                  next.payment_status ?? prev.snapshot.paymentStatus,
+                ),
+              },
+            };
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [bookingId]);
+
   useEffect(() => {
     let cancelled = false;
 

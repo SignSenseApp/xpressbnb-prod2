@@ -79,7 +79,10 @@
     }
     </script>
 
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <!-- Razorpay checkout.js is intentionally NOT loaded here.
+         It is lazy-loaded by src/lib/razorpay.ts only on the host
+         subscription upgrade path, so guest pages do not ship the
+         payment SDK or trigger Razorpay's risk-detection iframe. -->
   </head>
   <body>
     <div id="root"></div>

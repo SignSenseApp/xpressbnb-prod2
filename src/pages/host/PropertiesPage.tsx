@@ -6,8 +6,6 @@ import PropertyListingForm from '../../components/PropertyListingForm';
 import { hasPremiumAccess, getPremiumBadgeText } from '../../lib/premium';
 import ABTesting from '../../components/premium/ABTesting';
 import type { Property } from '../../lib/database.types';
-import type { RazorpayPaymentResponse } from '../../lib/razorpay';
-import '../../lib/razorpay';
 
 export default function PropertiesPage() {
   const { host } = useAuth();
@@ -16,7 +14,6 @@ export default function PropertiesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [expandedPropertyId, setExpandedPropertyId] = useState<string | null>(null);
-  const [upgradingPropertyId, setUpgradingPropertyId] = useState<string | null>(null);
 
   useEffect(() => {
     if (host?.id) {
@@ -88,102 +85,11 @@ export default function PropertiesPage() {
     loadProperties();
   };
 
-  const handleUpgradeProperty = async (propertyId: string) => {
+  const goToSubscription = (propertyId: string, tier: 'standard_999' | 'premium_2999' = 'standard_999') => {
     if (!host) return;
-
-    setUpgradingPropertyId(propertyId);
-
-    try {
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-razorpay-order`;
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: 999,
-          currency: 'INR',
-          receipt: `property_${propertyId}_${Date.now()}`,
-          notes: {
-            host_id: host.id,
-            property_id: propertyId,
-            subscription_type: 'monthly',
-          },
-        }),
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        console.error('Order creation failed:', responseData);
-        throw new Error(responseData.message || responseData.error || 'Failed to create order');
-      }
-
-      const { order } = responseData;
-
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: order.amount,
-        currency: order.currency,
-        name: 'XpressBnB',
-        description: 'Property Premium Subscription',
-        order_id: order.id,
-        handler: async function (razorpayResponse: RazorpayPaymentResponse) {
-          try {
-            const subscriptionEndDate = new Date();
-            subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
-
-            const { error: insertError } = await supabase
-              .from('property_subscriptions')
-              .upsert({
-                property_id: propertyId,
-                host_id: host.id,
-                subscription_status: 'active',
-                subscription_plan: 'monthly',
-                amount_paid: 999,
-                currency: 'INR',
-                razorpay_order_id: razorpayResponse.razorpay_order_id,
-                razorpay_payment_id: razorpayResponse.razorpay_payment_id,
-                subscription_start_date: new Date().toISOString(),
-                subscription_end_date: subscriptionEndDate.toISOString(),
-                auto_renew: true,
-              }, {
-                onConflict: 'property_id'
-              });
-
-            if (insertError) throw insertError;
-
-            alert('Property upgraded to premium successfully!');
-            await loadProperties();
-          } catch (err) {
-            console.error('Error updating subscription:', err);
-            alert('Payment successful but failed to update subscription. Please contact support.');
-          }
-        },
-        prefill: {
-          name: host.name,
-          email: host.email,
-          contact: host.phone,
-        },
-        theme: {
-          color: '#50C878',
-        },
-      };
-
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
-
-      razorpay.on('payment.failed', function () {
-        alert('Payment failed. Please try again.');
-      });
-    } catch (err) {
-      console.error('Error creating subscription:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to process subscription';
-      alert(errorMessage);
-    } finally {
-      setUpgradingPropertyId(null);
-    }
+    const path = `/host/${host.id}/dashboard/subscription?property=${propertyId}&tier=${tier}`;
+    window.history.pushState({}, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
   if (loading) {
@@ -383,26 +289,17 @@ export default function PropertiesPage() {
                               </p>
                               <div className="flex items-center gap-4 flex-wrap">
                                 <button
-                                  onClick={() => handleUpgradeProperty(property.id)}
-                                  disabled={upgradingPropertyId === property.id}
-                                  className="px-6 py-2.5 rounded-xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                  type="button"
+                                  onClick={() => goToSubscription(property.id, 'standard_999')}
+                                  className="px-6 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2"
                                   style={{
                                     background: 'var(--xpx-warm)',
                                     color: '#ffffff',
                                     boxShadow: '0 6px 20px rgba(80,200,120,0.35)',
                                   }}
                                 >
-                                  {upgradingPropertyId === property.id ? (
-                                    <>
-                                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                      Processing...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Crown className="w-4 h-4" />
-                                      Upgrade for ₹999/month
-                                    </>
-                                  )}
+                                  <Crown className="w-4 h-4" />
+                                  Upgrade on Subscription page
                                 </button>
                                 <span className="text-sm text-xpx-muted">Cancel anytime</span>
                               </div>

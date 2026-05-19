@@ -120,8 +120,8 @@ export default function SupportPage() {
         <div className="space-y-4">
           {[
             { q: 'How do I add a new property?', a: 'Go to the Properties page and click "Add Property". Fill in all required details and submit the form.' },
-            { q: 'How do bookings work?', a: "Guests book through the platform and pay via Razorpay. You'll receive notifications and can manage bookings from the Bookings page." },
-            { q: 'When do I receive payments?', a: 'Payments are processed immediately through Razorpay. Payouts are made to your bank account within 2–3 business days after the booking is completed.' },
+            { q: 'How do bookings work?', a: "Guests submit booking inquiries (no Razorpay on the listing page). You'll receive notifications and can accept or reject from the Bookings page." },
+            { q: 'When do I pay for my host plan?', a: 'Host Standard and Premium plans are billed per property via Razorpay on the Subscription page only.' },
             { q: 'How do I cancel or refund a booking?', a: 'Go to the Bookings page, find the booking, and use the Cancel button. For refunds, contact our support team for assistance.' },
           ].map((item, i, arr) => (
             <div key={item.q} className={i < arr.length - 1 ? 'pb-4' : ''} style={i < arr.length - 1 ? { borderBottom: '1px solid var(--xpx-border)' } : undefined}>

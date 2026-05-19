@@ -24,3 +24,19 @@ dist-ssr
 .env.*
 
 .vercel
+
+# Local MCP / deploy scratch (do not commit)
+.mcp-*
+.chunk-*
+.deploy-*
+.send-json-part-*
+.verify-json-part-*
+.stdout-*
+.tmp-*
+.shell-send-out.txt
+.index-only.txt
+.both-deploy-args.json
+.deploy_send_*.json
+.deploy_verify_*.json
+.send-compact-line.txt
+.verify-compact-line.txt
