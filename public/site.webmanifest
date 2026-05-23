@@ -1,11 +1,16 @@
 {
+  "id": "/",
   "name": "XpressBnB",
   "short_name": "XpressBnB",
-  "description": "Verified stays in Delhi NCR, Gurgaon, Noida and Rishikesh. No commission.",
-  "start_url": "/",
+  "description": "Verified stays in Delhi NCR, Gurgaon, Noida and Rishikesh. Book directly from hosts — zero commission.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "browser"],
+  "orientation": "portrait-primary",
   "background_color": "#FAFAF8",
   "theme_color": "#059669",
+  "categories": ["travel", "lifestyle"],
   "icons": [
     {
       "src": "/favicon-48.png",
@@ -24,6 +29,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/apple-touch-icon.png",

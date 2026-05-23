@@ -33,6 +33,11 @@ export default function AboutPage({ onClose }: AboutPageProps) {
         'You can email us at support@xpressbnb.com and our team will respond to your inquiry as soon as possible.',
     },
     {
+      question: 'Can I add XpressBnB to my phone or laptop like an app?',
+      answer:
+        'Yes. Android: Chrome → menu (⋮) → Install app. iPhone: Safari → Share → Add to Home Screen. Laptop: Chrome or Edge → install icon in the address bar. Look for the Install banner on the site for step-by-step help.',
+    },
+    {
       question: 'Are the properties verified?',
       answer:
         'Yes, all properties listed on XpressBnB are verified by our team to ensure quality and safety standards.',

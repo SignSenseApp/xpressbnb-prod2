@@ -24,6 +24,7 @@ import AboutPage from './components/AboutPage';
 import BlogPage from './components/BlogPage';
 import Preloader from './components/Preloader';
 import MobileBottomNav from './components/MobileBottomNav';
+import InstallAppPrompt from './components/InstallAppPrompt';
 import { closeHomeOverlay, getHomeOverlayPage } from './lib/navigation';
 
 function syncLocation() {
@@ -180,6 +181,7 @@ export default function AppRouter() {
     <>
       <Preloader isLoading={showPreloader} />
       {renderContent()}
+      <InstallAppPrompt hidden={currentPath.startsWith('/booking/')} />
       <MobileBottomNav currentPath={currentPath} onNavigate={handleNavigate} />
     </>
   );

@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { HelpCircle, MessageSquare, Mail, Phone, Send } from 'lucide-react';
+import { HelpCircle, MessageSquare, Mail, Phone, Send, Download } from 'lucide-react';
+import { InstallAppHelpModal } from '../../components/InstallAppPrompt';
+import { getInstallPlatform } from '../../lib/pwa';
 
 export default function SupportPage() {
+  const [showInstallHelp, setShowInstallHelp] = useState(false);
   const [formData, setFormData] = useState({
     subject: '',
     message: '',
@@ -41,7 +44,23 @@ export default function SupportPage() {
         <SupportTile icon={MessageSquare} title="Live Chat" body="Chat with our team" cta={
           <button className="text-sm font-semibold hover:underline" style={{ color: 'var(--xpx-warm)' }}>Start Chat</button>
         } accent="#EC4899" />
+        <SupportTile icon={Download} title="Install app" body="Add XpressBnB to your phone or laptop" cta={
+          <button
+            type="button"
+            onClick={() => setShowInstallHelp(true)}
+            className="text-sm font-semibold hover:underline"
+            style={{ color: 'var(--xpx-warm)' }}
+          >
+            View steps
+          </button>
+        } accent="#059669" />
       </div>
+
+      <InstallAppHelpModal
+        open={showInstallHelp}
+        onClose={() => setShowInstallHelp(false)}
+        initialPlatform={getInstallPlatform()}
+      />
 
       <div
         className="rounded-2xl p-6 sm:p-8"
@@ -123,6 +142,10 @@ export default function SupportPage() {
             { q: 'How do bookings work?', a: "Guests submit booking inquiries (no Razorpay on the listing page). You'll receive notifications and can accept or reject from the Bookings page." },
             { q: 'When do I pay for my host plan?', a: 'Host Standard and Premium plans are billed per property via Razorpay on the Subscription page only.' },
             { q: 'How do I cancel or refund a booking?', a: 'Go to the Bookings page, find the booking, and use the Cancel button. For refunds, contact our support team for assistance.' },
+            {
+              q: 'How do I install XpressBnB on my phone or laptop?',
+              a: 'Android: open the site in Chrome → menu (⋮) → Install app. iPhone: Safari → Share → Add to Home Screen. Laptop: Chrome or Edge → install icon in the address bar. You can also tap the Install banner on the site or copy steps from Support → Install instructions when the banner appears.',
+            },
           ].map((item, i, arr) => (
             <div key={item.q} className={i < arr.length - 1 ? 'pb-4' : ''} style={i < arr.length - 1 ? { borderBottom: '1px solid var(--xpx-border)' } : undefined}>
               <div className="flex items-start gap-3">

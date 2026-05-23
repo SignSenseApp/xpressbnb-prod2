@@ -4,6 +4,9 @@ import App from './App.tsx';
 import { AuthProvider } from './contexts/AuthContext';
 import SmoothScrollRoot from './components/SmoothScrollRoot';
 import './index.css';
+import { registerServiceWorker } from './lib/pwa';
+
+registerServiceWorker();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
