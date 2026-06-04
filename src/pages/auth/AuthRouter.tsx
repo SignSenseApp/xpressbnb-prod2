@@ -18,7 +18,7 @@ export default function AuthRouter() {
   const initialPage = (): AuthPage => {
     if (typeof window === 'undefined') return 'login';
     const p = window.location.pathname;
-    if (p.startsWith('/auth/register')) return 'register';
+    if (p.startsWith('/auth/register') || p.startsWith('/auth/host-register')) return 'register';
     if (p.startsWith('/auth/forgot')) return 'forgot';
     if (p.startsWith('/auth/reset-password')) return 'reset-password';
     return 'login';

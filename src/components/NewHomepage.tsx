@@ -28,6 +28,9 @@ import type { Property } from '../lib/database.types';
 import { addDaysIso, parseTripFromSearch } from '../lib/tripSearch';
 import { scrollToId } from '../lib/smoothScroll';
 import { normalizeCityBucket } from '../lib/cityBuckets';
+import { openHomeOverlay } from '../lib/navigation';
+import { TEAM_EMAIL } from '../lib/team';
+import { ManageCookiesLink } from './CookieConsent';
 
 // Global brand system (premium minimal emerald scale).
 const ACCENT = '#059669';
@@ -1019,9 +1022,9 @@ export default function NewHomepage() {
             <FooterCol
               title="Legal"
               items={[
-                { label: 'Privacy', onClick: () => {} },
-                { label: 'Terms', onClick: () => {} },
-                { label: 'Contact', onClick: () => {} },
+                { label: 'Privacy', onClick: () => openHomeOverlay('privacy') },
+                { label: 'Terms', onClick: () => openHomeOverlay('terms') },
+                { label: 'Contact', onClick: () => { window.location.href = `mailto:${TEAM_EMAIL}`; } },
               ]}
             />
           </div>
@@ -1031,6 +1034,11 @@ export default function NewHomepage() {
           >
             <p className="text-xs" style={{ color: FOOTER_COPY }}>
               &copy; 2025 XpressBnB. All rights reserved.
+              {' · '}
+              <ManageCookiesLink
+                className="hover:underline transition-colors"
+                style={{ color: FOOTER_BODY }}
+              />
             </p>
             <p className="text-xs font-semibold" style={{ color: FOOTER_BODY }}>
               India&rsquo;s Smarter Stay ♡

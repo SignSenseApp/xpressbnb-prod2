@@ -40,3 +40,4 @@ dist-ssr
 .deploy_verify_*.json
 .send-compact-line.txt
 .verify-compact-line.txt
+.mcp_migration_payload.json

@@ -230,8 +230,8 @@ export default function InstallAppPrompt({ hidden = false }: InstallAppPromptPro
         className="fixed left-3 right-3 z-[45] animate-fade-in-up"
         style={{
           bottom: isMobile
-            ? 'calc(72px + env(safe-area-inset-bottom))'
-            : 'calc(16px + env(safe-area-inset-bottom))',
+            ? 'calc(72px + env(safe-area-inset-bottom) + var(--xpx-cookie-banner-h, 0px))'
+            : 'calc(16px + env(safe-area-inset-bottom) + var(--xpx-cookie-banner-h, 0px))',
         }}
       >
         <div

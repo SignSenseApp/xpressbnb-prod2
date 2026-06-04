@@ -5,8 +5,10 @@ import { AuthProvider } from './contexts/AuthContext';
 import SmoothScrollRoot from './components/SmoothScrollRoot';
 import './index.css';
 import { registerServiceWorker } from './lib/pwa';
+import { initCookieConsent } from './lib/cookieConsent';
 
 registerServiceWorker();
+initCookieConsent();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

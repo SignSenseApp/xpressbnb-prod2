@@ -22,9 +22,12 @@ import SupportPage from './pages/host/SupportPage';
 import ImportPage from './pages/host/ImportPage';
 import AboutPage from './components/AboutPage';
 import BlogPage from './components/BlogPage';
+import PrivacyPolicyPage from './components/PrivacyPolicyPage';
+import TermsPage from './components/TermsPage';
 import Preloader from './components/Preloader';
 import MobileBottomNav from './components/MobileBottomNav';
 import InstallAppPrompt from './components/InstallAppPrompt';
+import { CookieConsentBanner } from './components/CookieConsent';
 import { closeHomeOverlay, getHomeOverlayPage } from './lib/navigation';
 
 function syncLocation() {
@@ -35,7 +38,7 @@ function syncLocation() {
 }
 
 export default function AppRouter() {
-  const { user, host, loading } = useAuth();
+  const { user, host, loading, signOut } = useAuth();
   const [currentPath, setCurrentPath] = useState(() => syncLocation().path);
   const [locationKey, setLocationKey] = useState(() => syncLocation().key);
   const [isRouteLoading, setIsRouteLoading] = useState(true);
@@ -134,6 +137,13 @@ export default function AppRouter() {
       return <CityListingPage city={citySlug} />;
     }
 
+    // Authenticated, but the host profile could not be loaded/created. Surface a
+    // retry instead of silently falling through to the public homepage (which is
+    // what made login "do nothing"). Public routes above still render normally.
+    if (user && !host) {
+      return <HostProfileError onRetry={() => window.location.reload()} onSignOut={signOut} />;
+    }
+
     if (user && host) {
       if (currentPath.startsWith('/host/')) {
         const match = currentPath.match(/\/host\/[^/]+\/dashboard\/(.+)/);
@@ -173,6 +183,12 @@ export default function AppRouter() {
     if (homeOverlay === 'blog') {
       return <BlogPage onClose={closeHomeOverlay} />;
     }
+    if (homeOverlay === 'privacy') {
+      return <PrivacyPolicyPage onClose={closeHomeOverlay} />;
+    }
+    if (homeOverlay === 'terms') {
+      return <TermsPage onClose={closeHomeOverlay} />;
+    }
 
     return <NewHomepage />;
   };
@@ -181,8 +197,50 @@ export default function AppRouter() {
     <>
       <Preloader isLoading={showPreloader} />
       {renderContent()}
+      <CookieConsentBanner />
       <InstallAppPrompt hidden={currentPath.startsWith('/booking/')} />
       <MobileBottomNav currentPath={currentPath} onNavigate={handleNavigate} />
     </>
+  );
+}
+
+function HostProfileError({
+  onRetry,
+  onSignOut,
+}: {
+  onRetry: () => void;
+  onSignOut: () => void;
+}) {
+  return (
+    <div className="min-h-screen flex items-center justify-center px-6" style={{ background: 'var(--xpx-page, #F8FAFC)' }}>
+      <div
+        className="w-full max-w-md rounded-2xl p-8 text-center"
+        style={{ background: 'var(--xpx-surface, #fff)', border: '1px solid var(--xpx-border, #e2e8f0)', boxShadow: '0 24px 64px rgba(15,23,42,0.10)' }}
+      >
+        <h1 className="text-xl font-extrabold text-xpx-text mb-2">We couldn&apos;t load your host profile</h1>
+        <p className="text-sm text-xpx-muted mb-6 leading-relaxed">
+          You&apos;re signed in, but your host dashboard didn&apos;t load. This is usually a temporary
+          connection issue. Please retry — if it keeps happening, sign out and sign back in.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            type="button"
+            onClick={onRetry}
+            className="px-5 py-2.5 rounded-xl font-bold text-white transition-all"
+            style={{ background: 'var(--xpx-warm, #50C878)', boxShadow: '0 6px 20px rgba(80,200,120,0.35)' }}
+          >
+            Retry
+          </button>
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="px-5 py-2.5 rounded-xl font-semibold text-xpx-text transition-colors"
+            style={{ background: 'var(--xpx-surface-light, #f1f5f9)', border: '1px solid var(--xpx-border-strong, #cbd5e1)' }}
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

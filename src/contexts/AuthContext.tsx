@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, logSupabaseError } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 
 interface Host {
@@ -40,6 +40,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/** After OAuth, Supabase reads tokens from the URL hash then leaves `#` behind. */
+function clearAuthHashFromUrl() {
+  if (typeof window === 'undefined') return;
+  const { pathname, search, hash } = window.location;
+  if (!hash || hash === '#') return;
+  if (
+    hash.includes('access_token') ||
+    hash.includes('refresh_token') ||
+    hash.includes('error=')
+  ) {
+    window.history.replaceState({}, '', pathname + search);
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -59,7 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        clearAuthHashFromUrl();
+      }
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -73,46 +90,77 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const fetchHostRow = async (userId: string) => {
+    // `limit(1).maybeSingle()` is duplicate-proof: even if legacy duplicate host
+    // rows exist for this user, we deterministically take the earliest one
+    // instead of throwing (the old `.maybeSingle()` errored on >1 row, which
+    // left the host stuck on the public homepage).
+    return supabase
+      .from('hosts')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+  };
+
   const loadHostProfile = async (userId: string) => {
     try {
-      // `data` is reassigned below when a host row is auto-provisioned, so
-      // keep it as `let`. `error` is read once and never reassigned.
-      const { data: initialData, error } = await supabase
-        .from('hosts')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
+      const existing = await fetchHostRow(userId);
+      if (existing.error) throw existing.error;
 
-      if (error) throw error;
-
-      let data = initialData;
-
-      if (!data) {
-        const { data: userData } = await supabase.auth.getUser();
-        if (userData.user) {
-          const userMetadata = userData.user.user_metadata;
-          const { data: newHostData, error: insertError } = await supabase
-            .from('hosts')
-            .insert({
-              user_id: userId,
-              name: userMetadata.name || userData.user.email?.split('@')[0] || 'Host',
-              email: userData.user.email || '',
-              phone: userMetadata.phone || '',
-            })
-            .select()
-            .single();
-
-          if (insertError) {
-            console.error('Error creating host profile:', insertError);
-          } else {
-            data = newHostData;
-          }
-        }
+      if (existing.data) {
+        setHost(existing.data);
+        return;
       }
 
-      setHost(data);
+      const { data: userData } = await supabase.auth.getUser();
+      const authUser = userData.user;
+      if (!authUser) {
+        setHost(null);
+        return;
+      }
+
+      const metadata = authUser.user_metadata ?? {};
+      const email = (authUser.email ?? '').toLowerCase();
+      const name = metadata.name || authUser.email?.split('@')[0] || 'Host';
+      const phone = metadata.phone || '';
+
+      // Prefer atomic RPC (no client-side insert race, works even if RLS is strict).
+      const { data: ensured, error: rpcError } = await supabase.rpc('ensure_host_profile', {
+        p_name: name,
+        p_email: email,
+        p_phone: phone,
+      });
+
+      if (!rpcError && ensured) {
+        setHost(ensured as Host);
+        return;
+      }
+
+      if (rpcError) {
+        logSupabaseError('ensure_host_profile RPC failed, falling back to insert', rpcError);
+      }
+
+      const inserted = await supabase
+        .from('hosts')
+        .upsert(
+          { user_id: userId, name, email, phone },
+          { onConflict: 'user_id', ignoreDuplicates: false },
+        )
+        .select()
+        .maybeSingle();
+
+      if (inserted.error) {
+        const retry = await fetchHostRow(userId);
+        if (retry.error) throw retry.error;
+        setHost(retry.data ?? null);
+        return;
+      }
+
+      setHost(inserted.data ?? null);
     } catch (error) {
-      console.error('Error loading host profile:', error);
+      logSupabaseError('Error loading host profile', error);
       setHost(null);
     } finally {
       setLoading(false);
@@ -121,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, name: string, phone: string) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -135,15 +183,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
 
-      if (data.user) {
-        await supabase.from('hosts').insert({
-          user_id: data.user.id,
-          name,
-          email,
-          phone,
-        });
-      }
-
+      // Do NOT insert the host row here. The auth state change triggers
+      // loadHostProfile(), which creates the row idempotently. Inserting in both
+      // places raced and produced duplicate host rows (e.g. mixed-case emails),
+      // which then broke login.
       return { error: null };
     } catch (error) {
       return { error: error as Error };
