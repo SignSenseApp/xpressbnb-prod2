@@ -1,6 +1,8 @@
-import { MapPin, Star, Heart, CheckCircle, Shield, Clock } from 'lucide-react';
+import { MapPin, Star, CheckCircle, Shield, Clock } from 'lucide-react';
 import type { Property } from '../lib/database.types';
 import { theme } from '../lib/theme';
+import SaveListingButton from './SaveListingButton';
+import { snapshotFromProperty } from '../lib/savedListingsStorage';
 
 interface ConversionPropertyCardProps {
   property: Property;
@@ -73,15 +75,10 @@ export default function ConversionPropertyCard({
           }}
         />
 
-        {/* Wishlist */}
-        <button
-          onClick={(e) => e.stopPropagation()}
-          className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110"
-          style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', boxShadow: '0 4px 12px rgba(15,23,42,0.12)' }}
-          aria-label="Save"
-        >
-          <Heart className="w-4 h-4" style={{ color: theme.accent }} fill={theme.accent} />
-        </button>
+        <SaveListingButton
+          propertyId={property.id}
+          getSnapshot={() => snapshotFromProperty(property)}
+        />
 
         {/* Top-left badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5">

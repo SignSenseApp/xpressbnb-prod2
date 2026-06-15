@@ -7,7 +7,6 @@ import {
   MapPin,
   Calendar,
   Users,
-  Heart,
   CheckCircle,
   ShieldCheck,
   Zap,
@@ -31,6 +30,8 @@ import { normalizeCityBucket } from '../lib/cityBuckets';
 import { openHomeOverlay } from '../lib/navigation';
 import { TEAM_EMAIL } from '../lib/team';
 import { ManageCookiesLink } from './CookieConsent';
+import SaveListingButton from './SaveListingButton';
+import { snapshotFromProperty } from '../lib/savedListingsStorage';
 
 // Global brand system (premium minimal emerald scale).
 const ACCENT = '#059669';
@@ -1585,16 +1586,11 @@ function FeaturedCard({ property }: { property: Property }) {
             No image
           </div>
         )}
-        <div
-          className="absolute top-3 left-3 w-9 h-9 rounded-full flex items-center justify-center"
-          style={{
-            background: 'rgba(255,255,255,0.96)',
-            border: '1px solid rgba(255,255,255,0.95)',
-            boxShadow: '0 6px 16px rgba(15,23,42,0.16)',
-          }}
-        >
-          <Heart className="w-4 h-4" style={{ color: '#0F172A' }} />
-        </div>
+        <SaveListingButton
+          propertyId={property.id}
+          getSnapshot={() => snapshotFromProperty(property)}
+          align="left"
+        />
 
         <div
           className="absolute top-3 right-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"

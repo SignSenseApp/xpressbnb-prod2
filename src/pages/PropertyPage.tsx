@@ -48,6 +48,8 @@ import {
 import { safeHostDisplayName } from '../lib/host';
 import { parseTripFromSearch } from '../lib/tripSearch';
 import { scrollToElement } from '../lib/smoothScroll';
+import SaveListingButton from '../components/SaveListingButton';
+import { snapshotFromProperty } from '../lib/savedListingsStorage';
 
 /**
  * PropertyPage — redesigned around an Apple / Expedia-grade reading flow:
@@ -338,7 +340,14 @@ export default function PropertyPage() {
             Back to results
           </button>
 
-          <div className="relative">
+          <div className="flex items-center gap-1">
+            <SaveListingButton
+              propertyId={property.id}
+              variant="inline"
+              getSnapshot={() => snapshotFromProperty(property)}
+            />
+
+            <div className="relative">
             <button
               type="button"
               onClick={() => setShowShareMenu((v) => !v)}
@@ -417,6 +426,7 @@ export default function PropertyPage() {
                 </div>
               </>
             )}
+            </div>
           </div>
         </div>
 

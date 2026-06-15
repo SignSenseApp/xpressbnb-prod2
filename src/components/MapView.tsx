@@ -1,6 +1,7 @@
 import { MapPin } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Property } from '../lib/database.types';
+import { mappableProperties } from '../lib/propertyCoords';
 
 interface MapViewProps {
   properties: Property[];
@@ -77,6 +78,7 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
   const infoWindowRef = useRef<GoogleMapsInfoWindow | null>(null);
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const plottedProperties = useMemo(() => mappableProperties(properties), [properties]);
 
   const navigateToProperty = (property: Property) => {
     window.history.pushState({}, '', `/property/${property.id}`);
@@ -92,11 +94,11 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
       const gmaps = window.google?.maps;
       if (!mapRef.current || !gmaps) return;
 
-      const centerLat = properties.length > 0
-        ? properties.reduce((sum, p) => sum + p.latitude, 0) / properties.length
+      const centerLat = plottedProperties.length > 0
+        ? plottedProperties.reduce((sum, p) => sum + p.latitude, 0) / plottedProperties.length
         : 28.5355;
-      const centerLng = properties.length > 0
-        ? properties.reduce((sum, p) => sum + p.longitude, 0) / properties.length
+      const centerLng = plottedProperties.length > 0
+        ? plottedProperties.reduce((sum, p) => sum + p.longitude, 0) / plottedProperties.length
         : 77.3910;
 
       const map = new gmaps.Map(mapRef.current, {
@@ -117,7 +119,7 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
       markersRef.current.forEach(m => m.setMap(null));
       markersRef.current = [];
 
-      properties.forEach((property) => {
+      plottedProperties.forEach((property) => {
         const price = property.price_per_day || property.price_full_day || 0;
         const isSelected = selectedProperty?.id === property.id;
         const svg = buildPinSvg(price, isSelected);
@@ -181,14 +183,14 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
     return () => {
       markersRef.current.forEach(m => m.setMap(null));
     };
-  }, [apiKey, properties]);
+  }, [apiKey, plottedProperties]);
 
   useEffect(() => {
     const gmaps = window.google?.maps;
     if (!googleMapRef.current || !gmaps) return;
 
     markersRef.current.forEach((marker, index) => {
-      const property = properties[index];
+      const property = plottedProperties[index];
       if (!property) return;
       const price = property.price_per_day || property.price_full_day || 0;
       const isSelected = selectedProperty?.id === property.id;
@@ -201,10 +203,10 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
       });
       marker.setZIndex(isSelected ? 999 : 1);
     });
-  }, [selectedProperty, properties]);
+  }, [selectedProperty, plottedProperties]);
 
   if (!apiKey || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
-    if (properties.length === 0) {
+    if (plottedProperties.length === 0) {
       return (
         <div className="relative w-full h-full bg-gradient-to-br from-blue-50 via-sky-50 to-blue-100 flex items-center justify-center">
           <div className="text-center">
@@ -215,8 +217,8 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
       );
     }
 
-    const centerLat = properties.reduce((sum, p) => sum + p.latitude, 0) / properties.length || 28.5355;
-    const centerLng = properties.reduce((sum, p) => sum + p.longitude, 0) / properties.length || 77.3910;
+    const centerLat = plottedProperties.reduce((sum, p) => sum + p.latitude, 0) / plottedProperties.length || 28.5355;
+    const centerLng = plottedProperties.reduce((sum, p) => sum + p.longitude, 0) / plottedProperties.length || 77.3910;
 
     return (
       <div className="relative w-full h-full bg-gradient-to-br from-blue-50 via-sky-50 to-blue-100 overflow-hidden">
@@ -224,7 +226,7 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         }} />
 
-        {properties.map((property) => {
+        {plottedProperties.map((property) => {
           const latDiff = property.latitude - centerLat;
           const lngDiff = property.longitude - centerLng;
           const left = Math.max(8, Math.min(88, 50 + lngDiff * 500));
@@ -265,7 +267,7 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
 
         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-md">
           <p className="font-semibold text-gray-900 text-sm">
-            {properties.length} {properties.length === 1 ? 'property' : 'properties'}
+            {plottedProperties.length} {plottedProperties.length === 1 ? 'property' : 'properties'}
           </p>
         </div>
       </div>
@@ -277,7 +279,7 @@ export default function MapView({ properties, selectedProperty, onPropertyClick 
       <div ref={mapRef} className="w-full h-full" />
       <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-md pointer-events-none">
         <p className="font-semibold text-gray-900 text-sm">
-          {properties.length} {properties.length === 1 ? 'property' : 'properties'}
+          {plottedProperties.length} {plottedProperties.length === 1 ? 'property' : 'properties'}
         </p>
       </div>
     </div>

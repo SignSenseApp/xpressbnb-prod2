@@ -14,7 +14,6 @@ import {
   Mountain,
   SlidersHorizontal,
   X,
-  Heart,
   Loader2,
   CheckCircle,
   Tag,
@@ -26,6 +25,8 @@ import BookArtistSection from '../components/BookArtistSection';
 import RishikeshTrustRow from '../components/RishikeshTrustRow';
 import RishikeshExperiencesSection from '../components/RishikeshExperiencesSection';
 import SEOHead from '../components/SEOHead';
+import SaveListingButton from '../components/SaveListingButton';
+import { snapshotFromStayLike } from '../lib/savedListingsStorage';
 
 type PropertyType = 'all' | 'hotel' | 'guesthouse' | 'resort' | 'villa' | 'cottage' | 'hostel';
 
@@ -180,14 +181,10 @@ function AmenityChip({ name }: { name: string }) {
 function StayCard({
   stay,
   index,
-  saved,
-  onToggleSave,
   onView,
 }: {
   stay: Stay;
   index: number;
-  saved: boolean;
-  onToggleSave: (id: string) => void;
   onView: (stay: Stay) => void;
 }) {
   // Alternating commercial pill mirroring the Figma — "Best price" highlights
@@ -226,25 +223,23 @@ function StayCard({
         style={{ background: 'var(--xpx-surface-light)' }}
       >
         <StayImage urls={stay.images} alt={stay.name} />
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleSave(stay.id);
-          }}
-          aria-label={saved ? 'Remove from saved' : 'Save stay'}
-          aria-pressed={saved}
-          className="absolute top-3 right-3 w-11 h-11 rounded-full backdrop-blur flex items-center justify-center transition-transform active:scale-95"
-          style={{
-            background: 'rgba(255,255,255,0.92)',
-            boxShadow: '0 4px 12px rgba(15,23,42,0.12)',
-          }}
-        >
-          <Heart
-            className={`w-4 h-4 transition-colors ${
-              saved ? 'fill-orange-500 text-orange-500' : 'text-slate-700'
-            }`}
+        {stay.isFromDb && (
+          <SaveListingButton
+            propertyId={stay.id}
+            size="md"
+            getSnapshot={() =>
+              snapshotFromStayLike({
+                id: stay.id,
+                name: stay.name,
+                city: 'Rishikesh',
+                images: stay.images,
+                pricePerNight: stay.pricePerNight,
+                rating: stay.rating,
+                isVerified: stay.isVerified,
+              })
+            }
           />
-        </button>
+        )}
         {/* Top-left status stack — type first, verified below it. Single column
             so they never overlap (previous version had two absolutes at the
             same coordinates which collided visually). */}
@@ -368,7 +363,6 @@ const RishikeshStaysPage: React.FC = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 15000]);
   const [selectedAmenities, setSelectedAmenities] = useState<Set<string>>(new Set());
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [saved, setSaved] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -463,15 +457,6 @@ const RishikeshStaysPage: React.FC = () => {
       const next = new Set(prev);
       if (next.has(a)) next.delete(a);
       else next.add(a);
-      return next;
-    });
-  };
-
-  const onToggleSave = (id: string) => {
-    setSaved((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
       return next;
     });
   };
@@ -799,8 +784,6 @@ const RishikeshStaysPage: React.FC = () => {
                       key={s.id}
                       stay={s}
                       index={i}
-                      saved={saved.has(s.id)}
-                      onToggleSave={onToggleSave}
                       onView={handleView}
                     />
                   ))}
@@ -833,8 +816,6 @@ const RishikeshStaysPage: React.FC = () => {
                 key={s.id}
                 stay={s}
                 index={i + 4}
-                saved={saved.has(s.id)}
-                onToggleSave={onToggleSave}
                 onView={handleView}
               />
             ))}

@@ -5,6 +5,7 @@ import BookingConfirmationPage from './pages/BookingConfirmationPage';
 import CityListingPage from './pages/CityListingPage';
 import RishikeshStaysPage from './pages/RishikeshStaysPage';
 import ExploreCitiesPage from './pages/ExploreCitiesPage';
+import SavedListingsPage from './pages/SavedListingsPage';
 import NewHomepage from './components/NewHomepage';
 import AuthRouter from './pages/auth/AuthRouter';
 import HostDashboardLayout from './pages/host/HostDashboardLayout';
@@ -127,6 +128,10 @@ export default function AppRouter() {
 
     if (currentPath === '/explore' || currentPath === '/explore/') {
       return <ExploreCitiesPage onNavigate={handleNavigate} />;
+    }
+
+    if (currentPath === '/saved' || currentPath === '/saved/') {
+      return <SavedListingsPage onNavigate={handleNavigate} />;
     }
 
     if (currentPath.startsWith('/stays/')) {

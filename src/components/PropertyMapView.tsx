@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { Property } from '../lib/database.types';
+import { isMappableProperty } from '../lib/propertyCoords';
 // `window.google` is typed in src/types/google-maps.d.ts and is picked up
 // by `tsc` via the `include: ["src"]` setting in tsconfig.app.json.
 
@@ -30,6 +31,7 @@ export default function PropertyMapView({ property }: PropertyMapViewProps) {
 
   useEffect(() => {
     if (!apiKey || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') return;
+    if (!isMappableProperty(property)) return;
 
     const initMap = () => {
       const gmaps = window.google?.maps;
@@ -119,12 +121,16 @@ export default function PropertyMapView({ property }: PropertyMapViewProps) {
     }
   }, [apiKey, property]);
 
-  if (!apiKey || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
+  if (!apiKey || apiKey === 'YOUR_GOOGLE_MAPS_API_KEY_HERE' || !isMappableProperty(property)) {
     return (
       <div className="w-full h-full bg-gradient-to-br from-emerald-50 via-rose-50 to-pink-100 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600 font-semibold">Map view unavailable</p>
-          <p className="text-sm text-gray-500 mt-1">Configure Google Maps API key</p>
+          <p className="text-sm text-gray-500 mt-1">
+            {!isMappableProperty(property)
+              ? 'Location coordinates are not available for this listing'
+              : 'Configure Google Maps API key'}
+          </p>
         </div>
       </div>
     );

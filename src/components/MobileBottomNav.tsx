@@ -11,7 +11,7 @@ interface MobileBottomNavProps {
 const TABS = [
   { id: 'home', label: 'Home', icon: Home, path: '/' },
   { id: 'explore', label: 'Explore', icon: Compass, path: '/explore' },
-  { id: 'saved', label: 'Saved', icon: Bookmark, path: '/' },
+  { id: 'saved', label: 'Saved', icon: Bookmark, path: '/saved' },
   { id: 'profile', label: 'Profile', icon: User, path: '/auth/login' },
 ] as const;
 
@@ -27,6 +27,7 @@ export default function MobileBottomNav({ currentPath, onNavigate }: MobileBotto
   if (shouldHide) return null;
 
   const getActiveTab = () => {
+    if (currentPath === '/saved') return 'saved';
     if (currentPath === '/' || currentPath === '') return 'home';
     if (currentPath === '/explore' || currentPath.startsWith('/stays/')) return 'explore';
     return 'home';

@@ -8,13 +8,33 @@ interface PropertyReviewsProps {
   property: Property;
 }
 
+function mapExternalReview(
+  propertyId: string,
+  row: {
+    id: string;
+    reviewer_name: string;
+    rating: number;
+    comment: string | null;
+    review_date: string;
+    created_at: string | null;
+  },
+): Review {
+  return {
+    id: row.id,
+    property_id: propertyId,
+    booking_id: null,
+    guest_name: row.reviewer_name,
+    rating: row.rating,
+    comment: row.comment,
+    created_at: row.created_at ?? row.review_date,
+  };
+}
+
 /**
  * "What guests are saying" section.
  *
- * Pulls up to 6 real reviews from the `reviews` table for this property and
- * features the most recent. Falls back gracefully when no reviews exist:
- * the sub-rating bars hide and the page reads honestly as a "no reviews
- * yet" state — never fabricated 4.9s.
+ * Pulls up to 6 reviews from `external_reviews` for this property and
+ * features the most recent. Falls back gracefully when no reviews exist.
  */
 export default function PropertyReviews({ property }: PropertyReviewsProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -25,17 +45,17 @@ export default function PropertyReviews({ property }: PropertyReviewsProps) {
     (async () => {
       try {
         const { data, error } = await supabase
-          .from('reviews')
-          .select('*')
+          .from('external_reviews')
+          .select('id, reviewer_name, rating, comment, review_date, created_at')
           .eq('property_id', property.id)
-          .order('created_at', { ascending: false })
+          .order('review_date', { ascending: false })
           .limit(6);
         if (cancelled) return;
         if (error) {
           console.error('PropertyReviews: failed to fetch reviews', error);
           setReviews([]);
         } else {
-          setReviews(data ?? []);
+          setReviews((data ?? []).map((row) => mapExternalReview(property.id, row)));
         }
       } finally {
         if (!cancelled) setLoaded(true);
