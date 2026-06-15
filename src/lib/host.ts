@@ -70,3 +70,8 @@ export function safeHostInitial(name: string | null | undefined, fallback = 'H')
   const first = safe.charAt(0).toUpperCase();
   return /[A-Z]/.test(first) ? first : fallback;
 }
+
+/** Host dashboard: phone required before a listing can go live (DB trigger enforces this). */
+export function hasValidHostPhone(phone: string | null | undefined): boolean {
+  return typeof phone === 'string' && phone.trim() !== '';
+}

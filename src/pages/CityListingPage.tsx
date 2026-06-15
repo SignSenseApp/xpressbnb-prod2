@@ -18,6 +18,7 @@ const CITY_DISPLAY_NAMES: Record<string, string> = {
   'gurgaon': 'Gurgaon',
   'noida': 'Noida',
   'greater-noida': 'Greater Noida',
+  'ghaziabad': 'Ghaziabad',
   'rishikesh': 'Rishikesh',
 };
 
@@ -26,6 +27,7 @@ const CITY_META: Record<string, { tagline: string; bg: string }> = {
   'Gurgaon': { tagline: 'Modern living in Millennium City', bg: 'from-blue-100 to-slate-100' },
   'Noida': { tagline: 'Tech city verified stays', bg: 'from-teal-100 to-slate-100' },
   'Greater Noida': { tagline: 'Spacious homes, serene surroundings', bg: 'from-green-100 to-slate-100' },
+  'Ghaziabad': { tagline: 'Verified stays across Ghaziabad', bg: 'from-amber-100 to-slate-100' },
   'Rishikesh': { tagline: 'Yoga capital riverside retreats', bg: 'from-orange-100 to-slate-100' },
 };
 

@@ -1,6 +1,9 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase, logSupabaseError } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
+import type { Database } from '../lib/database.types';
+
+type HostRow = Database['public']['Tables']['hosts']['Row'];
 
 interface Host {
   id: string;
@@ -36,9 +39,40 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  refreshHostProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+/** Map Supabase `hosts` row to the context `Host` shape (nullable DB fields → UI defaults). */
+function mapHostRowToHost(row: HostRow): Host {
+  const payout = row.payout_details;
+  const payoutRecord =
+    payout && typeof payout === 'object' && !Array.isArray(payout)
+      ? (payout as Record<string, unknown>)
+      : null;
+
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    bio: row.bio ?? '',
+    kyc_status: row.kyc_status ?? 'unverified',
+    rating: row.rating ?? 0,
+    total_bookings: row.total_bookings ?? 0,
+    total_views: row.total_views ?? 0,
+    subscription_status: row.subscription_status ?? 'trial',
+    subscription_provider_id: row.subscription_provider_id,
+    subscription_next_billing: row.subscription_next_billing,
+    payout_details: {
+      bank: typeof payoutRecord?.bank === 'string' ? payoutRecord.bank : '',
+      upi: typeof payoutRecord?.upi === 'string' ? payoutRecord.upi : '',
+    },
+    created_at: row.created_at ?? '',
+  };
+}
 
 /** After OAuth, Supabase reads tokens from the URL hash then leaves `#` behind. */
 function clearAuthHashFromUrl() {
@@ -110,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (existing.error) throw existing.error;
 
       if (existing.data) {
-        setHost(existing.data);
+        setHost(mapHostRowToHost(existing.data));
         return;
       }
 
@@ -154,16 +188,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (inserted.error) {
         const retry = await fetchHostRow(userId);
         if (retry.error) throw retry.error;
-        setHost(retry.data ?? null);
+        setHost(retry.data ? mapHostRowToHost(retry.data) : null);
         return;
       }
 
-      setHost(inserted.data ?? null);
+      setHost(inserted.data ? mapHostRowToHost(inserted.data) : null);
     } catch (error) {
       logSupabaseError('Error loading host profile', error);
       setHost(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const refreshHostProfile = async () => {
+    if (!user?.id) return;
+    try {
+      const { data, error } = await fetchHostRow(user.id);
+      if (error) throw error;
+      if (data) setHost(mapHostRowToHost(data));
+    } catch (error) {
+      logSupabaseError('Error refreshing host profile', error);
     }
   };
 
@@ -259,6 +304,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithGoogle,
         signOut,
         resetPassword,
+        refreshHostProfile,
       }}
     >
       {children}

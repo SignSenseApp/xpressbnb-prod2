@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { User, Mail, Phone, Lock, Save, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function SettingsPage() {
-  const { host } = useAuth();
+  const { host, refreshHostProfile } = useAuth();
   const [formData, setFormData] = useState({
     name: host?.name || '',
     email: host?.email || '',
@@ -26,6 +26,7 @@ export default function SettingsPage() {
     try {
       const { error } = await supabase.from('hosts').update(formData).eq('id', host.id);
       if (error) throw error;
+      await refreshHostProfile();
       setMessage({ kind: 'ok', text: 'Settings updated successfully.' });
     } catch (error) {
       console.error('Error updating settings:', error);
@@ -76,9 +77,12 @@ export default function SettingsPage() {
             <input type="email" name="email" value={formData.email} onChange={handleChange} className="xpx-input pl-12" />
           </Field>
 
-          <Field icon={Phone} label="Phone Number (private — never shown publicly)">
+          <Field icon={Phone} label="Phone Number (required to publish listings)">
             <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className="xpx-input pl-12" />
           </Field>
+          <p className="-mt-3 text-xs text-xpx-muted">
+            Required so guests can reach you after an inquiry. Listings stay hidden on XpressBNB until this is set.
+          </p>
 
           <div>
             <label className="block text-xs uppercase tracking-wide font-bold text-xpx-muted mb-2">

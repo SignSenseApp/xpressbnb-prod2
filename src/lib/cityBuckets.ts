@@ -8,6 +8,7 @@ export const HOMEPAGE_CITY_BUCKETS = [
   'Gurgaon',
   'Noida',
   'Greater Noida',
+  'Ghaziabad',
   'Rishikesh',
 ] as const;
 
@@ -19,6 +20,7 @@ export const CITY_VALUE_VARIANTS: Record<string, string[]> = {
   Gurgaon: ['Gurgaon', 'Gurugram', 'gurgaon', 'gurugram', 'GURGAON', 'GURUGRAM'],
   Noida: ['Noida', 'noida'],
   'Greater Noida': ['Greater Noida', 'greater noida'],
+  Ghaziabad: ['Ghaziabad', 'ghaziabad'],
   Rishikesh: ['Rishikesh', 'rishikesh'],
 };
 

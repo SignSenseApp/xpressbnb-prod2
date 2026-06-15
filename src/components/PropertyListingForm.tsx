@@ -5,12 +5,16 @@ import { useAuth } from '../contexts/AuthContext';
 import type { Database, Property } from '../lib/database.types';
 import { AMENITY_CATEGORIES } from '../lib/amenities';
 import LocationPicker from './LocationPicker';
+import { hasValidHostPhone } from '../lib/host';
 
 interface PropertyListingFormProps {
   property?: Property | null;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (result: { isActive: boolean }) => void;
 }
+
+const PHONE_REQUIRED_MESSAGE =
+  'Add your phone number before publishing. Listings without host phone stay inactive and will not appear on XpressBNB.';
 
 type PropertyInsert = Database['public']['Tables']['properties']['Insert'];
 
@@ -78,6 +82,16 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
     }
   }, [property]);
 
+  const hostHasPhone = hasValidHostPhone(host?.phone);
+  const wantsLive = formData.is_active !== false;
+
+  const goToSettings = () => {
+    onClose();
+    if (!host?.id) return;
+    window.history.pushState({}, '', `/host/${host.id}/dashboard/settings`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -100,6 +114,13 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
         throw new Error('You must be logged in as a host to create a property');
       }
 
+      if (!hostHasPhone && wantsLive) {
+        setError(PHONE_REQUIRED_MESSAGE);
+        return;
+      }
+
+      const effectiveIsActive = hostHasPhone ? formData.is_active : false;
+
       // `rating` and `total_reviews` are managed by the reviews pipeline, not
       // the listing form, so they are intentionally excluded from the Insert
       // payload (they are also not part of the properties Insert contract).
@@ -120,25 +141,33 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
         max_guests: formData.max_guests,
         amenities: formData.amenities,
         images: formData.images,
-        is_active: formData.is_active
+        is_active: effectiveIsActive
       };
 
+      let savedIsActive = false;
+
       if (property) {
-        const { error: updateError } = await supabase
+        const { data, error: updateError } = await supabase
           .from('properties')
           .update(propertyData)
-          .eq('id', property.id);
+          .eq('id', property.id)
+          .select('is_active')
+          .single();
 
         if (updateError) throw updateError;
+        savedIsActive = data?.is_active === true;
       } else {
-        const { error: insertError } = await supabase
+        const { data, error: insertError } = await supabase
           .from('properties')
-          .insert([propertyData]);
+          .insert([propertyData])
+          .select('is_active')
+          .single();
 
         if (insertError) throw insertError;
+        savedIsActive = data?.is_active === true;
       }
 
-      onSuccess();
+      onSuccess({ isActive: savedIsActive });
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : `Failed to ${property ? 'update' : 'create'} property`);
@@ -267,7 +296,31 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
             <form onSubmit={handleSubmit} className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 sm:px-6 py-3 sm:py-4 rounded-2xl text-sm sm:text-base">
-              {error}
+              <p>{error}</p>
+              {error === PHONE_REQUIRED_MESSAGE && host?.id && (
+                <button
+                  type="button"
+                  onClick={goToSettings}
+                  className="mt-3 text-sm font-semibold text-[#3dae68] underline hover:text-[#2d8f52]"
+                >
+                  Add phone in Settings
+                </button>
+              )}
+            </div>
+          )}
+
+          {!hostHasPhone && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-900 px-4 sm:px-6 py-3 sm:py-4 rounded-2xl text-sm sm:text-base">
+              <p>{PHONE_REQUIRED_MESSAGE}</p>
+              {host?.id && (
+                <button
+                  type="button"
+                  onClick={goToSettings}
+                  className="mt-3 text-sm font-semibold text-[#3dae68] underline hover:text-[#2d8f52]"
+                >
+                  Add phone in Settings
+                </button>
+              )}
             </div>
           )}
 
@@ -577,10 +630,18 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (!hostHasPhone && wantsLive)}
               className="w-full sm:flex-1 px-6 py-3 sm:py-4 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white font-semibold text-sm sm:text-base rounded-xl hover:from-[#3dae68] hover:to-[#3dae68] transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? (property ? 'Updating...' : 'Creating...') : (property ? 'Update Property' : 'List Property')}
+              {loading
+                ? property
+                  ? 'Updating...'
+                  : 'Creating...'
+                : !hostHasPhone && !property
+                  ? 'Add phone to publish'
+                  : property
+                    ? 'Update Property'
+                    : 'List Property'}
             </button>
           </div>
             </form>

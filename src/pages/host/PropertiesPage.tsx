@@ -6,6 +6,9 @@ import PropertyListingForm from '../../components/PropertyListingForm';
 import { hasPremiumAccess, getPremiumBadgeText } from '../../lib/premium';
 import ABTesting from '../../components/premium/ABTesting';
 import type { Property } from '../../lib/database.types';
+import { hasValidHostPhone } from '../../lib/host';
+
+type SaveNotice = { kind: 'live' | 'inactive' | 'phone'; text: string };
 
 export default function PropertiesPage() {
   const { host } = useAuth();
@@ -14,6 +17,7 @@ export default function PropertiesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [expandedPropertyId, setExpandedPropertyId] = useState<string | null>(null);
+  const [saveNotice, setSaveNotice] = useState<SaveNotice | null>(null);
 
   useEffect(() => {
     if (host?.id) {
@@ -65,14 +69,33 @@ export default function PropertiesPage() {
   };
 
   const handleToggleActive = async (property: Property) => {
+    const activating = !property.is_active;
+    if (activating && !hasValidHostPhone(host?.phone)) {
+      setSaveNotice({
+        kind: 'phone',
+        text: 'Add your phone number in Settings before activating a listing. Listings without host phone stay inactive and will not appear on XpressBNB.',
+      });
+      return;
+    }
+
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('properties')
-        .update({ is_active: !property.is_active })
-        .eq('id', property.id);
+        .update({ is_active: activating })
+        .eq('id', property.id)
+        .select('is_active')
+        .single();
 
       if (error) throw error;
       await loadProperties();
+      if (data?.is_active) {
+        setSaveNotice({ kind: 'live', text: 'Property is now live on XpressBNB.' });
+      } else {
+        setSaveNotice({
+          kind: 'inactive',
+          text: 'Property saved but not live yet. Add host phone number to activate it.',
+        });
+      }
     } catch (error) {
       console.error('Error toggling property status:', error);
       alert('Failed to update property status');
@@ -83,6 +106,26 @@ export default function PropertiesPage() {
     setShowForm(false);
     setEditingProperty(null);
     loadProperties();
+  };
+
+  const handleFormSuccess = (result: { isActive: boolean }) => {
+    setShowForm(false);
+    setEditingProperty(null);
+    loadProperties();
+    if (result.isActive) {
+      setSaveNotice({ kind: 'live', text: 'Property saved and live.' });
+    } else {
+      setSaveNotice({
+        kind: 'inactive',
+        text: 'Property saved but not live yet. Add host phone number to activate it.',
+      });
+    }
+  };
+
+  const goToSettings = () => {
+    if (!host) return;
+    window.history.pushState({}, '', `/host/${host.id}/dashboard/settings`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
   const goToSubscription = (propertyId: string, tier: 'standard_999' | 'premium_2999' = 'standard_999') => {
@@ -101,8 +144,16 @@ export default function PropertiesPage() {
   }
 
   if (showForm) {
-    return <PropertyListingForm property={editingProperty} onClose={handleFormClose} onSuccess={handleFormClose} />;
+    return (
+      <PropertyListingForm
+        property={editingProperty}
+        onClose={handleFormClose}
+        onSuccess={handleFormSuccess}
+      />
+    );
   }
+
+  const hostMissingPhone = !hasValidHostPhone(host?.phone);
 
   return (
     <div className="space-y-6">
@@ -121,6 +172,49 @@ export default function PropertiesPage() {
           Add Property
         </button>
       </div>
+
+      {hostMissingPhone && (
+        <div
+          className="rounded-xl p-4 text-sm"
+          style={{ background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.35)', color: '#92400E' }}
+        >
+          <p>
+            Add your phone number before publishing. Listings without host phone stay inactive and will not appear on
+            XpressBNB.
+          </p>
+          <button
+            type="button"
+            onClick={goToSettings}
+            className="mt-2 font-semibold underline hover:no-underline"
+            style={{ color: '#3dae68' }}
+          >
+            Add phone in Settings
+          </button>
+        </div>
+      )}
+
+      {saveNotice && (
+        <div
+          className="rounded-xl p-4 text-sm"
+          style={
+            saveNotice.kind === 'live'
+              ? { background: 'rgba(80,200,120,0.10)', border: '1px solid rgba(80,200,120,0.30)', color: '#3dae68' }
+              : { background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.35)', color: '#92400E' }
+          }
+        >
+          <p>{saveNotice.text}</p>
+          {(saveNotice.kind === 'inactive' || saveNotice.kind === 'phone') && hostMissingPhone && (
+            <button
+              type="button"
+              onClick={goToSettings}
+              className="mt-2 font-semibold underline hover:no-underline"
+              style={{ color: '#3dae68' }}
+            >
+              Add phone in Settings
+            </button>
+          )}
+        </div>
+      )}
 
       {properties.length === 0 ? (
         <div
@@ -178,7 +272,7 @@ export default function PropertiesPage() {
                         : { background: 'rgba(220,38,38,0.10)', color: '#B91C1C', border: '1px solid rgba(220,38,38,0.3)' }
                     }
                   >
-                    {property.is_active ? 'Active' : 'Inactive'}
+                    {property.is_active ? 'Live' : 'Inactive / Not live'}
                   </span>
                 </div>
               </div>
@@ -191,6 +285,12 @@ export default function PropertiesPage() {
                   </span>
                 </div>
                 <p className="text-xpx-muted text-sm mb-4 line-clamp-2">{property.description}</p>
+                {!property.is_active && (
+                  <p className="text-sm mb-3" style={{ color: '#B91C1C' }}>
+                    Not visible on the public website until activated.
+                    {hostMissingPhone ? ' Add your phone in Settings first.' : ''}
+                  </p>
+                )}
                 <div className="mb-4 flex items-baseline gap-2">
                   <span className="text-xs uppercase tracking-wider text-xpx-subtle font-bold">Per day</span>
                   <span className="font-extrabold text-xpx-text text-lg">

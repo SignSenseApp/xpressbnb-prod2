@@ -87,13 +87,14 @@ const HERO_SLIDES = HERO_SLIDE_META.map(({ city, tagline, photoId }) => ({
   image: pexelsPhotoUrl(photoId, HERO_PEXELS_W),
 }));
 
-const CITIES = ['Delhi', 'Gurgaon', 'Noida', 'Greater Noida', 'Rishikesh'];
+const CITIES = ['Delhi', 'Gurgaon', 'Noida', 'Greater Noida', 'Ghaziabad', 'Rishikesh'];
 
 const CITY_IMAGES: Record<string, string> = {
   Delhi: pexelsPhotoUrl('789750', 600),
   Gurgaon: pexelsPhotoUrl('1571460', 600),
   Noida: pexelsPhotoUrl('1396122', 600),
   'Greater Noida': pexelsPhotoUrl('1643383', 600),
+  Ghaziabad: pexelsPhotoUrl('2506988', 600),
   Rishikesh: pexelsPhotoUrl('2161449', 600),
 };
 
