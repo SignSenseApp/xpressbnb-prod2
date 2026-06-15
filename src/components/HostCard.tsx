@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle, MapPin, MessageCircle, Phone, Star, Shield, Languages } from 'lucide-react';
+import { CheckCircle, MapPin, MessageCircle, Star, Shield, Languages } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { theme } from '../lib/theme';
 import { safeHostDisplayName, safeHostInitial, stripPhoneLike } from '../lib/host';
-import { TEAM_PHONE_DISPLAY, buildHostWhatsAppLink, buildHostCallLink } from '../lib/team';
+import { buildHostWhatsAppLink } from '../lib/team';
 
 interface HostInfo {
   id: string;
@@ -219,56 +219,18 @@ export default function HostCard({
       </dl>
 
       <div className="mt-5 space-y-3">
-        {/* Visible "host's direct contact" line. Reads as the host's number to
-            the guest (intentional psychology); resolves to the team line so
-            the boss controls the conversation. */}
-        <a
-          href={buildHostCallLink()}
-          className="flex items-center justify-between rounded-xl px-4 py-3 transition-colors hover:bg-white"
+        <button
+          onClick={handleMessage}
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition-all hover:scale-[1.01]"
           style={{
-            background: 'var(--xpx-surface)',
-            border: '1px solid var(--xpx-border-strong)',
+            background: theme.accent,
+            color: '#ffffff',
+            boxShadow: '0 6px 20px rgba(80,200,120,0.32)',
           }}
         >
-          <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wider text-xpx-subtle font-bold">
-              Host&apos;s contact
-            </p>
-            <p className="text-base font-bold text-xpx-text tracking-wide mt-0.5">
-              {TEAM_PHONE_DISPLAY}
-            </p>
-          </div>
-          <Phone className="w-5 h-5" style={{ color: 'var(--accent)' }} />
-        </a>
-
-        {/* Message + Call CTA row — wraps on extra-narrow phones so the
-            primary "Message host" never collides with the call icon. */}
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-          <button
-            onClick={handleMessage}
-            className="flex-1 min-w-[180px] inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition-all hover:scale-[1.01]"
-            style={{
-              background: theme.accent,
-              color: '#ffffff',
-              boxShadow: '0 6px 20px rgba(80,200,120,0.32)',
-            }}
-          >
-            <MessageCircle className="w-4 h-4" />
-            Message host
-          </button>
-          <a
-            href={buildHostCallLink()}
-            className="inline-flex items-center justify-center w-12 h-12 rounded-xl text-xpx-text transition-colors hover:bg-slate-100"
-            style={{
-              background: 'var(--xpx-surface)',
-              border: '1px solid var(--xpx-border-strong)',
-            }}
-            aria-label="Call host"
-            title="Call host"
-          >
-            <Phone className="w-4 h-4" />
-          </a>
-        </div>
+          <MessageCircle className="w-4 h-4" />
+          Message host
+        </button>
         <p className="text-[11px] text-xpx-subtle text-center">
           Reply usually within an hour. We coordinate with the host on your behalf.
         </p>
