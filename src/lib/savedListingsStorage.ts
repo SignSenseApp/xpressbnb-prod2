@@ -85,12 +85,10 @@ function migrateLegacySavedListings(): string | null {
   }
 }
 
-function readMap(): SavedMap {
-  if (typeof window === 'undefined') return {};
+const EMPTY_STORE_SNAPSHOT = '{}';
+
+function parseMapFromRaw(raw: string): SavedMap {
   try {
-    let raw = localStorage.getItem(SAVED_LISTINGS_STORAGE_KEY);
-    if (!raw) raw = migrateLegacySavedListings();
-    if (!raw) return {};
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
     const map: SavedMap = {};
@@ -109,6 +107,21 @@ function readMap(): SavedMap {
   } catch {
     return {};
   }
+}
+
+function readRawFromStorage(): string {
+  if (typeof window === 'undefined') return EMPTY_STORE_SNAPSHOT;
+  try {
+    let raw = localStorage.getItem(SAVED_LISTINGS_STORAGE_KEY);
+    if (!raw) raw = migrateLegacySavedListings();
+    return raw ?? EMPTY_STORE_SNAPSHOT;
+  } catch {
+    return EMPTY_STORE_SNAPSHOT;
+  }
+}
+
+function readMap(): SavedMap {
+  return parseMapFromRaw(readRawFromStorage());
 }
 
 function writeMap(map: SavedMap): void {
@@ -177,6 +190,21 @@ export function subscribeSavedListings(onStoreChange: () => void): () => void {
   };
 }
 
+/** Stable primitive snapshot for `useSyncExternalStore` — same string until storage changes. */
+export function getSavedListingsStoreSnapshot(): string {
+  return readRawFromStorage();
+}
+
+export function getSavedListingsServerSnapshot(): string {
+  return EMPTY_STORE_SNAPSHOT;
+}
+
+/** Parse store JSON into sorted listing array (use inside `useMemo` after subscribing). */
+export function parseSavedListingsFromStore(raw: string): SavedListingSnapshot[] {
+  const map = parseMapFromRaw(raw);
+  return Object.values(map).sort((a, b) => b.savedAt - a.savedAt);
+}
+
 export function getSavedListingsSnapshot(): SavedListingSnapshot[] {
-  return listSavedListings();
+  return parseSavedListingsFromStore(getSavedListingsStoreSnapshot());
 }

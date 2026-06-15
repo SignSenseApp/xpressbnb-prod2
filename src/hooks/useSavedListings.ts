@@ -1,8 +1,10 @@
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import type { Property } from '../lib/database.types';
 import {
-  getSavedListingsSnapshot,
+  getSavedListingsServerSnapshot,
+  getSavedListingsStoreSnapshot,
   isListingSaved,
+  parseSavedListingsFromStore,
   removeSavedListing,
   saveListing,
   snapshotFromProperty,
@@ -13,10 +15,15 @@ import {
 } from '../lib/savedListingsStorage';
 
 export function useSavedListings() {
-  const savedList = useSyncExternalStore(
+  const storeSnapshot = useSyncExternalStore(
     subscribeSavedListings,
-    getSavedListingsSnapshot,
-    () => [] as SavedListingSnapshot[],
+    getSavedListingsStoreSnapshot,
+    getSavedListingsServerSnapshot,
+  );
+
+  const savedList = useMemo(
+    () => parseSavedListingsFromStore(storeSnapshot),
+    [storeSnapshot],
   );
 
   const isSaved = (propertyId: string) => isListingSaved(propertyId);
