@@ -4,6 +4,7 @@ import type { Property } from '../../lib/database.types';
 import BookingCalendar from '../BookingCalendar';
 import { computeOffer } from '../../lib/offers';
 import { computeFeeBreakdown } from '../../config/propertyDefaults';
+import PropertyTrustNotes from './PropertyTrustNotes';
 
 interface PropertySidebarProps {
   property: Property;
@@ -253,6 +254,7 @@ export default function PropertySidebar({
         <Shield className="w-3 h-3" style={{ color: 'var(--accent-dark)' }} />
         Send an inquiry — no online payment on this step. Host confirms directly.
       </p>
+      <PropertyTrustNotes className="mt-3 px-1" />
 
       {/* When the user hasn't picked dates yet, give a soft prompt so the
           empty breakdown doesn't read as "broken". */}

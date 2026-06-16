@@ -3,6 +3,7 @@ import { Star, Quote } from 'lucide-react';
 import type { Property, Review } from '../../lib/database.types';
 import { supabase } from '../../lib/supabase';
 import { getSubRatings, hasReviewSignal, type SubRating } from '../../config/propertyDefaults';
+import PropertyTrustNotes from './PropertyTrustNotes';
 
 interface PropertyReviewsProps {
   property: Property;
@@ -67,10 +68,12 @@ export default function PropertyReviews({ property }: PropertyReviewsProps) {
   }, [property.id]);
 
   const featured = reviews[0];
+  const moreReviews = reviews.slice(1, 4);
   const totalReviews = property.total_reviews || reviews.length;
   const overallRating = Number(property.rating) || 0;
   const subRatings = getSubRatings(property);
   const showSubBars = hasReviewSignal(property);
+  const hasReviews = reviews.length > 0 || showSubBars;
 
   return (
     <section
@@ -84,9 +87,9 @@ export default function PropertyReviews({ property }: PropertyReviewsProps) {
     >
       <div className="flex items-end justify-between gap-4 flex-wrap mb-6">
         <div>
-          <p className="xpx-eyebrow mb-1">Guest reviews</p>
+          <p className="xpx-eyebrow mb-1">{hasReviews ? 'Guest reviews' : 'Direct booking'}</p>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-xpx-text">
-            What guests are saying
+            {hasReviews ? 'What guests are saying' : 'Book with confidence'}
           </h2>
         </div>
         {totalReviews > 0 && (
@@ -100,7 +103,26 @@ export default function PropertyReviews({ property }: PropertyReviewsProps) {
         )}
       </div>
 
-      {/* Big rating block */}
+      {/* Rating block or trust fallback when there are no reviews yet */}
+      {loaded && !hasReviews ? (
+        <div
+          className="rounded-2xl p-6 sm:p-7"
+          style={{
+            background:
+              'linear-gradient(135deg, rgba(80,200,120,0.08) 0%, var(--xpx-surface-light) 100%)',
+            border: '1px solid var(--xpx-border)',
+          }}
+        >
+          <p className="text-base sm:text-lg font-bold text-xpx-text leading-snug">
+            Book directly with the host
+          </p>
+          <p className="mt-2 text-sm text-xpx-muted leading-relaxed">
+            Ask for the best available price, check dates, and confirm your stay on WhatsApp.
+            Payment is arranged directly with the host — no guest commission on XpressBNB.
+          </p>
+          <PropertyTrustNotes className="mt-4" />
+        </div>
+      ) : (
       <div className="grid lg:grid-cols-[280px_1fr] gap-6 lg:gap-10 items-start">
         <div
           className="rounded-2xl p-5 sm:p-6 flex flex-col items-start"
@@ -143,9 +165,9 @@ export default function PropertyReviews({ property }: PropertyReviewsProps) {
                 <span className="font-semibold text-xpx-text tabular-nums">{totalReviews}</span>{' '}
                 {totalReviews === 1 ? 'review' : 'reviews'}
               </>
-            ) : (
-              'No reviews yet — be the first.'
-            )}
+            ) : !loaded ? (
+              'Loading guest feedback…'
+            ) : null}
           </p>
         </div>
 
@@ -156,7 +178,7 @@ export default function PropertyReviews({ property }: PropertyReviewsProps) {
               <SubRatingBar key={sr.label} sub={sr} />
             ))}
           </div>
-        ) : (
+        ) : reviews.length > 0 ? (
           <div
             className="rounded-2xl p-6 text-sm text-xpx-muted leading-relaxed"
             style={{
@@ -164,15 +186,25 @@ export default function PropertyReviews({ property }: PropertyReviewsProps) {
               border: '1px solid var(--xpx-border)',
             }}
           >
-            We&apos;ll surface a category-by-category breakdown (cleanliness, accuracy,
-            communication, location, check-in, value) once guests start leaving
-            verified reviews after their stay.
+            Recent guests have shared their experience below. Ask the host for availability
+            and the best price for your dates.
           </div>
-        )}
+        ) : !loaded ? (
+          <div
+            className="rounded-2xl p-6 animate-pulse"
+            style={{
+              background: 'var(--xpx-surface-light)',
+              border: '1px solid var(--xpx-border)',
+            }}
+          >
+            <div className="h-3 w-2/3 rounded" style={{ background: 'rgba(15,23,42,0.06)' }} />
+          </div>
+        ) : null}
       </div>
+      )}
 
       {/* Featured review */}
-      {loaded && featured ? (
+      {hasReviews && loaded && featured ? (
         <article
           className="mt-8 rounded-2xl p-6"
           style={{
@@ -211,7 +243,37 @@ export default function PropertyReviews({ property }: PropertyReviewsProps) {
             </div>
           </div>
         </article>
-      ) : loaded ? null : (
+      ) : null}
+
+      {hasReviews && loaded && moreReviews.length > 0 ? (
+        <div className="mt-4 grid sm:grid-cols-2 gap-4">
+          {moreReviews.map((review) => (
+            <article
+              key={review.id}
+              className="rounded-2xl p-5"
+              style={{
+                background: 'var(--xpx-surface-light)',
+                border: '1px solid var(--xpx-border)',
+              }}
+            >
+              <p className="text-sm text-xpx-text leading-relaxed line-clamp-4">
+                &ldquo;{review.comment ?? 'Great stay.'}&rdquo;
+              </p>
+              <div className="mt-4 flex items-center gap-2 flex-wrap">
+                <p className="text-sm font-semibold text-xpx-text">{review.guest_name || 'Guest'}</p>
+                <div className="ml-auto flex items-center gap-1 text-sm font-bold text-xpx-text tabular-nums">
+                  <Star
+                    className="w-3.5 h-3.5"
+                    style={{ color: 'var(--xpx-rating)' }}
+                    fill="currentColor"
+                  />
+                  {Number(review.rating).toFixed(1)}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : hasReviews && !loaded ? (
         <div
           className="mt-8 rounded-2xl p-6 animate-pulse"
           style={{
@@ -223,7 +285,7 @@ export default function PropertyReviews({ property }: PropertyReviewsProps) {
           <div className="h-3 w-3/4 rounded mb-2" style={{ background: 'rgba(15,23,42,0.06)' }} />
           <div className="h-3 w-2/3 rounded" style={{ background: 'rgba(15,23,42,0.06)' }} />
         </div>
-      )}
+      ) : null}
     </section>
   );
 }

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { theme } from '../lib/theme';
 import { safeHostDisplayName, safeHostInitial, stripPhoneLike } from '../lib/host';
 import { buildHostWhatsAppLink } from '../lib/team';
+import PropertyTrustNotes from './property/PropertyTrustNotes';
 
 interface HostInfo {
   id: string;
@@ -118,12 +119,8 @@ export default function HostCard({
     ? memberSince.toLocaleString('en-IN', { month: 'short', year: 'numeric' })
     : null;
 
-  // Both contact CTAs route to the team line (see src/lib/team.ts business
-  // rule). The buttons are still labeled "Message host" / "Call host" so the
-  // guest psychologically believes they have direct host contact, while the
-  // boss actually receives the message and brokers the conversation. This
-  // is what protects the host subscription model.
   const hostFirstName = safeName.split(' ')[0];
+  const bookingCount = host.total_bookings && host.total_bookings > 0 ? host.total_bookings : null;
   const handleMessage = () => {
     if (onMessageHost) return onMessageHost(host);
     window.open(buildHostWhatsAppLink(propertyTitle, hostFirstName), '_blank');
@@ -185,8 +182,8 @@ export default function HostCard({
               <span className="inline-flex items-center gap-1">
                 <Star className="w-4 h-4" style={{ color: theme.rating }} fill="currentColor" />
                 {host.rating.toFixed(1)}
-                {host.total_bookings ? (
-                  <span className="text-xpx-subtle">({host.total_bookings} bookings)</span>
+                {bookingCount ? (
+                  <span className="text-xpx-subtle">({bookingCount} bookings)</span>
                 ) : null}
               </span>
             )}
@@ -201,7 +198,9 @@ export default function HostCard({
         <p className="mt-4 text-sm text-xpx-muted leading-relaxed line-clamp-3">{safeBio}</p>
       )}
 
-      <dl className="mt-5 grid grid-cols-3 gap-3 text-center">
+      <dl
+        className={`mt-5 grid gap-3 text-center ${bookingCount ? 'grid-cols-3' : 'grid-cols-2'}`}
+      >
         <div className="rounded-xl p-3" style={{ background: 'var(--xpx-surface)' }}>
           <dt className="text-[11px] uppercase tracking-wide text-xpx-subtle">Response</dt>
           <dd className="mt-1 text-sm font-bold text-xpx-text">~ 1 hr</dd>
@@ -212,10 +211,12 @@ export default function HostCard({
             <Languages className="w-3.5 h-3.5 text-xpx-subtle" /> EN · HI
           </dd>
         </div>
-        <div className="rounded-xl p-3" style={{ background: 'var(--xpx-surface)' }}>
-          <dt className="text-[11px] uppercase tracking-wide text-xpx-subtle">Bookings</dt>
-          <dd className="mt-1 text-sm font-bold text-xpx-text">{host.total_bookings ?? 0}</dd>
-        </div>
+        {bookingCount ? (
+          <div className="rounded-xl p-3" style={{ background: 'var(--xpx-surface)' }}>
+            <dt className="text-[11px] uppercase tracking-wide text-xpx-subtle">Bookings</dt>
+            <dd className="mt-1 text-sm font-bold text-xpx-text tabular-nums">{bookingCount}</dd>
+          </div>
+        ) : null}
       </dl>
 
       <div className="mt-5 space-y-3">
@@ -229,11 +230,12 @@ export default function HostCard({
           }}
         >
           <MessageCircle className="w-4 h-4" />
-          Message host
+          Contact Host
         </button>
-        <p className="text-[11px] text-xpx-subtle text-center">
-          Reply usually within an hour. We coordinate with the host on your behalf.
+        <p className="text-[11px] text-xpx-muted text-center leading-snug">
+          Ask for availability, final price, and token advance directly.
         </p>
+        <PropertyTrustNotes className="mt-1" />
       </div>
     </section>
   );
