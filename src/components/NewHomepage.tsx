@@ -20,7 +20,7 @@ import {
   Linkedin,
 } from 'lucide-react';
 import { XPRESSBNB_LOGO_IMG_CLASS, XPRESSBNB_LOGO_PATH } from '../lib/branding';
-import { supabase } from '../lib/supabase';
+import { supabase, logSupabaseError } from '../lib/supabase';
 import SEOHead from './SEOHead';
 import { generateOrganizationStructuredData } from '../lib/seo';
 import type { Property } from '../lib/database.types';
@@ -32,6 +32,7 @@ import { TEAM_EMAIL } from '../lib/team';
 import { ManageCookiesLink } from './CookieConsent';
 import SaveListingButton from './SaveListingButton';
 import { snapshotFromProperty } from '../lib/savedListingsStorage';
+import XpModeSwitch from './XpModeSwitch';
 
 // Global brand system (premium minimal emerald scale).
 const ACCENT = '#059669';
@@ -164,6 +165,7 @@ export default function NewHomepage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [propertiesByCity, setPropertiesByCity] = useState<Record<string, Property[]>>({});
   const [loading, setLoading] = useState(true);
+  const [listingsError, setListingsError] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [heroIndex, setHeroIndex] = useState(0);
@@ -207,6 +209,7 @@ export default function NewHomepage() {
   }, []);
 
   const loadProperties = async () => {
+    setListingsError(null);
     try {
       const { data, error } = await supabase
         .from('properties')
@@ -223,7 +226,10 @@ export default function NewHomepage() {
       });
       setPropertiesByCity(grouped);
     } catch (err) {
-      console.error('Error loading properties:', err);
+      logSupabaseError('Error loading properties', err);
+      setProperties([]);
+      setPropertiesByCity({});
+      setListingsError('Could not load stays. Refresh the page or check your connection.');
     } finally {
       setLoading(false);
     }
@@ -323,32 +329,35 @@ export default function NewHomepage() {
         }}
       >
         <div className="xpx-container min-h-[var(--xpx-nav-height)] h-[var(--xpx-nav-height)] grid grid-cols-[auto_1fr_auto] lg:grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
-          <button
-            type="button"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="flex items-center gap-2 min-w-0 justify-self-start text-left"
-            aria-label="XpressBnB home"
-          >
-            <img
-              src={XPRESSBNB_LOGO_PATH}
-              alt=""
-              className="h-9 w-9 sm:h-10 sm:w-10 object-contain shrink-0"
-              width={40}
-              height={40}
-              decoding="async"
-              fetchPriority="low"
-            />
-            <span
-              className="truncate text-[22px] sm:text-[24px] leading-none"
-              style={{
-                letterSpacing: '-0.03em',
-                textShadow: '0 1px 2px rgba(15,23,42,0.18)',
-              }}
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 justify-self-start">
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="flex items-center gap-2 min-w-0 text-left shrink"
+              aria-label="XpressBnB home"
             >
-              <span style={{ color: TEXT, fontWeight: 800 }}>Xpress</span>
-              <span style={{ color: '#34D399', fontWeight: 800 }}>BnB</span>
-            </span>
-          </button>
+              <img
+                src={XPRESSBNB_LOGO_PATH}
+                alt=""
+                className="h-9 w-9 sm:h-10 sm:w-10 object-contain shrink-0"
+                width={40}
+                height={40}
+                decoding="async"
+                fetchPriority="low"
+              />
+              <span
+                className="hidden sm:inline truncate text-[22px] sm:text-[24px] leading-none"
+                style={{
+                  letterSpacing: '-0.03em',
+                  textShadow: '0 1px 2px rgba(15,23,42,0.18)',
+                }}
+              >
+                <span style={{ color: TEXT, fontWeight: 800 }}>Xpress</span>
+                <span style={{ color: '#34D399', fontWeight: 800 }}>BnB</span>
+              </span>
+            </button>
+            <XpModeSwitch />
+          </div>
 
           <nav className="hidden lg:flex items-center justify-center gap-1 justify-self-center">
             {['Stays', 'Experiences', 'Host', 'About'].map(label => (
@@ -605,6 +614,10 @@ export default function NewHomepage() {
 
           {loading ? (
             <FeaturedSkeleton />
+          ) : listingsError ? (
+            <div className="py-16 text-center text-sm" style={{ color: '#B91C1C' }}>
+              {listingsError}
+            </div>
           ) : featuredProperties.length === 0 ? (
             <div className="py-16 text-center text-sm" style={{ color: TEXT_SUBTLE }}>
               No properties available right now.

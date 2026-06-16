@@ -2,6 +2,7 @@ import { Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { XPRESSBNB_LOGO_NAV_IMG_CLASS, XPRESSBNB_LOGO_PATH } from '../lib/branding';
 import { theme } from '../lib/theme';
+import XpModeSwitch from './XpModeSwitch';
 
 interface HeaderProps {
   onAboutClick: () => void;
@@ -67,32 +68,35 @@ export default function Header({
       }}
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 flex items-center justify-between h-[60px] md:h-[72px] gap-2">
-        <button
-          onClick={goHome}
-          className="flex items-center gap-2 min-w-0 shrink text-base sm:text-lg md:text-xl leading-none"
-        >
-          <img
-            src={XPRESSBNB_LOGO_PATH}
-            alt=""
-            className={XPRESSBNB_LOGO_NAV_IMG_CLASS}
-            width={48}
-            height={48}
-            decoding="async"
-          />
-          <span
-            className={`truncate ${brandTextClass}`}
-            style={{
-              fontSize: 'clamp(20px, 2.2vw, 24px)',
-              letterSpacing: '-0.03em',
-              fontWeight: 800,
-              textShadow: transparentTextShadow,
-              lineHeight: 1,
-            }}
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink">
+          <button
+            onClick={goHome}
+            className="flex items-center gap-2 min-w-0 shrink text-base sm:text-lg md:text-xl leading-none"
           >
-            <span>Xpress</span>
-            <span style={{ color: '#34D399' }}>BnB</span>
-          </span>
-        </button>
+            <img
+              src={XPRESSBNB_LOGO_PATH}
+              alt=""
+              className={XPRESSBNB_LOGO_NAV_IMG_CLASS}
+              width={48}
+              height={48}
+              decoding="async"
+            />
+            <span
+              className={`hidden sm:inline truncate ${brandTextClass}`}
+              style={{
+                fontSize: 'clamp(20px, 2.2vw, 24px)',
+                letterSpacing: '-0.03em',
+                fontWeight: 800,
+                textShadow: transparentTextShadow,
+                lineHeight: 1,
+              }}
+            >
+              <span>Xpress</span>
+              <span style={{ color: '#34D399' }}>BnB</span>
+            </span>
+          </button>
+          <XpModeSwitch variant={scrolled ? 'dark' : 'light'} />
+        </div>
 
         <nav className="hidden md:flex items-center gap-1">
           <button
