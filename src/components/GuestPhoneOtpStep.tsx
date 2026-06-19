@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Loader2, Phone, ShieldCheck } from 'lucide-react';
 import {
+  BOOKING_OTP_CODE_LENGTH,
   normalizePhoneDigits,
+  sanitizeBookingOtpInput,
   sendBookingInquiryOtp,
   verifyBookingInquiryOtp,
   type BookingOtpVerifyResult,
@@ -163,7 +165,7 @@ export default function GuestPhoneOtpStep({
       {phase === 'otp' && (
         <div>
           <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-600">
-            6-digit code
+            {BOOKING_OTP_CODE_LENGTH}-digit code
           </label>
           <p className="mb-2 text-xs text-gray-500">
             Sent to {maskedPhone ?? 'your phone'}. Valid for 15 minutes.
@@ -172,12 +174,12 @@ export default function GuestPhoneOtpStep({
             type="text"
             inputMode="numeric"
             autoComplete="one-time-code"
-            maxLength={6}
+            maxLength={BOOKING_OTP_CODE_LENGTH}
             value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            onChange={(e) => setOtp(sanitizeBookingOtpInput(e.target.value))}
             disabled={disabled || loading}
             className="w-full rounded-xl border border-gray-300 px-4 py-3 text-center font-mono text-lg tracking-[0.35em] focus:border-transparent focus:ring-2 focus:ring-emerald-500"
-            placeholder="••••••"
+            placeholder={'•'.repeat(BOOKING_OTP_CODE_LENGTH)}
           />
         </div>
       )}
@@ -204,7 +206,7 @@ export default function GuestPhoneOtpStep({
             <button
               type="button"
               onClick={handleVerifyOtp}
-              disabled={disabled || loading || otp.length !== 6}
+              disabled={disabled || loading || otp.length !== BOOKING_OTP_CODE_LENGTH}
               className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}

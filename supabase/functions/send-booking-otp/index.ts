@@ -10,6 +10,8 @@ import { corsHeadersFor } from '../_shared/cors.ts';
  *   are mandatory — do not send ad-hoc marketing-style bodies in production.
  */
 const PURPOSE_BOOKING = 'booking_inquiry';
+/** Matches Twilio Verify SMS length for this project; fallback SMS uses the same. */
+const BOOKING_OTP_CODE_LENGTH = 4;
 const WINDOW_MS = 60 * 60 * 1000;
 const MAX_SENDS_PER_PHONE = 3;
 const MAX_SENDS_PER_IP = 20;
@@ -225,10 +227,15 @@ Deno.serve(async (req: Request) => {
           },
         );
       }
-      const otp = (Math.floor(100000 + Math.random() * 900000)).toString();
+      const otp = (
+        Math.floor(
+          10 ** (BOOKING_OTP_CODE_LENGTH - 1) +
+            Math.random() * 9 * 10 ** (BOOKING_OTP_CODE_LENGTH - 1),
+        )
+      ).toString();
       codeHash = await sha256Hex(otp);
       const msg =
-        `Your XpressBnB booking verification code is ${otp}. Valid ${OTP_TTL_MIN} minutes. Do not share this code.`;
+        `Your XpressBnB ${BOOKING_OTP_CODE_LENGTH}-digit booking verification code is ${otp}. Valid ${OTP_TTL_MIN} minutes. Do not share this code.`;
       const msgUrl =
         `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(accountSid)}/Messages.json`;
       const msgBody = new URLSearchParams({

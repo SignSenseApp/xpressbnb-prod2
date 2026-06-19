@@ -2,6 +2,9 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { corsHeadersFor } from '../_shared/cors.ts';
 
 const PURPOSE_BOOKING = 'booking_inquiry';
+/** Matches Twilio Verify SMS length for this project; fallback path validates the same. */
+const BOOKING_OTP_CODE_LENGTH = 4;
+const BOOKING_OTP_PATTERN = /^\d{4}$/;
 const VERIFY_TOKEN_TTL_MIN = 15;
 const MAX_OTP_ATTEMPTS = 8;
 
@@ -55,11 +58,14 @@ Deno.serve(async (req: Request) => {
     const d10 = normalizeIndia10(String(body.phone ?? ''));
     const otp = String(body.otp ?? '').trim();
 
-    if (!d10 || !/^\d{6}$/.test(otp)) {
-      return new Response(JSON.stringify({ error: 'Phone and 6-digit OTP required' }), {
-        status: 400,
-        headers: { ...cors, 'Content-Type': 'application/json' },
-      });
+    if (!d10 || !BOOKING_OTP_PATTERN.test(otp)) {
+      return new Response(
+        JSON.stringify({ error: `Phone and ${BOOKING_OTP_CODE_LENGTH}-digit OTP required` }),
+        {
+          status: 400,
+          headers: { ...cors, 'Content-Type': 'application/json' },
+        },
+      );
     }
 
     let draftId: string | null = null;

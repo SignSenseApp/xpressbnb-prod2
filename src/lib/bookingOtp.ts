@@ -1,5 +1,18 @@
 import { supabase } from './supabase';
 
+/** Twilio Verify for this project sends 4-digit SMS codes; fallback SMS matches. */
+export const BOOKING_OTP_CODE_LENGTH = 4;
+
+const BOOKING_OTP_PATTERN = /^\d{4}$/;
+
+export function sanitizeBookingOtpInput(raw: string): string {
+  return raw.replace(/\D/g, '').slice(0, BOOKING_OTP_CODE_LENGTH);
+}
+
+export function isValidBookingOtpCode(otp: string): boolean {
+  return BOOKING_OTP_PATTERN.test(otp.trim());
+}
+
 export type BookingOtpVerifyResult = {
   verificationToken: string;
   expiresAt: string;
@@ -82,8 +95,8 @@ export async function verifyBookingInquiryOtp(
   if (digits.length !== 10) {
     return { ok: false, error: 'Enter a valid 10-digit mobile number' };
   }
-  if (!/^\d{6}$/.test(otp.trim())) {
-    return { ok: false, error: 'Enter the 6-digit code' };
+  if (!isValidBookingOtpCode(otp)) {
+    return { ok: false, error: `Enter the ${BOOKING_OTP_CODE_LENGTH}-digit code` };
   }
 
   const { data, error } = await supabase.functions.invoke('verify-booking-otp', {
