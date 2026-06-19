@@ -32,7 +32,7 @@ import { TEAM_EMAIL } from '../lib/team';
 import { ManageCookiesLink } from './CookieConsent';
 import SaveListingButton from './SaveListingButton';
 import { firstImageUrl, snapshotFromProperty } from '../lib/savedListingsStorage';
-import { fetchActiveProperties } from '../lib/publicListings';
+import { fetchActiveProperties, invalidatePublicListingsCache } from '../lib/publicListings';
 import XpModeSwitch from './XpModeSwitch';
 
 // Global brand system (premium minimal emerald scale).
@@ -174,10 +174,14 @@ export default function NewHomepage() {
   const heroSlidesWithImgRef = useRef(new Set<number>([0]));
   heroSlidesWithImgRef.current.add(heroIndex);
 
+  const loadPropertiesRef = useRef(0);
+
   useEffect(() => {
-    const controller = new AbortController();
-    void loadProperties(controller.signal);
-    return () => controller.abort();
+    const requestId = ++loadPropertiesRef.current;
+    void loadProperties(requestId);
+    return () => {
+      loadPropertiesRef.current += 1;
+    };
   }, []);
 
   useEffect(() => {
@@ -211,12 +215,12 @@ export default function NewHomepage() {
     return () => clearInterval(id);
   }, []);
 
-  const loadProperties = async (signal?: AbortSignal) => {
+  const loadProperties = async (requestId: number, forceRefresh = false) => {
     setLoading(true);
     setListingsError(null);
     try {
-      const data = await fetchActiveProperties({ signal });
-      if (signal?.aborted) return;
+      const data = await fetchActiveProperties({ forceRefresh });
+      if (requestId !== loadPropertiesRef.current) return;
       setProperties(data);
       const grouped: Record<string, Property[]> = {};
       CITIES.forEach((c) => {
@@ -224,13 +228,13 @@ export default function NewHomepage() {
       });
       setPropertiesByCity(grouped);
     } catch (err) {
-      if (signal?.aborted || (err instanceof DOMException && err.name === 'AbortError')) return;
+      if (requestId !== loadPropertiesRef.current) return;
       logSupabaseError('Error loading properties', err);
       setProperties([]);
       setPropertiesByCity({});
       setListingsError('Could not load stays. Refresh the page or check your connection.');
     } finally {
-      if (!signal?.aborted) setLoading(false);
+      if (requestId === loadPropertiesRef.current) setLoading(false);
     }
   };
 
@@ -614,8 +618,19 @@ export default function NewHomepage() {
           {loading ? (
             <FeaturedSkeleton />
           ) : listingsError ? (
-            <div className="py-16 text-center text-sm" style={{ color: '#B91C1C' }}>
-              {listingsError}
+            <div className="py-16 text-center text-sm px-4" style={{ color: '#B91C1C' }}>
+              <p>{listingsError}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  invalidatePublicListingsCache();
+                  void loadProperties(loadPropertiesRef.current, true);
+                }}
+                className="mt-4 inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold text-white"
+                style={{ background: ACCENT }}
+              >
+                Try again
+              </button>
             </div>
           ) : featuredProperties.length === 0 ? (
             <div className="py-16 text-center text-sm" style={{ color: TEXT_SUBTLE }}>

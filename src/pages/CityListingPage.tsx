@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { ArrowLeft, SlidersHorizontal, X, MapPin, CheckCircle, Clock, Zap, Shield, Star, MessageCircle, Calendar } from 'lucide-react';
 import { logSupabaseError } from '../lib/supabase';
 import ConversionPropertyCard from '../components/ConversionPropertyCard';
@@ -8,7 +8,7 @@ import { theme } from '../lib/theme';
 import { buildTeamWhatsAppLink } from '../lib/team';
 import { parseTripFromSearch, formatTripChip } from '../lib/tripSearch';
 import { cityDbInList } from '../lib/cityBuckets';
-import { fetchActiveProperties } from '../lib/publicListings';
+import { fetchActiveProperties, invalidatePublicListingsCache } from '../lib/publicListings';
 
 interface CityListingPageProps {
   city: string;
@@ -87,10 +87,14 @@ export default function CityListingPage({ city }: CityListingPageProps) {
     'Hi — I want to book a Private Solo show in Rishikesh. Please share availability and next steps.'
   );
 
+  const loadPropertiesRef = useRef(0);
+
   useEffect(() => {
-    const controller = new AbortController();
-    void loadProperties(controller.signal);
-    return () => controller.abort();
+    const requestId = ++loadPropertiesRef.current;
+    void loadProperties(requestId);
+    return () => {
+      loadPropertiesRef.current += 1;
+    };
   }, [city]);
 
   useEffect(() => {
@@ -110,23 +114,23 @@ export default function CityListingPage({ city }: CityListingPageProps) {
     applyFiltersAndSort();
   }, [properties, filters, sortBy, trip.guests]);
 
-  const loadProperties = async (signal?: AbortSignal) => {
+  const loadProperties = async (requestId: number, forceRefresh = false) => {
     setLoading(true);
     setListingsError(null);
     try {
       const data = await fetchActiveProperties({
         cityIn: cityDbInList(cityName),
-        signal,
+        forceRefresh,
       });
-      if (signal?.aborted) return;
+      if (requestId !== loadPropertiesRef.current) return;
       setProperties(data);
     } catch (error) {
-      if (signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) return;
+      if (requestId !== loadPropertiesRef.current) return;
       logSupabaseError('Error loading city properties', error);
       setProperties([]);
       setListingsError('Could not load stays. Refresh the page or check your connection.');
     } finally {
-      if (!signal?.aborted) setLoading(false);
+      if (requestId === loadPropertiesRef.current) setLoading(false);
     }
   };
 
@@ -334,6 +338,17 @@ export default function CityListingPage({ city }: CityListingPageProps) {
           <div className="flex flex-col items-center justify-center py-24 text-center px-4">
             <h3 className="text-lg font-bold text-xpx-text mb-2">Could not load stays</h3>
             <p className="text-sm text-red-700 max-w-md leading-relaxed">{listingsError}</p>
+            <button
+              type="button"
+              onClick={() => {
+                invalidatePublicListingsCache();
+                void loadProperties(loadPropertiesRef.current, true);
+              }}
+              className="mt-5 px-5 py-2.5 rounded-full text-sm font-semibold text-white"
+              style={{ background: theme.warm, boxShadow: '0 6px 18px rgba(80,200,120,0.28)' }}
+            >
+              Try again
+            </button>
           </div>
         ) : filteredProperties.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
