@@ -27,7 +27,7 @@ export type SavedListingSnapshot = {
 
 type SavedMap = Record<string, SavedListingSnapshot>;
 
-function firstImageUrl(images: Property['images']): string | null {
+export function firstImageUrl(images: Property['images']): string | null {
   if (!Array.isArray(images)) return null;
   for (const item of images) {
     if (typeof item === 'string' && item.trim().length > 0) return item.trim();

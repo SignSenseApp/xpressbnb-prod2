@@ -20,7 +20,7 @@ import {
   Linkedin,
 } from 'lucide-react';
 import { XPRESSBNB_LOGO_IMG_CLASS, XPRESSBNB_LOGO_PATH } from '../lib/branding';
-import { supabase, logSupabaseError } from '../lib/supabase';
+import { logSupabaseError } from '../lib/supabase';
 import SEOHead from './SEOHead';
 import { generateOrganizationStructuredData } from '../lib/seo';
 import type { Property } from '../lib/database.types';
@@ -31,7 +31,8 @@ import { openHomeOverlay } from '../lib/navigation';
 import { TEAM_EMAIL } from '../lib/team';
 import { ManageCookiesLink } from './CookieConsent';
 import SaveListingButton from './SaveListingButton';
-import { snapshotFromProperty } from '../lib/savedListingsStorage';
+import { firstImageUrl, snapshotFromProperty } from '../lib/savedListingsStorage';
+import { fetchActiveProperties } from '../lib/publicListings';
 import XpModeSwitch from './XpModeSwitch';
 
 // Global brand system (premium minimal emerald scale).
@@ -174,7 +175,9 @@ export default function NewHomepage() {
   heroSlidesWithImgRef.current.add(heroIndex);
 
   useEffect(() => {
-    loadProperties();
+    const controller = new AbortController();
+    void loadProperties(controller.signal);
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -208,30 +211,26 @@ export default function NewHomepage() {
     return () => clearInterval(id);
   }, []);
 
-  const loadProperties = async () => {
+  const loadProperties = async (signal?: AbortSignal) => {
+    setLoading(true);
     setListingsError(null);
     try {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('is_active', true)
-        .order('is_verified', { ascending: false })
-        .order('rating', { ascending: false });
-
-      if (error) throw error;
-      setProperties(data || []);
+      const data = await fetchActiveProperties({ signal });
+      if (signal?.aborted) return;
+      setProperties(data);
       const grouped: Record<string, Property[]> = {};
-      CITIES.forEach(c => {
-        grouped[c] = (data || []).filter(p => normalizeCityBucket(p.city) === c);
+      CITIES.forEach((c) => {
+        grouped[c] = data.filter((p) => normalizeCityBucket(p.city) === c);
       });
       setPropertiesByCity(grouped);
     } catch (err) {
+      if (signal?.aborted || (err instanceof DOMException && err.name === 'AbortError')) return;
       logSupabaseError('Error loading properties', err);
       setProperties([]);
       setPropertiesByCity({});
       setListingsError('Could not load stays. Refresh the page or check your connection.');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   };
 
@@ -645,7 +644,7 @@ export default function NewHomepage() {
                 className="group relative md:col-span-5 md:row-span-2 overflow-hidden cursor-pointer transition-all duration-300 md:hover:-translate-y-1"
               style={{ boxShadow: '0 8px 22px rgba(15,23,42,0.08)', borderRadius: 20 }}
             >
-              <TopDestinationCardInner city="Delhi" propertiesByCity={propertiesByCity} variant="hero" />
+              <TopDestinationCardInner city="Delhi" propertiesByCity={propertiesByCity} listingsLoading={loading} variant="hero" />
             </button>
             <button
               type="button"
@@ -653,7 +652,7 @@ export default function NewHomepage() {
                 className="group relative md:col-span-7 overflow-hidden cursor-pointer transition-all duration-300 md:hover:-translate-y-1"
               style={{ boxShadow: '0 8px 20px rgba(15,23,42,0.08)', borderRadius: 20 }}
             >
-              <TopDestinationCardInner city="Gurgaon" propertiesByCity={propertiesByCity} variant="wide" />
+              <TopDestinationCardInner city="Gurgaon" propertiesByCity={propertiesByCity} listingsLoading={loading} variant="wide" />
             </button>
             <div className="md:col-span-7 grid grid-cols-3 gap-4 lg:gap-5">
               {(['Noida', 'Greater Noida', 'Rishikesh'] as const).map(city => (
@@ -664,7 +663,7 @@ export default function NewHomepage() {
                   className="group relative min-h-[210px] overflow-hidden cursor-pointer transition-all duration-300 md:hover:-translate-y-1"
                   style={{ boxShadow: '0 8px 18px rgba(15,23,42,0.08)', borderRadius: 20 }}
                 >
-                  <TopDestinationCardInner city={city} propertiesByCity={propertiesByCity} />
+                  <TopDestinationCardInner city={city} propertiesByCity={propertiesByCity} listingsLoading={loading} />
                 </button>
               ))}
             </div>
@@ -680,7 +679,7 @@ export default function NewHomepage() {
                 className="group relative min-h-[170px] overflow-hidden cursor-pointer transition-all duration-300 active:scale-[0.99]"
                 style={{ boxShadow: '0 8px 18px rgba(15,23,42,0.08)', borderRadius: 20 }}
               >
-                <TopDestinationCardInner city={city} propertiesByCity={propertiesByCity} />
+                <TopDestinationCardInner city={city} propertiesByCity={propertiesByCity} listingsLoading={loading} />
               </button>
             ))}
           </div>
@@ -1107,13 +1106,16 @@ function openHeroDatePicker(input: HTMLInputElement | null) {
 function TopDestinationCardInner({
   city,
   propertiesByCity,
+  listingsLoading = false,
   variant = 'small',
 }: {
   city: string;
   propertiesByCity: Record<string, Property[]>;
+  listingsLoading?: boolean;
   variant?: 'hero' | 'wide' | 'small';
 }) {
-  const cover = propertiesByCity[city]?.[0]?.images?.[0] || CITY_IMAGES[city];
+  const cover =
+    firstImageUrl(propertiesByCity[city]?.[0]?.images ?? null) || CITY_IMAGES[city];
   const count = propertiesByCity[city]?.length ?? 0;
   const citySize = variant === 'hero' ? 30 : variant === 'wide' ? 24 : 19;
   const countSize = variant === 'hero' ? 'text-sm' : 'text-[13px]';
@@ -1140,7 +1142,7 @@ function TopDestinationCardInner({
           {city}
         </div>
         <div className={`mt-1 ${countSize} font-medium`} style={{ color: 'rgba(248,250,252,0.88)' }}>
-          {count.toLocaleString()} properties
+          {listingsLoading ? 'Loading stays…' : `${count.toLocaleString()} properties`}
         </div>
       </div>
     </div>
@@ -1574,6 +1576,8 @@ function FeaturedCard({ property }: { property: Property }) {
   const reviewCount = Number(property.total_reviews) || 0;
   const rating = Number(property.rating) || 0;
 
+  const coverImage = firstImageUrl(property.images);
+
   return (
     <article
       onClick={handleClick}
@@ -1585,9 +1589,9 @@ function FeaturedCard({ property }: { property: Property }) {
       }}
     >
       <div className="relative h-[220px] overflow-hidden">
-        {property.images?.[0] ? (
+        {coverImage ? (
           <img
-            src={property.images[0]}
+            src={coverImage}
             alt={property.title}
             loading="lazy"
             className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"

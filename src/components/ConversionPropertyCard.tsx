@@ -2,7 +2,7 @@ import { MapPin, Star, CheckCircle, Shield, Clock } from 'lucide-react';
 import type { Property } from '../lib/database.types';
 import { theme } from '../lib/theme';
 import SaveListingButton from './SaveListingButton';
-import { snapshotFromProperty } from '../lib/savedListingsStorage';
+import { firstImageUrl, snapshotFromProperty } from '../lib/savedListingsStorage';
 
 interface ConversionPropertyCardProps {
   property: Property;
@@ -36,6 +36,7 @@ export default function ConversionPropertyCard({
     : null;
 
   const price = (property.price_per_day || property.price_full_day || 0).toLocaleString();
+  const coverImage = firstImageUrl(property.images);
 
   return (
     <article
@@ -54,9 +55,9 @@ export default function ConversionPropertyCard({
     >
       {/* Image */}
       <div className="relative h-44 sm:h-52 overflow-hidden" style={{ background: 'var(--xpx-surface-light)' }}>
-        {property.images?.[0] ? (
+        {coverImage ? (
           <img
-            src={property.images[0]}
+            src={coverImage}
             alt={property.title}
             loading="lazy"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"

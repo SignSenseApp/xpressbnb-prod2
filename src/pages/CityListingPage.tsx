@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, SlidersHorizontal, X, MapPin, CheckCircle, Clock, Zap, Shield, Star, MessageCircle, Calendar } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { logSupabaseError } from '../lib/supabase';
 import ConversionPropertyCard from '../components/ConversionPropertyCard';
 import SEOHead from '../components/SEOHead';
 import type { Property } from '../lib/database.types';
@@ -8,6 +8,7 @@ import { theme } from '../lib/theme';
 import { buildTeamWhatsAppLink } from '../lib/team';
 import { parseTripFromSearch, formatTripChip } from '../lib/tripSearch';
 import { cityDbInList } from '../lib/cityBuckets';
+import { fetchActiveProperties } from '../lib/publicListings';
 
 interface CityListingPageProps {
   city: string;
@@ -72,6 +73,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
   const [properties, setProperties] = useState<Property[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [listingsError, setListingsError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<'recommended' | 'price-low' | 'price-high' | 'rating'>('recommended');
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
@@ -86,7 +88,9 @@ export default function CityListingPage({ city }: CityListingPageProps) {
   );
 
   useEffect(() => {
-    loadProperties();
+    const controller = new AbortController();
+    void loadProperties(controller.signal);
+    return () => controller.abort();
   }, [city]);
 
   useEffect(() => {
@@ -106,24 +110,23 @@ export default function CityListingPage({ city }: CityListingPageProps) {
     applyFiltersAndSort();
   }, [properties, filters, sortBy, trip.guests]);
 
-  const loadProperties = async () => {
+  const loadProperties = async (signal?: AbortSignal) => {
     setLoading(true);
+    setListingsError(null);
     try {
-      // Match canonical city + legacy spellings (e.g. Gurugram vs Gurgaon, New Delhi).
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('is_active', true)
-        .in('city', cityDbInList(cityName))
-        .order('is_verified', { ascending: false })
-        .order('rating', { ascending: false });
-
-      if (error) throw error;
-      setProperties(data || []);
+      const data = await fetchActiveProperties({
+        cityIn: cityDbInList(cityName),
+        signal,
+      });
+      if (signal?.aborted) return;
+      setProperties(data);
     } catch (error) {
-      console.error('Error loading properties:', error);
+      if (signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) return;
+      logSupabaseError('Error loading city properties', error);
+      setProperties([]);
+      setListingsError('Could not load stays. Refresh the page or check your connection.');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   };
 
@@ -326,6 +329,11 @@ export default function CityListingPage({ city }: CityListingPageProps) {
                 <div className="h-3.5 w-1/3 rounded animate-pulse" style={{ background: 'rgba(15,23,42,0.06)' }} />
               </div>
             ))}
+          </div>
+        ) : listingsError ? (
+          <div className="flex flex-col items-center justify-center py-24 text-center px-4">
+            <h3 className="text-lg font-bold text-xpx-text mb-2">Could not load stays</h3>
+            <p className="text-sm text-red-700 max-w-md leading-relaxed">{listingsError}</p>
           </div>
         ) : filteredProperties.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
