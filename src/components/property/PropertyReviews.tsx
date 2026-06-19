@@ -114,11 +114,11 @@ export default function PropertyReviews({ property }: PropertyReviewsProps) {
           }}
         >
           <p className="text-base sm:text-lg font-bold text-xpx-text leading-snug">
-            Book directly with the host
+            Send a verified inquiry
           </p>
           <p className="mt-2 text-sm text-xpx-muted leading-relaxed">
-            Ask for the best available price, check dates, and confirm your stay on WhatsApp.
-            Payment is arranged directly with the host — no guest commission on XpressBNB.
+            Host contact is shared after phone verification. Use Request to book in the sidebar to
+            start — confirm advance, pets, and parking with the host once connected.
           </p>
           <PropertyTrustNotes className="mt-4" />
         </div>

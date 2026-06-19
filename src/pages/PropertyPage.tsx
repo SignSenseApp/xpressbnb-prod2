@@ -691,6 +691,7 @@ export default function PropertyPage() {
                 hostId={property.host_id}
                 fallbackCity={property.city}
                 propertyTitle={property.title}
+                onRequestToBook={handleBookNow}
               />
             </section>
 

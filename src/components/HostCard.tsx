@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle, MapPin, MessageCircle, Star, Shield, Languages } from 'lucide-react';
+import { CheckCircle, MapPin, Star, Shield, Languages, Sparkles, Headphones } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { theme } from '../lib/theme';
 import { safeHostDisplayName, safeHostInitial, stripPhoneLike } from '../lib/host';
-import { buildHostWhatsAppLink } from '../lib/team';
+import { buildTeamWhatsAppLink, TEAM_BRAND_NAME } from '../lib/team';
+import { scrollToId } from '../lib/smoothScroll';
 import PropertyTrustNotes from './property/PropertyTrustNotes';
 
 interface HostInfo {
@@ -14,8 +15,6 @@ interface HostInfo {
   kyc_status?: string | null;
   rating?: number | null;
   total_bookings?: number | null;
-  phone?: string | null;
-  email?: string | null;
   created_at?: string | null;
 }
 
@@ -24,24 +23,22 @@ interface HostCardProps {
   /** City of the property; used as a fallback when host has no city of its own. */
   fallbackCity?: string;
   className?: string;
-  /** Property title used inside the WhatsApp pre-fill so the routed message
-   *  carries enough context for the team line to take it forward. */
   propertyTitle?: string;
-  /** Optional handler for the message CTA. Defaults to opening WhatsApp/email. */
-  onMessageHost?: (host: HostInfo) => void;
+  /** Opens the existing verified inquiry flow (BookingForm + OTP). */
+  onRequestToBook?: () => void;
 }
 
 /**
  * HostCard renders a trustworthy snapshot of the property host using real
- * data from the `hosts` table. Themed for the light Gen Z surface used
- * across the rest of the property page.
+ * data from the `hosts` table. Pre-OTP: no host phone — primary CTA routes
+ * to verified inquiry; optional concierge line is labeled clearly.
  */
 export default function HostCard({
   hostId,
   fallbackCity,
   className = '',
   propertyTitle = 'this property',
-  onMessageHost,
+  onRequestToBook,
 }: HostCardProps) {
   const [host, setHost] = useState<HostInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,7 +53,7 @@ export default function HostCard({
       try {
         const { data, error } = await supabase
           .from('hosts')
-          .select('id, name, bio, kyc_status, rating, total_bookings, phone, email, created_at')
+          .select('id, name, bio, kyc_status, rating, total_bookings, created_at')
           .eq('id', hostId)
           .maybeSingle();
         if (cancelled) return;
@@ -74,6 +71,24 @@ export default function HostCard({
       cancelled = true;
     };
   }, [hostId]);
+
+  const handleRequestToBook = () => {
+    if (onRequestToBook) {
+      onRequestToBook();
+      return;
+    }
+    scrollToId('booking-sidebar', { offset: -80, duration: 1.05 });
+  };
+
+  const handleConcierge = () => {
+    window.open(
+      buildTeamWhatsAppLink(
+        `Hi — I have a question about "${propertyTitle}" on XpressBNB before I send a verified inquiry.`,
+      ),
+      '_blank',
+      'noopener,noreferrer',
+    );
+  };
 
   if (loading) {
     return (
@@ -108,9 +123,6 @@ export default function HostCard({
   }
 
   const isVerified = host.kyc_status === 'verified';
-  // Sanitize before render: never let a host's phone number leak as their
-  // displayed name or avatar, even if the DB has dirty data. Bio is also
-  // stripped so a host can't write "9876543210" in their bio to bypass.
   const safeName = safeHostDisplayName(host.name);
   const initial = safeHostInitial(host.name);
   const safeBio = host.bio ? stripPhoneLike(host.bio) : '';
@@ -118,13 +130,7 @@ export default function HostCard({
   const memberSinceLabel = memberSince
     ? memberSince.toLocaleString('en-IN', { month: 'short', year: 'numeric' })
     : null;
-
-  const hostFirstName = safeName.split(' ')[0];
   const bookingCount = host.total_bookings && host.total_bookings > 0 ? host.total_bookings : null;
-  const handleMessage = () => {
-    if (onMessageHost) return onMessageHost(host);
-    window.open(buildHostWhatsAppLink(propertyTitle, hostFirstName), '_blank');
-  };
 
   return (
     <section
@@ -219,23 +225,37 @@ export default function HostCard({
         ) : null}
       </dl>
 
-      <div className="mt-5 space-y-3">
+      <div className="mt-5 space-y-2.5">
         <button
-          onClick={handleMessage}
+          type="button"
+          onClick={handleRequestToBook}
           className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition-all hover:scale-[1.01]"
           style={{
-            background: theme.accent,
+            background: 'var(--xpx-cta)',
             color: '#ffffff',
-            boxShadow: '0 6px 20px rgba(80,200,120,0.32)',
+            boxShadow: '0 10px 32px rgba(255,56,92,0.28)',
           }}
         >
-          <MessageCircle className="w-4 h-4" />
-          Contact Host
+          <Sparkles className="w-4 h-4" />
+          Request to book
         </button>
-        <p className="text-[11px] text-xpx-muted text-center leading-snug">
-          Ask for availability, final price, and token advance directly.
+        <button
+          type="button"
+          onClick={handleConcierge}
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm text-xpx-text transition-colors"
+          style={{
+            background: 'var(--xpx-surface)',
+            border: '1px solid var(--xpx-border-strong)',
+          }}
+        >
+          <Headphones className="w-4 h-4" />
+          Ask {TEAM_BRAND_NAME}
+        </button>
+        <p className="text-[11px] text-xpx-muted text-center leading-snug pt-0.5">
+          Verified inquiry shares host contact after phone OTP. Questions first? Use concierge — not
+          direct host messaging yet.
         </p>
-        <PropertyTrustNotes className="mt-1" />
+        <PropertyTrustNotes />
       </div>
     </section>
   );

@@ -1,17 +1,17 @@
 import { Shield } from 'lucide-react';
 
 const TRUST_NOTES = [
-  'You can ask the host for the best available price.',
-  'Host may request a small token advance to confirm.',
-  'Share genuine ID with the host before check-in if requested.',
-  'XpressBNB does not charge guest commission.',
+  'Verify your phone to send an inquiry.',
+  'Host contact is shared after verification.',
+  'Carry a genuine ID if the host asks.',
+  'Confirm advance, pets, parking, and special requests with the host.',
 ] as const;
 
 interface PropertyTrustNotesProps {
   className?: string;
 }
 
-/** Compact direct-booking trust copy for property page contact/inquiry areas. */
+/** Compact verified-inquiry safety copy for property page CTAs. */
 export default function PropertyTrustNotes({ className = '' }: PropertyTrustNotesProps) {
   return (
     <ul className={`space-y-1.5 text-[11px] text-xpx-muted leading-snug ${className}`}>

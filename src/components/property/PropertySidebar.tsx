@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Tag, Users, Shield, Sparkles } from 'lucide-react';
+import { Tag, Users, Sparkles } from 'lucide-react';
 import type { Property } from '../../lib/database.types';
 import BookingCalendar from '../BookingCalendar';
 import { computeOffer } from '../../lib/offers';
@@ -249,10 +249,10 @@ export default function PropertySidebar({
       </button>
 
       <p
-        className="mt-3 text-[11px] text-xpx-subtle text-center inline-flex items-center justify-center gap-1.5 w-full"
+        className="mt-3 text-[11px] text-xpx-subtle text-center leading-snug px-1"
       >
-        <Shield className="w-3 h-3" style={{ color: 'var(--accent-dark)' }} />
-        Send an inquiry — no online payment on this step. Host confirms directly.
+        Verify your phone to send an inquiry. Host contact is shared after verification — no online
+        payment on this step.
       </p>
       <PropertyTrustNotes className="mt-3 px-1" />
 
