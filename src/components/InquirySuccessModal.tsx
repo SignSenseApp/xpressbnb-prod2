@@ -5,6 +5,7 @@ import {
   formatHostPhoneDisplay,
   hostPhoneToE164,
 } from '../lib/inquiryHostContact';
+import ZeroCommissionSavingsReceipt from './ZeroCommissionSavingsReceipt';
 
 export type InquirySuccessVariant = 'booking' | 'offer';
 
@@ -65,9 +66,11 @@ export default function InquirySuccessModal({
         <p className="text-sm text-xpx-muted mt-2 leading-relaxed max-w-sm mx-auto">
           Your verified inquiry was sent to{' '}
           <span className="font-semibold text-xpx-text">{hostName}</span>. Host contact is unlocked —
-          you can WhatsApp or call them now. This is not a confirmed booking until the host accepts.
+          continue on WhatsApp or call below.
         </p>
       </div>
+
+      <ZeroCommissionSavingsReceipt estimatedTotal={estimatedTotal} />
 
       <section
         className="rounded-2xl p-4 text-left"

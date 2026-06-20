@@ -24,6 +24,7 @@ import {
   TEAM_PHONE_E164,
   buildTeamWhatsAppLink,
 } from '../lib/team';
+import ZeroCommissionSavingsReceipt from './ZeroCommissionSavingsReceipt';
 
 export type GuestTripConfirmationProps = {
   snapshot: BookingConfirmationSnapshot;
@@ -109,6 +110,10 @@ export default function GuestTripConfirmation({
           We&apos;ve shared your stay details with the host. Keep this summary handy — it has your trip basics and how
           to reach out.
         </p>
+      </div>
+
+      <div className="mt-5">
+        <ZeroCommissionSavingsReceipt estimatedTotal={total} compact />
       </div>
 
       {source === 'snapshot' && (
