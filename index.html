@@ -73,6 +73,16 @@
     }
     </script>
 
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HLZN3RJKTN"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-HLZN3RJKTN');
+    </script>
+
     <!-- Razorpay checkout.js is intentionally NOT loaded here.
          It is lazy-loaded by src/lib/razorpay.ts only on the host
          subscription upgrade path, so guest pages do not ship the
