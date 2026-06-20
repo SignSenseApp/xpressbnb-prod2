@@ -63,8 +63,9 @@ export default function InquirySuccessModal({
       <div>
         <h3 className="text-xl font-extrabold text-xpx-text tracking-tight">{headline}</h3>
         <p className="text-sm text-xpx-muted mt-2 leading-relaxed max-w-sm mx-auto">
-          Inquiry sent to <span className="font-semibold text-xpx-text">{hostName}</span>. They
-          usually reply within a few minutes — seedha unse baat karein, no platform commission.
+          Your verified inquiry was sent to{' '}
+          <span className="font-semibold text-xpx-text">{hostName}</span>. Host contact is unlocked —
+          you can WhatsApp or call them now. This is not a confirmed booking until the host accepts.
         </p>
       </div>
 

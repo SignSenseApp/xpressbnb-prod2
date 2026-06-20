@@ -1,5 +1,6 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import {
   Home,
   Building2,
@@ -38,6 +39,46 @@ export default function HostDashboardLayout({
 }: HostDashboardLayoutProps) {
   const { host, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingInquiryCount, setPendingInquiryCount] = useState(0);
+
+  useEffect(() => {
+    if (!host?.id) {
+      setPendingInquiryCount(0);
+      return;
+    }
+
+    const loadPendingCount = async () => {
+      const { count, error } = await supabase
+        .from('bookings')
+        .select('id', { count: 'exact', head: true })
+        .eq('host_id', host.id)
+        .in('status', ['pending_host', 'pending', 'inquiry_pending']);
+
+      if (!error) setPendingInquiryCount(count ?? 0);
+    };
+
+    void loadPendingCount();
+
+    const channel = supabase
+      .channel(`host-nav-pending-${host.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings',
+          filter: `host_id=eq.${host.id}`,
+        },
+        () => {
+          void loadPendingCount();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [host?.id]);
 
   const navigation = [
     { id: 'overview', name: 'Overview', icon: Home, path: `/host/${hostId}/dashboard/overview` },
@@ -187,7 +228,16 @@ export default function HostDashboardLayout({
                     }}
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
-                    <span>{item.name}</span>
+                    <span className="flex-1 text-left">{item.name}</span>
+                    {item.id === 'bookings' && pendingInquiryCount > 0 && (
+                      <span
+                        className="min-w-[1.25rem] rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-center"
+                        style={{ background: 'rgba(220,38,38,0.12)', color: '#B91C1C' }}
+                        aria-label={`${pendingInquiryCount} new inquiries`}
+                      >
+                        {pendingInquiryCount}
+                      </span>
+                    )}
                   </button>
                 );
               })}

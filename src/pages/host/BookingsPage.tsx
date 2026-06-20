@@ -14,6 +14,7 @@ import {
   Tag,
   ArrowRight,
   MessageSquare,
+  RefreshCw,
 } from 'lucide-react';
 import {
   parseOfferFromSpecialRequests,
@@ -162,12 +163,19 @@ export default function BookingsPage({ onNavigate }: BookingsPageProps = {}) {
             row.payment_status === 'offer_pending' ||
             /^\s*\[OFFER/i.test(row.special_requests ?? '');
           const guestName = row.guest_name || 'A guest';
+          const isVerified = row.phone_verified === true;
           showToast(
             row,
-            isOffer ? 'New offer received' : 'New inquiry received',
+            isOffer
+              ? 'New offer received'
+              : isVerified
+                ? 'New verified inquiry'
+                : 'New inquiry received',
             isOffer
               ? `${guestName} sent you an offer.`
-              : `${guestName} sent a booking inquiry.`,
+              : isVerified
+                ? `${guestName} verified their phone and sent a booking inquiry.`
+                : `${guestName} sent a booking inquiry.`,
           );
         },
       )
@@ -348,14 +356,26 @@ export default function BookingsPage({ onNavigate }: BookingsPageProps = {}) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-xpx-text tracking-tight">
-          Inquiries
-        </h1>
-        <p className="text-xpx-muted mt-2 max-w-2xl leading-relaxed">
-          0% commission — you accept or reject, then coordinate payment directly (WhatsApp, UPI, or
-          cash). We never take a cut of the guest payout.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-xpx-text tracking-tight">
+            Inquiries
+          </h1>
+          <p className="text-xpx-muted mt-2 max-w-2xl leading-relaxed">
+            0% commission — you accept or reject, then coordinate payment directly (WhatsApp, UPI, or
+            cash). We never take a cut of the guest payout.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => void loadBookings()}
+          disabled={loading}
+          className="inline-flex items-center justify-center gap-2 self-start rounded-xl border px-4 py-2.5 text-sm font-semibold text-xpx-text transition-colors disabled:opacity-50"
+          style={{ borderColor: 'var(--xpx-border-strong)', background: 'var(--xpx-surface)' }}
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} aria-hidden />
+          Refresh inquiries
+        </button>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -574,6 +594,14 @@ function InquiryCard({
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
+            {booking.phone_verified && (
+              <span
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                style={{ background: 'rgba(5,150,105,0.12)', color: '#047857' }}
+              >
+                Phone verified
+              </span>
+            )}
             {isOffer && (
               <span
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
