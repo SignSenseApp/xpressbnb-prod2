@@ -195,6 +195,7 @@ export default function BookingForm({
       includeDecoration,
       paymentStatus: 'inquiry',
       bookingStatus: 'pending_host',
+      externalListings: property.external_listings ?? null,
     });
 
     setLoading(false);
@@ -294,6 +295,7 @@ export default function BookingForm({
           checkOutLabel={checkOutDate?.toLocaleDateString('en-IN') ?? ''}
           estimatedTotal={totalPrice}
           includeDecoration={includeDecoration}
+          externalListings={property.external_listings}
           onViewConfirmation={() => onSuccess({ bookingId: completedBookingId })}
         />
       </div>

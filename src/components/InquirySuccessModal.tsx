@@ -6,6 +6,7 @@ import {
   hostPhoneToE164,
 } from '../lib/inquiryHostContact';
 import ZeroCommissionSavingsReceipt from './ZeroCommissionSavingsReceipt';
+import type { Json } from '../lib/database.types';
 
 export type InquirySuccessVariant = 'booking' | 'offer';
 
@@ -19,6 +20,7 @@ export type InquirySuccessModalProps = {
   estimatedTotal: number;
   includeDecoration?: boolean;
   offerPerNight?: number;
+  externalListings?: Json | null;
   onViewConfirmation: () => void;
   onDismiss?: () => void;
   dismissLabel?: string;
@@ -34,6 +36,7 @@ export default function InquirySuccessModal({
   estimatedTotal,
   includeDecoration = false,
   offerPerNight,
+  externalListings,
   onViewConfirmation,
   onDismiss,
   dismissLabel = 'Done',
@@ -70,7 +73,10 @@ export default function InquirySuccessModal({
         </p>
       </div>
 
-      <ZeroCommissionSavingsReceipt estimatedTotal={estimatedTotal} />
+      <ZeroCommissionSavingsReceipt
+        estimatedTotal={estimatedTotal}
+        externalListings={externalListings}
+      />
 
       <section
         className="rounded-2xl p-4 text-left"

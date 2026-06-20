@@ -8,6 +8,8 @@
  * insert — same device/session can reopen the confirmation URL.
  */
 
+import type { Json } from './database.types';
+
 export const BOOKING_SNAPSHOT_MAP_KEY = 'xpx_booking_confirmations_v1';
 
 export type BookingConfirmationSnapshot = {
@@ -28,6 +30,8 @@ export type BookingConfirmationSnapshot = {
   includeDecoration: boolean;
   paymentStatus: string;
   bookingStatus: string;
+  /** Optional copy of properties.external_listings for price-proof on confirmation page */
+  externalListings?: Json | null;
 };
 
 function readMap(): Record<string, BookingConfirmationSnapshot> {

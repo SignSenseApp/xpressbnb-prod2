@@ -113,7 +113,11 @@ export default function GuestTripConfirmation({
       </div>
 
       <div className="mt-5">
-        <ZeroCommissionSavingsReceipt estimatedTotal={total} compact />
+        <ZeroCommissionSavingsReceipt
+          estimatedTotal={total}
+          compact
+          externalListings={snapshot.externalListings}
+        />
       </div>
 
       {source === 'snapshot' && (

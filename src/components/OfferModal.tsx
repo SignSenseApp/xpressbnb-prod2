@@ -175,6 +175,7 @@ export default function OfferModal({
       includeDecoration: false,
       paymentStatus: 'offer_pending',
       bookingStatus: 'pending_host',
+      externalListings: property.external_listings ?? null,
     });
 
     setCompletedBookingId(inquiry.bookingId);
@@ -265,6 +266,7 @@ export default function OfferModal({
               }
               estimatedTotal={totalOffer}
               offerPerNight={offer}
+              externalListings={property.external_listings}
               onViewConfirmation={goToConfirmation}
               onDismiss={onClose}
               dismissLabel="Band karein"
