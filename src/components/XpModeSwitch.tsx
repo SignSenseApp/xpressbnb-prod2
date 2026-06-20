@@ -1,5 +1,5 @@
-/** External XpressBNB.ai concierge beta — no query params or user data. */
-export const XPRESSBNB_AI_URL = 'https://xpressbnbai.vercel.app' as const;
+/** External XpressBNB AI concierge — opens xpressbnbai.in (no query params or user data). */
+export const XPRESSBNB_AI_URL = 'https://xpressbnbai.in' as const;
 
 type XpModeSwitchProps = {
   /** `light` = white text on transparent hero headers; `dark` = ink on white bar. */
@@ -8,7 +8,7 @@ type XpModeSwitchProps = {
 };
 
 /**
- * Compact marketplace ↔ AI mode switch (.com active here · .ai opens beta).
+ * Compact marketplace ↔ AI mode switch (.com active here · .in opens AI concierge).
  */
 export default function XpModeSwitch({ variant = 'dark', className = '' }: XpModeSwitchProps) {
   const isLight = variant === 'light';
@@ -99,7 +99,7 @@ export default function XpModeSwitch({ variant = 'dark', className = '' }: XpMod
           href={XPRESSBNB_AI_URL}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Open XpressBNB AI Concierge beta"
+          aria-label="Open XpressBNB AI Concierge on xpressbnbai.in"
           className="xp-mode-ai group relative inline-flex items-center gap-1 rounded-full px-2 py-1.5 sm:px-2.5 sm:py-1.5 transition-[transform,background,box-shadow] duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
           style={{
             color: isLight ? 'rgba(255,255,255,0.75)' : '#64748b',
@@ -139,7 +139,7 @@ export default function XpModeSwitch({ variant = 'dark', className = '' }: XpMod
                   }
             }
           >
-            .ai
+            .in
           </span>
 
           <span

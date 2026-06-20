@@ -4,6 +4,8 @@ import { theme } from '../lib/theme';
 
 const SHARE_LINE =
   'Found a stay without guest commission on XpressBNB. Verified inquiry — coordinate directly with your host.';
+
+type ZeroCommissionSavingsReceiptProps = {
   /** Trip estimated total from booking flow — used only for illustrative fee estimate */
   estimatedTotal?: number;
   compact?: boolean;
