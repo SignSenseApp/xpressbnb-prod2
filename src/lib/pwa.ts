@@ -28,10 +28,31 @@ let installListenersAttached = false;
 export function registerServiceWorker(): void {
   if (!('serviceWorker' in navigator)) return;
 
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing || !navigator.serviceWorker.controller) return;
+    refreshing = true;
+    window.location.reload();
+  });
+
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      /* non-fatal — site still works without SW */
-    });
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((registration) => {
+        registration.update().catch(() => {});
+        registration.addEventListener('updatefound', () => {
+          const worker = registration.installing;
+          if (!worker) return;
+          worker.addEventListener('statechange', () => {
+            if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+              worker.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        });
+      })
+      .catch(() => {
+        /* non-fatal — site still works without SW */
+      });
   });
 }
 
@@ -60,6 +81,15 @@ export function isStandaloneApp(): boolean {
     window.matchMedia('(display-mode: fullscreen)').matches ||
     nav.standalone === true
   );
+}
+
+/** iOS/Android PWA + touch phones: native momentum scroll beats Lenis/CSS smooth. */
+export function prefersNativeScroll(): boolean {
+  if (typeof window === 'undefined') return true;
+  if (window.matchMedia('(max-width: 768px)').matches) return true;
+  if (isStandaloneApp()) return true;
+  const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+  return coarsePointer && navigator.maxTouchPoints > 0;
 }
 
 export function canNativeInstall(): boolean {

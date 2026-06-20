@@ -115,6 +115,20 @@ html.lenis body {
     -webkit-text-size-adjust: 100%;
   }
 
+  @media (max-width: 768px) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  html.xpx-native-scroll {
+    scroll-behavior: auto;
+  }
+
+  html.xpx-native-scroll body {
+    overscroll-behavior-y: contain;
+  }
+
   body {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: none;
@@ -347,7 +361,7 @@ html.lenis body {
   }
   .scroll-momentum {
     -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     overscroll-behavior-x: contain;
     scroll-snap-type: x mandatory;
   }
@@ -384,7 +398,7 @@ html.lenis body {
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     -webkit-overflow-scrolling: touch;
   }
 

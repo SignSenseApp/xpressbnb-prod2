@@ -224,23 +224,25 @@ export default function PropertyPage() {
   // Smooth-scroll the user from the mobile bottom action bar down to the
   // booking sidebar so they immediately land on the calendar / Reserve
   // section. Falls back to no-op if the sidebar isn't yet rendered.
-  const scrollToSidebar = () => {
+  const scrollToSidebar = useCallback(() => {
     scrollToElement(document.getElementById('booking-sidebar'), {
       offset: -80,
-      duration: 1.05,
+      duration: 0.35,
     });
-  };
+  }, []);
 
-  const handleBookNow = () => {
+  const handleBookNow = useCallback(() => {
     setShowBooking(true);
     // On mobile the sidebar lives at the bottom of the flow; bring it into
     // view so the user doesn't have to scroll manually after tapping Book.
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       requestAnimationFrame(() => {
-        scrollToSidebar();
+        requestAnimationFrame(() => {
+          scrollToSidebar();
+        });
       });
     }
-  };
+  }, [scrollToSidebar]);
 
   if (loading) {
     return (

@@ -1,16 +1,23 @@
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import Lenis from 'lenis';
+import { prefersNativeScroll } from '../lib/pwa';
 import { setLenisInstance } from '../lib/smoothScroll';
 
 /**
- * Site-wide smooth scrolling (wheel / touch) similar to Airbnb-class UX.
- * Uses Lenis with auto RAF; anchor-style jumps use the shared scroll helpers.
+ * Desktop: Lenis smooth wheel scroll. Mobile / PWA: native iOS momentum scroll.
  */
 export default function SmoothScrollRoot({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    const isNarrow = window.matchMedia('(max-width: 768px)').matches;
+  useLayoutEffect(() => {
+    if (prefersNativeScroll()) {
+      document.documentElement.classList.add('xpx-native-scroll');
+    }
+    return () => {
+      document.documentElement.classList.remove('xpx-native-scroll');
+    };
+  }, []);
 
-    if (isNarrow) {
+  useEffect(() => {
+    if (prefersNativeScroll()) {
       setLenisInstance(null);
       return;
     }

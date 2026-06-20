@@ -88,13 +88,11 @@ export default function BookingForm({
     null,
   );
 
-  const calculateNumberOfDays = () => {
+  const numberOfDays = useMemo(() => {
     if (!checkInDate || !checkOutDate) return 0;
     const diffTime = Math.abs(checkOutDate.getTime() - checkInDate.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
-  };
-
-  const numberOfDays = calculateNumberOfDays();
+  }, [checkInDate, checkOutDate]);
   const decorationPrice = includeDecoration ? 2000 : 0;
 
   const discountResult = useMemo(
