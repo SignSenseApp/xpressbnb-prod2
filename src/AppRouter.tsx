@@ -21,6 +21,7 @@ import ReviewsPage from './pages/host/ReviewsPage';
 import SubscriptionPage from './pages/host/SubscriptionPage';
 import SupportPage from './pages/host/SupportPage';
 import ImportPage from './pages/host/ImportPage';
+import OpsConsolePage from './pages/ops/OpsConsolePage';
 import AboutPage from './components/AboutPage';
 import BlogPage from './components/BlogPage';
 import PrivacyPolicyPage from './components/PrivacyPolicyPage';
@@ -81,9 +82,11 @@ export default function AppRouter() {
       // creates a temporary session for PASSWORD_RECOVERY and we must let the
       // user complete the form before redirecting anywhere else.
       const isResettingPassword = currentPath.startsWith('/auth/reset-password');
+      const isOpsConsole = currentPath.startsWith('/ops');
       const homeOverlay = getHomeOverlayPage();
       const shouldRedirectToDashboard =
         !isResettingPassword &&
+        !isOpsConsole &&
         !homeOverlay &&
         (currentPath.startsWith('/auth') || currentPath === '/' || currentPath === '/host');
       if (shouldRedirectToDashboard) {
@@ -116,6 +119,10 @@ export default function AppRouter() {
 
     if (currentPath.startsWith('/auth')) {
       return <AuthRouter />;
+    }
+
+    if (currentPath.startsWith('/ops')) {
+      return <OpsConsolePage onNavigate={handleNavigate} />;
     }
 
     if (currentPath.startsWith('/booking/')) {

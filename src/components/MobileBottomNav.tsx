@@ -21,6 +21,7 @@ export default function MobileBottomNav({ currentPath, onNavigate }: MobileBotto
   const shouldHide =
     currentPath.startsWith('/auth') ||
     currentPath.startsWith('/host/') ||
+    currentPath.startsWith('/ops') ||
     currentPath.includes('/property/') ||
     currentPath.startsWith('/booking/');
 
