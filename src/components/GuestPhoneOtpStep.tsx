@@ -168,7 +168,10 @@ export default function GuestPhoneOtpStep({
             {BOOKING_OTP_CODE_LENGTH}-digit code
           </label>
           <p className="mb-2 text-xs text-gray-500">
-            Sent to {maskedPhone ?? 'your phone'}. Valid for 15 minutes.
+            Enter the 4-digit OTP sent by XpressBNB.com. Never share this code with anyone.
+          </p>
+          <p className="mb-1 text-xs text-gray-400">
+            Sent to {maskedPhone ?? 'your phone'}.
           </p>
           <input
             type="text"

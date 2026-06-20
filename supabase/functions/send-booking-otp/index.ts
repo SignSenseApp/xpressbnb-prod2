@@ -235,7 +235,7 @@ Deno.serve(async (req: Request) => {
       ).toString();
       codeHash = await sha256Hex(otp);
       const msg =
-        `Your XpressBnB ${BOOKING_OTP_CODE_LENGTH}-digit booking verification code is ${otp}. Valid ${OTP_TTL_MIN} minutes. Do not share this code.`;
+        `Your XpressBNB.com OTP is ${otp}. Do not share it with anyone. Verified inquiries unlock host contact safely.`;
       const msgUrl =
         `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(accountSid)}/Messages.json`;
       const msgBody = new URLSearchParams({
