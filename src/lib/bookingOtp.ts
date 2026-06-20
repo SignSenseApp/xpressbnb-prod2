@@ -47,8 +47,11 @@ async function messageFromEdgeInvoke(
   }
 
   if (error instanceof Error) {
+    if (error.message.toLowerCase().includes('failed to send a request')) {
+      return 'Could not reach the OTP service. Check your internet connection and try again.';
+    }
     if (error.message.includes('non-2xx')) {
-      return 'SMS verification is not available yet. Twilio must be configured in Supabase Edge secrets before OTP can be sent.';
+      return 'Failed to send verification SMS. Twilio Verify may be misconfigured — confirm TWILIO_VERIFY_SERVICE_SID matches your XpressBNB Verify service in Supabase Edge secrets.';
     }
     return error.message;
   }
