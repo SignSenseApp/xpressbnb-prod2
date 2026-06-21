@@ -1,10 +1,19 @@
 import { safeHostDisplayName } from './host';
 
+/** Server-computed aggregate from create_pending_booking / create_make_offer_inquiry. */
+export type FrequentAmigoStatus = {
+  qualifyingCount: number;
+  threshold: number;
+  unlocked: boolean;
+  windowDays: number;
+};
+
 /** Parsed from create_pending_booking / create_make_offer_inquiry (jsonb). */
 export type InquirySubmitResult = {
   bookingId: string;
   hostName: string;
   hostPhone: string;
+  frequentAmigo?: FrequentAmigoStatus;
 };
 
 function normalizeHostPhoneDigits(raw: string): string {
@@ -36,6 +45,24 @@ export function buildHostDirectWhatsAppLink(
   return `https://wa.me/${wa}?text=${encodeURIComponent(message)}`;
 }
 
+export function parseFrequentAmigoStatus(data: unknown): FrequentAmigoStatus | null {
+  if (!data || typeof data !== 'object') return null;
+  const o = data as Record<string, unknown>;
+  const qualifyingCount = Number(o.qualifying_count ?? o.qualifyingCount);
+  const threshold = Number(o.threshold ?? 3);
+  const windowDays = Number(o.window_days ?? o.windowDays ?? 15);
+  if (!Number.isFinite(qualifyingCount) || qualifyingCount < 0) return null;
+  const unlocked =
+    o.unlocked === true ||
+    (Number.isFinite(threshold) && qualifyingCount >= threshold);
+  return {
+    qualifyingCount,
+    threshold: Number.isFinite(threshold) && threshold > 0 ? threshold : 3,
+    unlocked,
+    windowDays: Number.isFinite(windowDays) && windowDays > 0 ? windowDays : 15,
+  };
+}
+
 /** Accepts jsonb object or legacy plain uuid string from older RPC versions. */
 export function parseInquirySubmitResult(data: unknown): InquirySubmitResult | null {
   if (typeof data === 'string' && /^[0-9a-f-]{36}$/i.test(data)) {
@@ -47,9 +74,11 @@ export function parseInquirySubmitResult(data: unknown): InquirySubmitResult | n
   const hostPhone = String(o.host_phone ?? o.hostPhone ?? '');
   const hostNameRaw = String(o.host_name ?? o.hostName ?? '');
   if (!bookingId || !hostPhone) return null;
+  const frequentAmigo = parseFrequentAmigoStatus(o.frequent_amigo ?? o.frequentAmigo);
   return {
     bookingId,
     hostPhone: normalizeHostPhoneDigits(hostPhone),
     hostName: safeHostDisplayName(hostNameRaw, 'Host'),
+    ...(frequentAmigo ? { frequentAmigo } : {}),
   };
 }

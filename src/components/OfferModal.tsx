@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { theme } from '../lib/theme';
 import type { Property } from '../lib/database.types';
 import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
-import { parseInquirySubmitResult } from '../lib/inquiryHostContact';
+import { parseInquirySubmitResult, type FrequentAmigoStatus } from '../lib/inquiryHostContact';
 import GuestPhoneOtpStep from './GuestPhoneOtpStep';
 import InquirySuccessModal from './InquirySuccessModal';
 import type { BookingOtpVerifyResult } from '../lib/bookingOtp';
@@ -61,6 +61,7 @@ export default function OfferModal({
   const [completedBookingId, setCompletedBookingId] = useState<string | null>(null);
   const [inquiryHostName, setInquiryHostName] = useState<string | null>(null);
   const [inquiryHostPhone, setInquiryHostPhone] = useState<string | null>(null);
+  const [frequentAmigo, setFrequentAmigo] = useState<FrequentAmigoStatus | null>(null);
 
   // Whenever the modal re-opens or the listing changes, reset the suggested
   // offer back to a sensible default.
@@ -176,11 +177,19 @@ export default function OfferModal({
       paymentStatus: 'offer_pending',
       bookingStatus: 'pending_host',
       externalListings: property.external_listings ?? null,
+      ...(inquiry.frequentAmigo
+        ? {
+            frequentAmigoCount: inquiry.frequentAmigo.qualifyingCount,
+            frequentAmigoUnlocked: inquiry.frequentAmigo.unlocked,
+            frequentAmigoThreshold: inquiry.frequentAmigo.threshold,
+          }
+        : {}),
     });
 
     setCompletedBookingId(inquiry.bookingId);
     setInquiryHostName(inquiry.hostName);
     setInquiryHostPhone(inquiry.hostPhone);
+    setFrequentAmigo(inquiry.frequentAmigo ?? null);
     setSubmitting(false);
     setSuccess(true);
   };
@@ -267,6 +276,7 @@ export default function OfferModal({
               estimatedTotal={totalOffer}
               offerPerNight={offer}
               externalListings={property.external_listings}
+              frequentAmigo={frequentAmigo}
               onViewConfirmation={goToConfirmation}
               onDismiss={onClose}
               dismissLabel="Band karein"

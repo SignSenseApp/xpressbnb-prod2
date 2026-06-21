@@ -14,7 +14,7 @@ import type { Property } from '../lib/database.types';
 import { supabase } from '../lib/supabase';
 import { applyDiscounts, findPromoCode, type PromoCodeDef } from '../lib/offers';
 import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
-import { parseInquirySubmitResult } from '../lib/inquiryHostContact';
+import { parseInquirySubmitResult, type FrequentAmigoStatus } from '../lib/inquiryHostContact';
 import GuestPhoneOtpStep from './GuestPhoneOtpStep';
 import InquirySuccessModal from './InquirySuccessModal';
 import type { BookingOtpVerifyResult } from '../lib/bookingOtp';
@@ -80,6 +80,7 @@ export default function BookingForm({
   const [completedBookingId, setCompletedBookingId] = useState<string | null>(null);
   const [inquiryHostName, setInquiryHostName] = useState<string | null>(null);
   const [inquiryHostPhone, setInquiryHostPhone] = useState<string | null>(null);
+  const [frequentAmigo, setFrequentAmigo] = useState<FrequentAmigoStatus | null>(null);
 
   const [promoInput, setPromoInput] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<PromoCodeDef | null>(null);
@@ -169,10 +170,12 @@ export default function BookingForm({
     checkOut: string,
     hostName: string,
     hostPhone: string,
+    amigo?: FrequentAmigoStatus,
   ) => {
     setCompletedBookingId(bookingId);
     setInquiryHostName(hostName);
     setInquiryHostPhone(hostPhone);
+    setFrequentAmigo(amigo ?? null);
     setBookingSuccess(true);
 
     saveBookingConfirmationSnapshot({
@@ -194,6 +197,13 @@ export default function BookingForm({
       paymentStatus: 'inquiry',
       bookingStatus: 'pending_host',
       externalListings: property.external_listings ?? null,
+      ...(amigo
+        ? {
+            frequentAmigoCount: amigo.qualifyingCount,
+            frequentAmigoUnlocked: amigo.unlocked,
+            frequentAmigoThreshold: amigo.threshold,
+          }
+        : {}),
     });
 
     setLoading(false);
@@ -271,6 +281,7 @@ export default function BookingForm({
         checkOut,
         inquiry.hostName,
         inquiry.hostPhone,
+        inquiry.frequentAmigo,
       );
     } catch (error) {
       if (import.meta.env.DEV) console.error('Booking error:', error);
@@ -294,6 +305,7 @@ export default function BookingForm({
           estimatedTotal={totalPrice}
           includeDecoration={includeDecoration}
           externalListings={property.external_listings}
+          frequentAmigo={frequentAmigo}
           onViewConfirmation={() => onSuccess({ bookingId: completedBookingId })}
         />
       </div>

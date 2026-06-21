@@ -6,6 +6,8 @@ import {
   hostPhoneToE164,
 } from '../lib/inquiryHostContact';
 import ZeroCommissionSavingsReceipt from './ZeroCommissionSavingsReceipt';
+import FrequentAmigoProgress from './FrequentAmigoProgress';
+import type { FrequentAmigoStatus } from '../lib/inquiryHostContact';
 import type { Json } from '../lib/database.types';
 
 export type InquirySuccessVariant = 'booking' | 'offer';
@@ -21,6 +23,7 @@ export type InquirySuccessModalProps = {
   includeDecoration?: boolean;
   offerPerNight?: number;
   externalListings?: Json | null;
+  frequentAmigo?: FrequentAmigoStatus | null;
   onViewConfirmation: () => void;
   onDismiss?: () => void;
   dismissLabel?: string;
@@ -37,6 +40,7 @@ export default function InquirySuccessModal({
   includeDecoration = false,
   offerPerNight,
   externalListings,
+  frequentAmigo,
   onViewConfirmation,
   onDismiss,
   dismissLabel = 'Done',
@@ -77,6 +81,16 @@ export default function InquirySuccessModal({
         estimatedTotal={estimatedTotal}
         externalListings={externalListings}
       />
+
+      {frequentAmigo && (
+        <FrequentAmigoProgress
+          status={{
+            qualifyingCount: frequentAmigo.qualifyingCount,
+            threshold: frequentAmigo.threshold,
+            unlocked: frequentAmigo.unlocked,
+          }}
+        />
+      )}
 
       <section
         className="rounded-2xl p-4 text-left"

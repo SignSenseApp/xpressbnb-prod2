@@ -32,6 +32,10 @@ export type BookingConfirmationSnapshot = {
   bookingStatus: string;
   /** Optional copy of properties.external_listings for price-proof on confirmation page */
   externalListings?: Json | null;
+  /** Frequent Amigo aggregate from RPC at inquiry time (not recomputed client-side) */
+  frequentAmigoCount?: number;
+  frequentAmigoUnlocked?: boolean;
+  frequentAmigoThreshold?: number;
 };
 
 function readMap(): Record<string, BookingConfirmationSnapshot> {

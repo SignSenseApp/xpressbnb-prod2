@@ -25,6 +25,7 @@ import {
   buildTeamWhatsAppLink,
 } from '../lib/team';
 import ZeroCommissionSavingsReceipt from './ZeroCommissionSavingsReceipt';
+import FrequentAmigoProgress from './FrequentAmigoProgress';
 
 export type GuestTripConfirmationProps = {
   snapshot: BookingConfirmationSnapshot;
@@ -119,6 +120,18 @@ export default function GuestTripConfirmation({
           externalListings={snapshot.externalListings}
         />
       </div>
+
+      {snapshot.frequentAmigoCount != null && snapshot.frequentAmigoCount >= 1 && (
+        <div className="mt-5">
+          <FrequentAmigoProgress
+            status={{
+              qualifyingCount: snapshot.frequentAmigoCount,
+              threshold: snapshot.frequentAmigoThreshold ?? 3,
+              unlocked: snapshot.frequentAmigoUnlocked === true,
+            }}
+          />
+        </div>
+      )}
 
       {source === 'snapshot' && (
         <p className="mt-4 text-xs text-xpx-subtle text-center leading-relaxed" role="status">
