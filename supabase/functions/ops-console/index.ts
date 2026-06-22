@@ -47,7 +47,76 @@ type BookingRow = {
   amount_total: number | null;
   total_price: number | null;
   offer_amount: number | null;
+  host_decision_at: string | null;
 };
+
+type FunnelWindowMetrics = {
+  verified_inquiries: number;
+  pending_host: number;
+  median_host_response_minutes: number | null;
+  property_views: number;
+};
+
+const VIEW_EVENTS_CAVEAT =
+  'view_events counts paid listings only, one deduped insert per browser session — not total GA4 pageviews.';
+
+function medianHostResponseMinutes(
+  rows: Array<{ created_at: string | null; host_decision_at: string | null }>,
+): number | null {
+  const minutes = rows
+    .map((row) => {
+      if (!row.created_at || !row.host_decision_at) return null;
+      const delta =
+        (new Date(row.host_decision_at).getTime() - new Date(row.created_at).getTime()) / 60000;
+      return delta >= 0 ? delta : null;
+    })
+    .filter((v): v is number => v != null)
+    .sort((a, b) => a - b);
+
+  if (minutes.length === 0) return null;
+  const mid = Math.floor(minutes.length / 2);
+  return minutes.length % 2 === 1
+    ? Math.round(minutes[mid])
+    : Math.round((minutes[mid - 1] + minutes[mid]) / 2);
+}
+
+async function buildFunnelWindow(
+  adminClient: ReturnType<typeof createClient>,
+  sinceIso: string,
+): Promise<FunnelWindowMetrics> {
+  const [verifiedRes, pendingRes, viewsRes, decidedRes] = await Promise.all([
+    adminClient
+      .from('bookings')
+      .select('id', { count: 'exact', head: true })
+      .eq('phone_verified', true)
+      .gte('created_at', sinceIso),
+    adminClient
+      .from('bookings')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending_host')
+      .eq('phone_verified', true)
+      .gte('created_at', sinceIso),
+    adminClient
+      .from('view_events')
+      .select('id', { count: 'exact', head: true })
+      .eq('entity_type', 'property')
+      .gte('timestamp', sinceIso),
+    adminClient
+      .from('bookings')
+      .select('created_at, host_decision_at')
+      .eq('phone_verified', true)
+      .not('host_decision_at', 'is', null)
+      .gte('created_at', sinceIso)
+      .limit(500),
+  ]);
+
+  return {
+    verified_inquiries: verifiedRes.count ?? 0,
+    pending_host: pendingRes.count ?? 0,
+    median_host_response_minutes: medianHostResponseMinutes(decidedRes.data ?? []),
+    property_views: viewsRes.count ?? 0,
+  };
+}
 
 function jsonResponse(req: Request, body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -286,6 +355,13 @@ async function buildSnapshot(adminClient: ReturnType<typeof createClient>) {
     .filter((p) => !hasValidPrice(p))
     .map((p) => ({ id: p.id, title: p.title, city: p.city }));
 
+  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const [funnel_24h, funnel_7d] = await Promise.all([
+    buildFunnelWindow(adminClient, since24h),
+    buildFunnelWindow(adminClient, since7d),
+  ]);
+
   return {
     health: {
       active_properties: activeProps.length,
@@ -305,6 +381,9 @@ async function buildSnapshot(adminClient: ReturnType<typeof createClient>) {
       active_missing_images: activeMissingImages,
       active_invalid_price: activeInvalidPrice,
     },
+    funnel_24h,
+    funnel_7d,
+    view_events_caveat: VIEW_EVENTS_CAVEAT,
     generated_at: new Date().toISOString(),
   };
 }

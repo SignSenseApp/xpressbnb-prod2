@@ -67,12 +67,22 @@ export type OpsAlerts = {
   active_invalid_price: Array<{ id: string; title: string; city: string }>;
 };
 
+export type OpsFunnelWindow = {
+  verified_inquiries: number;
+  pending_host: number;
+  median_host_response_minutes: number | null;
+  property_views: number;
+};
+
 export type OpsSnapshot = {
   health: OpsHealth;
   properties: OpsPropertyRow[];
   hosts: OpsHostRow[];
   inquiries: OpsInquiryRow[];
   alerts: OpsAlerts;
+  funnel_24h?: OpsFunnelWindow;
+  funnel_7d?: OpsFunnelWindow;
+  view_events_caveat?: string;
   generated_at: string;
 };
 

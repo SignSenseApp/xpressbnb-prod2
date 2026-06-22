@@ -3,6 +3,7 @@ import type { Property } from '../lib/database.types';
 import { theme } from '../lib/theme';
 import SaveListingButton from './SaveListingButton';
 import { firstImageUrl, snapshotFromProperty } from '../lib/savedListingsStorage';
+import { trackXpressEvent } from '../lib/analytics';
 
 interface ConversionPropertyCardProps {
   property: Property;
@@ -21,6 +22,11 @@ export default function ConversionPropertyCard({
   tripQuery = '',
 }: ConversionPropertyCardProps) {
   const handleClick = () => {
+    trackXpressEvent('property_card_click', {
+      property_id: property.id,
+      property_slug: property.slug ?? undefined,
+      city: property.city,
+    });
     const q = tripQuery.startsWith('?') ? tripQuery : tripQuery ? `?${tripQuery}` : '';
     window.history.pushState({}, '', `/property/${property.id}${q}`);
     window.dispatchEvent(new PopStateEvent('popstate'));

@@ -13,6 +13,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   deactivateOpsProperty,
   fetchOpsSnapshot,
+  type OpsFunnelWindow,
   type OpsSnapshot,
 } from '../../lib/opsConsole';
 
@@ -48,6 +49,27 @@ function StatCard({ label, value, sub }: { label: string; value: number | string
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
       {sub && <p className="mt-1 text-xs text-slate-500">{sub}</p>}
+    </div>
+  );
+}
+
+function FunnelPanel({ title, metrics }: { title: string; metrics: OpsFunnelWindow }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p className="text-sm font-bold text-slate-900 mb-3">{title}</p>
+      <div className="grid grid-cols-2 gap-3">
+        <StatCard label="Verified inquiries" value={metrics.verified_inquiries} />
+        <StatCard label="Pending host" value={metrics.pending_host} />
+        <StatCard
+          label="Median host response"
+          value={
+            metrics.median_host_response_minutes != null
+              ? `${metrics.median_host_response_minutes}m`
+              : '—'
+          }
+        />
+        <StatCard label="Property views (DB)" value={metrics.property_views} />
+      </div>
     </div>
   );
 }
@@ -233,6 +255,22 @@ export default function OpsConsolePage({ onNavigate }: OpsConsolePageProps) {
                 />
               </div>
             </section>
+
+            {snapshot?.funnel_24h && snapshot?.funnel_7d ? (
+              <section>
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-bold">
+                  Funnel snapshot
+                </h2>
+                <p className="mb-3 text-xs text-slate-500 leading-relaxed">
+                  {snapshot.view_events_caveat ??
+                    'Property views are session-deduped DB events, not GA4 totals.'}
+                </p>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FunnelPanel title="Last 24 hours" metrics={snapshot.funnel_24h} />
+                  <FunnelPanel title="Last 7 days" metrics={snapshot.funnel_7d} />
+                </div>
+              </section>
+            ) : null}
 
             {/* E. Stuck Lead Alert */}
             <section>

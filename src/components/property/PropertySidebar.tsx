@@ -219,11 +219,10 @@ export default function PropertySidebar({
       <button
         type="button"
         onClick={onBookNow}
-        className="mt-5 w-full py-3.5 rounded-2xl font-bold text-[15px] text-white transition-transform active:scale-[0.98]"
+        className="mt-5 w-full py-3.5 rounded-2xl font-bold text-[15px] text-white transition-transform motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.98]"
         style={{
           background: 'var(--xpx-cta)',
           boxShadow: '0 10px 32px rgba(255,56,92,0.32)',
-          transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
           minHeight: 52,
         }}
       >
@@ -237,12 +236,11 @@ export default function PropertySidebar({
       <button
         type="button"
         onClick={onMakeOffer}
-        className="mt-2.5 w-full py-3 rounded-2xl font-semibold text-sm text-xpx-text transition-colors active:scale-[0.98]"
+        className="mt-2.5 w-full py-3 rounded-2xl font-semibold text-sm text-xpx-text transition-colors motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.98]"
         style={{
           background: 'var(--xpx-surface)',
           border: '1px solid var(--xpx-border-strong)',
           minHeight: 48,
-          transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
         }}
       >
         Make an Offer

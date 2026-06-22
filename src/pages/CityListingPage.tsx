@@ -9,6 +9,7 @@ import { buildTeamWhatsAppLink } from '../lib/team';
 import { parseTripFromSearch, formatTripChip } from '../lib/tripSearch';
 import { cityDbInList } from '../lib/cityBuckets';
 import { fetchActiveProperties, invalidatePublicListingsCache } from '../lib/publicListings';
+import { trackXpressEvent } from '../lib/analytics';
 
 interface CityListingPageProps {
   city: string;
@@ -92,6 +93,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
   useEffect(() => {
     const requestId = ++loadPropertiesRef.current;
     void loadProperties(requestId);
+    trackXpressEvent('city_page_view', { city: cityName });
     return () => {
       loadPropertiesRef.current += 1;
     };

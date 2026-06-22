@@ -48,6 +48,7 @@ import {
 import { safeHostDisplayName } from '../lib/host';
 import { parseTripFromSearch } from '../lib/tripSearch';
 import { scrollToElement } from '../lib/smoothScroll';
+import { trackXpressEvent } from '../lib/analytics';
 import SaveListingButton from '../components/SaveListingButton';
 import { snapshotFromProperty } from '../lib/savedListingsStorage';
 
@@ -147,17 +148,24 @@ export default function PropertyPage() {
 
       if (error) throw error;
       if (!data) {
+        trackXpressEvent('property_load_failed', { property_id: propertyId });
         navigateHome();
         return;
       }
 
       setProperty(data);
       trackPropertyView(propertyId, data.listing_type);
+      trackXpressEvent('property_view', {
+        property_id: data.id,
+        property_slug: data.slug ?? undefined,
+        city: data.city,
+      });
       if (data.host_id) {
         loadHostName(data.host_id);
       }
     } catch (error) {
       console.error('Error loading property:', error);
+      trackXpressEvent('property_load_failed', { property_id: propertyId });
       navigateHome();
     } finally {
       setLoading(false);
@@ -243,6 +251,25 @@ export default function PropertyPage() {
       });
     }
   }, [scrollToSidebar]);
+
+  const handleRequestToBookClick = useCallback(() => {
+    if (property) {
+      trackXpressEvent('request_to_book_click', {
+        property_id: property.id,
+        property_slug: property.slug ?? undefined,
+        city: property.city,
+        inquiry_type: 'book_pay_later',
+      });
+      trackXpressEvent('booking_form_started', {
+        property_id: property.id,
+        property_slug: property.slug ?? undefined,
+        city: property.city,
+        inquiry_type: 'book_pay_later',
+        booking_step: 'dates',
+      });
+    }
+    handleBookNow();
+  }, [handleBookNow, property]);
 
   if (loading) {
     return (
@@ -857,7 +884,11 @@ export default function PropertyPage() {
           {/* Sticky booking sidebar (desktop) / inline (mobile). */}
           <aside
             id="booking-sidebar"
-            className={!showBooking ? 'lg:sticky lg:top-24 scroll-mt-24' : 'scroll-mt-24'}
+            className={
+              !showBooking
+                ? 'lg:sticky lg:top-24 scroll-mt-24'
+                : 'scroll-mt-24 pb-28 lg:pb-0'
+            }
           >
             {!showBooking ? (
               <PropertySidebar
@@ -866,7 +897,7 @@ export default function PropertyPage() {
                 checkOut={selectedCheckOut}
                 nightlyTotal={totalPrice}
                 onDateRangeSelect={handleDateRangeSelect}
-                onBookNow={handleBookNow}
+                onBookNow={handleRequestToBookClick}
                 onMakeOffer={() => setShowOfferModal(true)}
                 promoCode={featuredPromo?.code ?? null}
                 promoLabel={featuredPromo?.label ?? null}
@@ -938,16 +969,15 @@ export default function PropertyPage() {
             </div>
             <button
               type="button"
-              onClick={scrollToSidebar}
-              className="px-5 py-3 rounded-full font-bold text-sm text-white transition-transform active:scale-[0.97]"
+              onClick={handleRequestToBookClick}
+              className="px-5 py-3 rounded-full font-bold text-sm text-white transition-transform motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.97]"
               style={{
                 background: 'var(--xpx-cta)',
                 boxShadow: '0 8px 24px rgba(255,56,92,0.36)',
                 minHeight: 48,
-                transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
               }}
             >
-              Reserve
+              Request to book
             </button>
           </div>
         </div>

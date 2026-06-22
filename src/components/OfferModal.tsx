@@ -9,6 +9,12 @@ import GuestPhoneOtpStep from './GuestPhoneOtpStep';
 import InquirySuccessModal from './InquirySuccessModal';
 import type { BookingOtpVerifyResult } from '../lib/bookingOtp';
 import { normalizePhoneDigits } from '../lib/bookingOtp';
+import {
+  bucketResponseMs,
+  categorizeBookingError,
+  trackXpressEvent,
+  type AnalyticsScope,
+} from '../lib/analytics';
 
 interface OfferModalProps {
   open: boolean;
@@ -63,6 +69,16 @@ export default function OfferModal({
   const [inquiryHostPhone, setInquiryHostPhone] = useState<string | null>(null);
   const [frequentAmigo, setFrequentAmigo] = useState<FrequentAmigoStatus | null>(null);
 
+  const analyticsScope: AnalyticsScope = useMemo(
+    () => ({
+      property_id: property.id,
+      property_slug: property.slug ?? undefined,
+      city: property.city,
+      inquiry_type: 'make_offer',
+    }),
+    [property.id, property.slug, property.city],
+  );
+
   // Whenever the modal re-opens or the listing changes, reset the suggested
   // offer back to a sensible default.
   useEffect(() => {
@@ -74,8 +90,12 @@ export default function OfferModal({
       setInquiryHostName(null);
       setInquiryHostPhone(null);
       setPhoneVerification(null);
+      trackXpressEvent('booking_form_started', {
+        ...analyticsScope,
+        booking_step: 'details',
+      });
     }
-  }, [open, defaultOffer]);
+  }, [open, defaultOffer, analyticsScope]);
 
   if (!open) return null;
 
@@ -99,6 +119,11 @@ export default function OfferModal({
 
     if (!name.trim() || !email.trim()) {
       setError('Please share your name and email so the host can reply.');
+      trackXpressEvent('inquiry_submit_failed', {
+        ...analyticsScope,
+        error_category: 'validation',
+        booking_step: 'send',
+      });
       return;
     }
     if (offer < minOffer || offer > maxOffer) {
@@ -116,6 +141,11 @@ export default function OfferModal({
     }
 
     setSubmitting(true);
+    const submitStarted = performance.now();
+    trackXpressEvent('inquiry_submit_started', {
+      ...analyticsScope,
+      booking_step: 'send',
+    });
 
     const today = new Date();
     const fmt = (d: Date) => d.toISOString().split('T')[0];
@@ -146,7 +176,14 @@ export default function OfferModal({
 
     if (insertError) {
       console.error('Offer insert failed', insertError);
-      setError(insertError.message || 'Could not send your offer. Please try again.');
+      const errMsg = insertError.message || 'Could not send your offer. Please try again.';
+      setError(errMsg);
+      trackXpressEvent('inquiry_submit_failed', {
+        ...analyticsScope,
+        error_category: categorizeBookingError(errMsg),
+        booking_step: 'send',
+        response_time_bucket: bucketResponseMs(performance.now() - submitStarted),
+      });
       setSubmitting(false);
       return;
     }
@@ -154,9 +191,21 @@ export default function OfferModal({
     const inquiry = parseInquirySubmitResult(rpcData);
     if (!inquiry) {
       setError('Offer sent, but host contact could not be loaded. Please try again.');
+      trackXpressEvent('inquiry_submit_failed', {
+        ...analyticsScope,
+        error_category: 'host_contact',
+        booking_step: 'send',
+        response_time_bucket: bucketResponseMs(performance.now() - submitStarted),
+      });
       setSubmitting(false);
       return;
     }
+
+    trackXpressEvent('inquiry_submit_success', {
+      ...analyticsScope,
+      booking_step: 'send',
+      response_time_bucket: bucketResponseMs(performance.now() - submitStarted),
+    });
 
     saveBookingConfirmationSnapshot({
       v: 1,
@@ -280,6 +329,7 @@ export default function OfferModal({
               onViewConfirmation={goToConfirmation}
               onDismiss={onClose}
               dismissLabel="Band karein"
+              analyticsScope={analyticsScope}
             />
           </div>
         ) : (
@@ -393,6 +443,7 @@ export default function OfferModal({
               onVerified={setPhoneVerification}
               onClearVerification={() => setPhoneVerification(null)}
               disabled={submitting}
+              analyticsScope={analyticsScope}
             />
 
             {/* Contact details */}

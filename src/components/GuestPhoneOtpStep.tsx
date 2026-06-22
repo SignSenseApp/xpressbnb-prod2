@@ -8,6 +8,7 @@ import {
   verifyBookingInquiryOtp,
   type BookingOtpVerifyResult,
 } from '../lib/bookingOtp';
+import { trackXpressEvent, type AnalyticsScope } from '../lib/analytics';
 
 export type GuestPhoneOtpStepProps = {
   phone: string;
@@ -16,6 +17,7 @@ export type GuestPhoneOtpStepProps = {
   verified: BookingOtpVerifyResult | null;
   onClearVerification: () => void;
   disabled?: boolean;
+  analyticsScope?: AnalyticsScope;
 };
 
 type Phase = 'phone' | 'otp' | 'verified';
@@ -27,6 +29,7 @@ export default function GuestPhoneOtpStep({
   verified,
   onClearVerification,
   disabled = false,
+  analyticsScope,
 }: GuestPhoneOtpStepProps) {
   const [phase, setPhase] = useState<Phase>(verified ? 'verified' : 'phone');
   const [otp, setOtp] = useState('');
@@ -54,12 +57,25 @@ export default function GuestPhoneOtpStep({
       return;
     }
     setLoading(true);
+    trackXpressEvent('otp_send_requested', {
+      ...analyticsScope,
+      booking_step: 'verify',
+    });
     const res = await sendBookingInquiryOtp(digits);
     setLoading(false);
     if (!res.ok) {
       setError(res.error ?? 'Could not send OTP');
+      trackXpressEvent('otp_verify_failed', {
+        ...analyticsScope,
+        booking_step: 'verify',
+        error_category: 'otp_send',
+      });
       return;
     }
+    trackXpressEvent('otp_send_success', {
+      ...analyticsScope,
+      booking_step: 'verify',
+    });
     setMaskedPhone(res.maskedPhone ?? `+91 ••••• ••${digits.slice(8)}`);
     setPhase('otp');
     setOtp('');
@@ -74,10 +90,19 @@ export default function GuestPhoneOtpStep({
     setLoading(false);
     if (!res.ok) {
       setError(res.error);
+      trackXpressEvent('otp_verify_failed', {
+        ...analyticsScope,
+        booking_step: 'verify',
+        error_category: 'otp_code',
+      });
       return;
     }
     setPhase('verified');
     onVerified(res.result);
+    trackXpressEvent('otp_verify_success', {
+      ...analyticsScope,
+      booking_step: 'verify',
+    });
   };
 
   const handleChangeNumber = () => {

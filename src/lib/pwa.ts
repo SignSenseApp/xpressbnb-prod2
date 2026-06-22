@@ -1,5 +1,7 @@
 /** PWA install helpers — service worker, platform detection, native install prompt */
 
+import { trackXpressEvent } from './analytics';
+
 const DISMISS_KEY = 'xpx_install_banner_dismissed_until';
 const DISMISS_DAYS = 14;
 
@@ -31,6 +33,7 @@ export function registerServiceWorker(): void {
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing || !navigator.serviceWorker.controller) return;
+    trackXpressEvent('pwa_update_applied');
     refreshing = true;
     window.location.reload();
   });
@@ -45,6 +48,7 @@ export function registerServiceWorker(): void {
           if (!worker) return;
           worker.addEventListener('statechange', () => {
             if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+              trackXpressEvent('pwa_update_available');
               worker.postMessage({ type: 'SKIP_WAITING' });
             }
           });
