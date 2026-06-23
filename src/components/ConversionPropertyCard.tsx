@@ -1,9 +1,12 @@
+import { useRef, useState } from 'react';
 import type { Property } from '../lib/database.types';
 import { computeXpressbnbStayScore } from '../lib/xpressbnbStayScore';
 import { openStayScoreInfo } from '../lib/stayScoreEducation';
 import SaveListingButton from './SaveListingButton';
 import PropertyCardHostRow from './PropertyCardHostRow';
-import { firstImageUrl, snapshotFromProperty } from '../lib/savedListingsStorage';
+import PropertyCardGallery from './PropertyCardGallery';
+import { snapshotFromProperty } from '../lib/savedListingsStorage';
+import { listPropertyImages } from '../lib/propertyImages';
 import { trackXpressEvent } from '../lib/analytics';
 import {
   VerifiedShieldIcon,
@@ -28,8 +31,7 @@ interface ConversionPropertyCardProps {
 }
 
 function countImages(images: Property['images']): number {
-  if (!Array.isArray(images)) return 0;
-  return images.filter((item) => typeof item === 'string' && item.trim().length > 0).length;
+  return listPropertyImages(images).length;
 }
 
 function formatLocation(city: string, state: string): string {
@@ -48,7 +50,15 @@ export default function ConversionPropertyCard({
   tripQuery = '',
   className = '',
 }: ConversionPropertyCardProps) {
+  const swipeRef = useRef(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+
   const handleClick = () => {
+    if (swipeRef.current) {
+      swipeRef.current = false;
+      return;
+    }
     trackXpressEvent('property_card_click', {
       property_id: property.id,
       property_slug: property.slug ?? undefined,
@@ -60,7 +70,6 @@ export default function ConversionPropertyCard({
   };
 
   const price = (property.price_per_day || property.price_full_day || 0).toLocaleString('en-IN');
-  const coverImage = firstImageUrl(property.images);
   const imageCount = countImages(property.images);
   const stayScore = computeXpressbnbStayScore(property);
   const locationLabel = formatLocation(property.city, property.state);
@@ -76,6 +85,8 @@ export default function ConversionPropertyCard({
   return (
     <article
       onClick={handleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       role="link"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -83,22 +94,16 @@ export default function ConversionPropertyCard({
       }}
       className={`xpx-property-card group flex h-full w-full max-w-[380px] cursor-pointer flex-col overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#16A34A] motion-reduce:transition-none active:scale-[0.99] md:mx-auto ${className}`}
     >
-      {/* Hero image */}
-      <div className="xpx-property-card-media">
-        {coverImage ? (
-          <img
-            src={coverImage}
-            alt={property.title}
-            loading="lazy"
-            decoding="async"
-            className="h-full w-full object-cover transition-transform duration-500 ease-out motion-reduce:transition-none md:group-hover:scale-[1.03]"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-sm text-[#6B7280]">
-            No image
-          </div>
-        )}
-
+      {/* Hero image gallery */}
+      <PropertyCardGallery
+        images={property.images}
+        alt={property.title}
+        isCardHovered={isHovered}
+        onIndexChange={setGalleryIndex}
+        onSwipe={() => {
+          swipeRef.current = true;
+        }}
+      >
         {property.is_verified && (
           <div className="absolute left-3 top-3 z-10">
             <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-[#16A34A] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
@@ -136,10 +141,12 @@ export default function ConversionPropertyCard({
             style={{ background: 'rgba(0,0,0,0.55)' }}
           >
             <ImageGalleryIcon className="h-3.5 w-3.5" />
-            <span className="tabular-nums">1 / {imageCount}</span>
+            <span className="tabular-nums">
+              {Math.min(galleryIndex + 1, imageCount)} / {imageCount}
+            </span>
           </div>
         )}
-      </div>
+      </PropertyCardGallery>
 
       {/* Card body */}
       <div className="flex min-w-0 flex-1 flex-col gap-3.5 px-5 pb-5 pt-4">

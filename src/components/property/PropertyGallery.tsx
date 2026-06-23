@@ -1,35 +1,29 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Camera, X, ChevronLeft, ChevronRight, Bed } from 'lucide-react';
+import { listPropertyImages } from '../../lib/propertyImages';
+import PropertyHeroCarousel from './PropertyHeroCarousel';
 
 interface PropertyGalleryProps {
-  images: string[];
+  images: string[] | import('../../lib/database.types').Json;
   title: string;
 }
 
 /**
- * Apple/Expedia-style property gallery.
+ * Apple/Expedia-style property gallery with VRBO-inspired hero carousel.
  *
- * Desktop: 1 large hero on the left + up to 3 stacked thumbnails on the
- * right. The hero carries a "+N photos" pill; the last thumbnail carries
- * a "+N" overlay when there are more photos than slots.
- *
- * Mobile: a horizontal scroll-snap strip with a bottom-right "i / N"
- * counter pill — feels like the native iOS photo viewer.
+ * Desktop: hero carousel (GPU transform) + stacked thumbnails.
+ * Mobile: full-width transform carousel with counter pill.
  *
  * Both surfaces open the same lightbox with arrow / Escape support.
  */
 export default function PropertyGallery({ images, title }: PropertyGalleryProps) {
-  const safeImages = (images ?? []).filter(
-    (u): u is string => typeof u === 'string' && u.trim().length > 0
-  );
+  const safeImages = listPropertyImages(images);
   const total = safeImages.length;
 
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
-  const [mobileIndex, setMobileIndex] = useState(0);
-  const stripRef = useRef<HTMLDivElement | null>(null);
+  const [heroIndex, setHeroIndex] = useState(0);
 
-  // Lightbox keyboard nav
   useEffect(() => {
     if (!open) return;
     const handleKey = (e: KeyboardEvent) => {
@@ -41,16 +35,6 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
     return () => window.removeEventListener('keydown', handleKey);
   }, [open, total]);
 
-  // Keep mobile counter in sync with horizontal scroll position
-  const onMobileScroll = () => {
-    const el = stripRef.current;
-    if (!el) return;
-    const idx = Math.round(el.scrollLeft / el.clientWidth);
-    if (idx !== mobileIndex) setMobileIndex(idx);
-  };
-
-  // Empty state — uses the warm surface tokens so a photo-less listing
-  // still reads as part of the design system.
   if (total === 0) {
     return (
       <div
@@ -70,37 +54,35 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
     setOpen(true);
   };
 
-  const heroSrc = safeImages[0];
   const thumbs = safeImages.slice(1, 4);
   const remaining = Math.max(0, total - 4);
 
   return (
     <>
-      {/* Desktop / tablet — 3-col, 3-row grid. Hero takes 2 cols × 3 rows so
-          the row-height of the thumbnails on the right matches the hero exactly. */}
+      {/* Desktop / tablet — hero carousel + thumbnails */}
       <div
         className="hidden sm:grid grid-cols-3 grid-rows-3 gap-3 md:gap-4 rounded-3xl overflow-hidden"
         style={{ height: 'clamp(380px, 48vw, 520px)' }}
       >
-        <button
-          type="button"
-          onClick={() => openAt(0)}
-          className={`relative ${thumbs.length > 0 ? 'col-span-2 row-span-3' : 'col-span-3 row-span-3'} overflow-hidden rounded-2xl group focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--xpx-warm)]`}
-          aria-label="View hero photo"
+        <div
+          className={`relative overflow-hidden rounded-2xl ${
+            thumbs.length > 0 ? 'col-span-2 row-span-3' : 'col-span-3 row-span-3'
+          }`}
         >
-          <img
-            src={heroSrc}
-            alt={`${title} — primary photo`}
-            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
-            loading="eager"
+          <PropertyHeroCarousel
+            images={safeImages}
+            title={title}
+            className="rounded-2xl"
+            imageClassName="w-full h-full object-cover"
+            onSlideClick={openAt}
+            onIndexChange={setHeroIndex}
           />
-          {/* Soft bottom-left gradient so the badge stays legible on busy photos. */}
           <div
             className="absolute inset-x-0 bottom-0 h-20 pointer-events-none"
             style={{ background: 'linear-gradient(180deg, transparent, rgba(15,23,42,0.32))' }}
           />
           <span
-            className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-xpx-text"
+            className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-xpx-text pointer-events-none"
             style={{
               background: 'rgba(255,255,255,0.92)',
               backdropFilter: 'blur(12px) saturate(1.4)',
@@ -109,9 +91,11 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
             }}
           >
             <Camera className="w-3.5 h-3.5" />
-            <span className="tabular-nums">+{total} Photos</span>
+            <span className="tabular-nums">
+              {heroIndex + 1} / {total}
+            </span>
           </span>
-        </button>
+        </div>
 
         {thumbs.map((img, i) => {
           const isLastThumb = i === thumbs.length - 1;
@@ -146,38 +130,17 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
         })}
       </div>
 
-      {/* Mobile — horizontal scroll snap strip with reserved height to avoid CLS */}
-      <div className="sm:hidden relative">
-        <div
-          ref={stripRef}
-          onScroll={onMobileScroll}
-          className="flex gap-2 overflow-x-auto scrollbar-hide px-1 overscroll-x-contain"
-          style={{
-            scrollSnapType: 'x mandatory',
-            WebkitOverflowScrolling: 'touch',
-            scrollBehavior: 'auto',
-          }}
-        >
-          {safeImages.map((img, i) => (
-            <button
-              key={`m-${i}`}
-              type="button"
-              onClick={() => openAt(i)}
-              className="shrink-0 w-[calc(100%-0.5rem)] aspect-[4/3] rounded-2xl overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--xpx-warm)]"
-              style={{ scrollSnapAlign: 'center' }}
-              aria-label={`View photo ${i + 1} of ${total}`}
-            >
-              <img
-                src={img}
-                alt={`${title} — photo ${i + 1}`}
-                className="w-full h-full object-cover"
-                loading={i === 0 ? 'eager' : 'lazy'}
-                decoding="async"
-              />
-            </button>
-          ))}
-        </div>
-        {/* Counter pill — bottom right, mirroring native iOS photo viewer. */}
+      {/* Mobile — transform carousel */}
+      <div className="sm:hidden relative aspect-[4/3] rounded-2xl overflow-hidden">
+        <PropertyHeroCarousel
+          images={safeImages}
+          title={title}
+          className="rounded-2xl"
+          imageClassName="w-full h-full object-cover"
+          showArrows={false}
+          onSlideClick={openAt}
+          onIndexChange={setHeroIndex}
+        />
         <span
           className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold tabular-nums pointer-events-none"
           style={{
@@ -188,11 +151,11 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
           }}
         >
           <Camera className="w-3 h-3" />
-          {Math.min(mobileIndex + 1, total)} / {total}
+          {heroIndex + 1} / {total}
         </span>
       </div>
 
-      {/* Lightbox — backdrop click closes; arrow keys & buttons cycle. */}
+      {/* Lightbox */}
       {open && (
         <div
           role="dialog"
@@ -210,9 +173,7 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
             <X className="w-6 h-6 text-white" />
           </button>
 
-          <div
-            className="absolute top-4 left-4 z-[90] bg-black/40 text-white px-4 py-2 rounded-full backdrop-blur-sm font-semibold tabular-nums"
-          >
+          <div className="absolute top-4 left-4 z-[90] bg-black/40 text-white px-4 py-2 rounded-full backdrop-blur-sm font-semibold tabular-nums">
             {index + 1} / {total}
           </div>
 
@@ -250,8 +211,6 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
             className="max-w-[92vw] max-h-[85vh] object-contain rounded-lg select-none"
           />
 
-          {/* Thumbnail strip at the bottom of the lightbox so users can jump
-              straight to a specific photo without arrow-key cycling. */}
           {total > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[90] max-w-full overflow-x-auto scrollbar-hide">
               <div className="flex gap-2 px-4">
