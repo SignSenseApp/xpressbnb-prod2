@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import {
   Search,
-  Star,
   MapPin,
   Wifi,
   Car,
@@ -26,6 +25,8 @@ import RishikeshTrustRow from '../components/RishikeshTrustRow';
 import RishikeshExperiencesSection from '../components/RishikeshExperiencesSection';
 import SEOHead from '../components/SEOHead';
 import SaveListingButton from '../components/SaveListingButton';
+import PropertyTrustLine from '../components/PropertyTrustLine';
+import type { PropertyTrustInput } from '../lib/propertyTrustDisplay';
 import { snapshotFromStayLike } from '../lib/savedListingsStorage';
 
 type PropertyType = 'all' | 'hotel' | 'guesthouse' | 'resort' | 'villa' | 'cottage' | 'hostel';
@@ -36,12 +37,11 @@ interface Stay {
   location: string;
   description: string;
   pricePerNight: number;
-  rating: number;
-  reviews: number;
   type: Exclude<PropertyType, 'all'>;
   amenities: string[];
   images: string[];
   isVerified?: boolean;
+  trustInput: PropertyTrustInput;
   /** Used to know whether clicking "View" should navigate to a real property page. */
   isFromDb: boolean;
   discountPercent?: number;
@@ -59,14 +59,13 @@ const FALLBACK_STAYS: Stay[] = [
     description:
       'A serene cottage perched above the Ganges with panoramic river views and morning yoga decks.',
     pricePerNight: 3800,
-    rating: 4.8,
-    reviews: 142,
     type: 'cottage',
     amenities: ['WiFi', 'Parking', 'Mountain View', 'Breakfast'],
     images: [
       'https://images.pexels.com/photos/2104882/pexels-photo-2104882.jpeg?auto=compress&w=900',
     ],
     isVerified: true,
+    trustInput: { is_verified: true },
     isFromDb: false,
   },
   {
@@ -76,12 +75,11 @@ const FALLBACK_STAYS: Stay[] = [
     description:
       'Boutique resort steps from the iconic suspension bridge with a riverside infinity pool.',
     pricePerNight: 6200,
-    rating: 4.7,
-    reviews: 318,
     type: 'resort',
     amenities: ['WiFi', 'Pool', 'Restaurant', 'Parking', 'AC'],
     images: ['https://images.pexels.com/photos/261101/pexels-photo-261101.jpeg?auto=compress&w=900'],
     isVerified: true,
+    trustInput: { is_verified: true },
     isFromDb: false,
   },
   {
@@ -90,13 +88,12 @@ const FALLBACK_STAYS: Stay[] = [
     location: 'Tapovan, Rishikesh',
     description: 'Dedicated yoga retreat with daily Hatha and Ashtanga sessions plus organic kitchen.',
     pricePerNight: 2900,
-    rating: 4.9,
-    reviews: 207,
     type: 'guesthouse',
     amenities: ['WiFi', 'Breakfast', 'Yoga Hall'],
     images: [
       'https://images.pexels.com/photos/3601425/pexels-photo-3601425.jpeg?auto=compress&w=900',
     ],
+    trustInput: { is_verified: false },
     isFromDb: false,
   },
   {
@@ -105,13 +102,12 @@ const FALLBACK_STAYS: Stay[] = [
     location: 'Shivpuri, Rishikesh',
     description: 'Private four-bedroom villa surrounded by pine forest, ideal for families and groups.',
     pricePerNight: 9800,
-    rating: 4.6,
-    reviews: 84,
     type: 'villa',
     amenities: ['WiFi', 'Parking', 'Pool', 'Kitchen', 'Mountain View'],
     images: [
       'https://images.pexels.com/photos/2102587/pexels-photo-2102587.jpeg?auto=compress&w=900',
     ],
+    trustInput: { is_verified: false },
     isFromDb: false,
   },
 ];
@@ -234,7 +230,6 @@ function StayCard({
                 city: 'Rishikesh',
                 images: stay.images,
                 pricePerNight: stay.pricePerNight,
-                rating: stay.rating,
                 isVerified: stay.isVerified,
               })
             }
@@ -295,16 +290,12 @@ function StayCard({
       </div>
       <div className="p-4 sm:p-[18px]">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-[15px] sm:text-base font-bold text-xpx-text truncate leading-snug">
+          <h3 className="text-[15px] sm:text-base font-bold text-xpx-text truncate leading-snug flex-1 min-w-0">
             {stay.name}
           </h3>
-          <span
-            className="inline-flex items-center gap-1 text-sm shrink-0"
-            style={{ color: 'var(--xpx-warm-dark)' }}
-          >
-            <Star className="w-3.5 h-3.5" fill="currentColor" />
-            {stay.rating.toFixed(1)}
-          </span>
+          <div className="shrink-0 max-w-[45%]">
+            <PropertyTrustLine property={stay.trustInput} />
+          </div>
         </div>
         <p className="mt-1 text-xs text-xpx-muted inline-flex items-center gap-1">
           <MapPin className="w-3 h-3" />
@@ -323,7 +314,6 @@ function StayCard({
         </div>
         <div className="mt-4 pt-3 flex items-end justify-between border-t border-xpx-border">
           <div>
-            <p className="text-[11px] text-xpx-subtle">{stay.reviews} reviews</p>
             <p className="text-lg font-extrabold text-xpx-text leading-tight">
               ₹{stay.pricePerNight.toLocaleString('en-IN')}
               <span className="text-xs font-medium text-xpx-muted"> /night</span>
@@ -417,12 +407,15 @@ const RishikeshStaysPage: React.FC = () => {
                 location: p.address || `${p.city ?? 'Rishikesh'}`,
                 description: p.description ?? '',
                 pricePerNight: Number(p.price_per_day) || 0,
-                rating: Number(p.rating) || 0,
-                reviews: Number(p.total_reviews) || 0,
                 type: ((p.property_type as Stay['type']) || 'hotel'),
                 amenities,
                 images: cleanImages,
                 isVerified: Boolean(p.is_verified),
+                trustInput: {
+                  external_listings: p.external_listings,
+                  is_verified: p.is_verified,
+                  created_at: p.created_at,
+                },
                 discountPercent:
                   typeof p.discount_percent === 'number' ? p.discount_percent : undefined,
                 isFromDb: true,

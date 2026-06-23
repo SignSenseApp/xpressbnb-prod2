@@ -76,7 +76,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
   const [loading, setLoading] = useState(true);
   const [listingsError, setListingsError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState<'recommended' | 'price-low' | 'price-high' | 'rating'>('recommended');
+  const [sortBy, setSortBy] = useState<'recommended' | 'price-low' | 'price-high'>('recommended');
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [urlSearch, setUrlSearch] = useState(() =>
     typeof window !== 'undefined' ? window.location.search : ''
@@ -161,9 +161,6 @@ export default function CityListingPage({ city }: CityListingPageProps) {
         break;
       case 'price-high':
         filtered.sort((a, b) => (b.price_per_day || 0) - (a.price_per_day || 0));
-        break;
-      case 'rating':
-        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
         break;
     }
 
@@ -262,7 +259,6 @@ export default function CityListingPage({ city }: CityListingPageProps) {
             <option value="recommended">Recommended</option>
             <option value="price-low">Price: Low to High</option>
             <option value="price-high">Price: High to Low</option>
-            <option value="rating">Highest Rated</option>
           </select>
 
           <div className="w-px h-6 flex-shrink-0" style={{ background: 'var(--xpx-border)' }} />

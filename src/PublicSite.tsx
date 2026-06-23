@@ -120,7 +120,7 @@ export default function PublicSite() {
         .select('*')
         .eq('is_active', true)
         .order('is_verified', { ascending: false })
-        .order('rating', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setProperties(data || []);

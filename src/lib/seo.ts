@@ -1,5 +1,7 @@
 // Loose JSON-LD payload: schema.org documents contain arbitrarily nested
 // strings/numbers/arrays/objects, so we model it as a JSON-shaped record.
+import { getPropertyTrustDisplay } from './propertyTrustDisplay';
+
 export type JsonLdValue =
   | string
   | number
@@ -106,6 +108,21 @@ function updateStructuredData(data: JsonLdRecord) {
 // rows from Supabase, manually composed objects, or partial cached data.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function generatePropertyStructuredData(property: any) {
+  const trust = getPropertyTrustDisplay({
+    external_listings: property.external_listings,
+    is_verified: property.is_verified,
+    created_at: property.created_at,
+  });
+
+  const aggregateRating =
+    trust.kind === 'verified_external_rating'
+      ? {
+          '@type': 'AggregateRating',
+          ratingValue: trust.rating,
+          reviewCount: trust.reviewCount,
+        }
+      : undefined;
+
   return {
     '@context': 'https://schema.org',
     '@type': 'LodgingBusiness',
@@ -125,11 +142,7 @@ export function generatePropertyStructuredData(property: any) {
     } : undefined,
     image: property.images || [],
     priceRange: `₹${property.price_per_day || property.price_full_day}`,
-    aggregateRating: property.rating ? {
-      '@type': 'AggregateRating',
-      ratingValue: property.rating,
-      reviewCount: property.review_count || 1,
-    } : undefined,
+    aggregateRating,
     amenityFeature: property.amenities?.map((amenity: string) => ({
       '@type': 'LocationFeatureSpecification',
       name: amenity,

@@ -3,7 +3,7 @@ import { logSupabaseError, supabase } from './supabase';
 
 /** Fields required for homepage/city listing cards — avoids heavy `select('*')` payloads. */
 export const PUBLIC_LISTING_SELECT =
-  'id,title,city,images,price_per_day,price_full_day,rating,total_reviews,is_verified,max_guests,is_couple_friendly,hourly_stay_available,instant_booking,is_private_space,no_brokerage,pay_at_property,description,address,bedrooms,bathrooms,host_id,is_active';
+  'id,title,city,images,price_per_day,price_full_day,is_verified,external_listings,created_at,max_guests,is_couple_friendly,hourly_stay_available,instant_booking,is_private_space,no_brokerage,pay_at_property,description,address,bedrooms,bathrooms,host_id,is_active';
 
 const RETRY_DELAY_MS = 700;
 const CACHE_TTL_MS = 60_000;
@@ -23,7 +23,7 @@ async function queryActiveProperties(select: string): Promise<Property[]> {
     .select(select)
     .eq('is_active', true)
     .order('is_verified', { ascending: false })
-    .order('rating', { ascending: false });
+    .order('created_at', { ascending: false });
 
   if (error) throw error;
   return (data ?? []) as Property[];
@@ -99,7 +99,7 @@ export async function fetchActiveProperties(options?: {
           .eq('is_active', true)
           .in('city', cityIn)
           .order('is_verified', { ascending: false })
-          .order('rating', { ascending: false });
+          .order('created_at', { ascending: false });
         if (error) throw error;
         return (data ?? []) as Property[];
       } catch (err) {

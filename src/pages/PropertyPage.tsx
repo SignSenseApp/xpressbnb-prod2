@@ -5,7 +5,6 @@ import {
   Users,
   Bed,
   Bath,
-  Star,
   CheckCircle,
   ShieldCheck,
   Share2,
@@ -50,6 +49,7 @@ import { parseTripFromSearch } from '../lib/tripSearch';
 import { scrollToElement } from '../lib/smoothScroll';
 import { trackXpressEvent } from '../lib/analytics';
 import SaveListingButton from '../components/SaveListingButton';
+import PropertyTrustLine from '../components/PropertyTrustLine';
 import { snapshotFromProperty } from '../lib/savedListingsStorage';
 
 /**
@@ -299,8 +299,6 @@ export default function PropertyPage() {
   const featuredPromo = listFeaturedPromoCodes()[0];
 
   const basePrice = property.price_per_day || property.price_full_day || 0;
-  const ratingValue = Number(property.rating) || 0;
-  const reviewsCount = Number(property.total_reviews) || 0;
   const amenitiesAll = property.amenities ?? [];
   const amenitiesPreview = amenitiesAll.slice(0, 9);
   const moreAmenities = Math.max(0, amenitiesAll.length - amenitiesPreview.length);
@@ -507,23 +505,9 @@ export default function PropertyPage() {
               {/* Stats strip — uses inline dot separators on desktop, wraps to
                   a stacked layout on narrow phones. */}
               <ul className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-                {ratingValue > 0 && (
-                  <li className="inline-flex items-center gap-1.5">
-                    <Star
-                      className="w-4 h-4"
-                      style={{ color: 'var(--xpx-rating)' }}
-                      fill="currentColor"
-                    />
-                    <span className="font-bold text-xpx-text tabular-nums">
-                      {ratingValue.toFixed(1)}
-                    </span>
-                    {reviewsCount > 0 && (
-                      <span className="text-xpx-muted tabular-nums">
-                        ({reviewsCount} reviews)
-                      </span>
-                    )}
-                  </li>
-                )}
+                <li>
+                  <PropertyTrustLine property={property} variant="page" />
+                </li>
                 <li className="inline-flex items-center gap-1.5 text-xpx-muted">
                   <Users className="w-4 h-4 text-xpx-subtle" />
                   <span className="tabular-nums">Up to {property.max_guests} guests</span>

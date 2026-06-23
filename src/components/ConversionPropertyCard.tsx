@@ -1,6 +1,7 @@
-import { MapPin, Star, CheckCircle, Shield, Clock } from 'lucide-react';
+import { MapPin, CheckCircle, Shield, Clock } from 'lucide-react';
 import type { Property } from '../lib/database.types';
 import { theme } from '../lib/theme';
+import PropertyTrustLine from './PropertyTrustLine';
 import SaveListingButton from './SaveListingButton';
 import { firstImageUrl, snapshotFromProperty } from '../lib/savedListingsStorage';
 import { trackXpressEvent } from '../lib/analytics';
@@ -135,16 +136,6 @@ export default function ConversionPropertyCard({
           </div>
         )}
 
-        {/* Guest favourite */}
-        {typeof property.rating === 'number' && property.rating >= 4.5 && (
-          <div
-            className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold text-white"
-            style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)' }}
-          >
-            <Star className="w-3 h-3" style={{ color: theme.rating }} fill={theme.rating} />
-            Guest favourite
-          </div>
-        )}
       </div>
 
       {/* Content */}
@@ -159,17 +150,9 @@ export default function ConversionPropertyCard({
           </div>
         </div>
 
-        {/* Trust chips */}
-        <div className="flex items-center gap-1.5 flex-wrap text-[10px]">
-          {typeof property.rating === 'number' && property.rating > 0 && (
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold text-xpx-text"
-              style={{ background: 'rgba(80,200,120,0.08)', border: '1px solid rgba(80,200,120,0.35)' }}
-            >
-              <Star className="w-3 h-3" style={{ color: theme.rating }} fill={theme.rating} />
-              {property.rating.toFixed(1)}
-            </span>
-          )}
+        {/* Trust */}
+        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+          <PropertyTrustLine property={property} />
           {property.no_brokerage && (
             <span
               className="inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold"

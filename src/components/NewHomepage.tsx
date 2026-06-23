@@ -31,6 +31,7 @@ import { openHomeOverlay } from '../lib/navigation';
 import { TEAM_EMAIL } from '../lib/team';
 import { ManageCookiesLink } from './CookieConsent';
 import SaveListingButton from './SaveListingButton';
+import PropertyTrustLine from './PropertyTrustLine';
 import { firstImageUrl, snapshotFromProperty } from '../lib/savedListingsStorage';
 import { fetchActiveProperties, invalidatePublicListingsCache } from '../lib/publicListings';
 import XpModeSwitch from './XpModeSwitch';
@@ -47,7 +48,6 @@ const TEXT_MUTED = '#64748B';
 const TEXT_SUBTLE = '#94A3B8';
 const BORDER = '#E5E7EB';
 const VERIFIED = '#059669';
-const RATING = '#059669';
 const FOOTER_HEADING = '#FFFFFF';
 const FOOTER_BODY = 'rgba(255,255,255,0.6)';
 const FOOTER_LOGO_ACCENT = ACCENT;
@@ -120,45 +120,6 @@ const TRUST_BADGES = [
     icon: ShieldCheck,
     label: 'Best Price Guarantee',
     subtext: 'Always the best rate',
-  },
-];
-
-interface Testimonial {
-  id: string;
-  name: string;
-  avatar_url: string;
-  location: string;
-  rating: number;
-  quote: string;
-}
-
-const SOCIAL_PROOF_TESTIMONIALS: Testimonial[] = [
-  {
-    id: 'f1',
-    name: 'Aarav Mehta',
-    avatar_url: 'https://i.pravatar.cc/120?img=12',
-    location: 'New Delhi',
-    rating: 5,
-    quote:
-      'Booked a verified apartment in Saket and the experience was flawless. Zero hidden fees, instant confirmation, and the host was incredible.',
-  },
-  {
-    id: 'f2',
-    name: 'Priya Sharma',
-    avatar_url: 'https://i.pravatar.cc/120?img=47',
-    location: 'Mumbai',
-    rating: 5,
-    quote:
-      'XpressBnB feels premium without the premium price tag. The verification badge gave me peace of mind, and the photos matched perfectly.',
-  },
-  {
-    id: 'f3',
-    name: 'Rohan Iyer',
-    avatar_url: 'https://i.pravatar.cc/120?img=33',
-    location: 'Bengaluru',
-    rating: 5,
-    quote:
-      'Used it for a 2 week corporate stay in Gurgaon. Clean, modern, and the direct with host model saved me almost 11% versus other platforms.',
   },
 ];
 
@@ -701,60 +662,16 @@ export default function NewHomepage() {
         </div>
       </section>
 
-      {/* ──── Social Proof ──── */}
+      {/* ──── Trust message ──── */}
       <section className="xpx-section" style={{ background: BASE }}>
         <div className="xpx-container">
-          <div className="text-center mb-10 md:mb-12">
-            <div className="inline-flex items-center gap-2 mb-4">
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map(i => (
-                  <Star key={i} className="w-6 h-6" style={{ color: RATING }} fill={RATING} />
-                ))}
-              </div>
-              <span className="text-3xl md:text-4xl font-extrabold ml-2" style={{ color: '#059669' }}>4.8</span>
-            </div>
-            <p className="text-sm" style={{ color: TEXT_MUTED }}>from 50,000+ verified guest reviews</p>
-          </div>
-
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:auto-rows-fr">
-            {SOCIAL_PROOF_TESTIMONIALS.map(t => (
-              <article
-                key={t.id}
-                className="snap-start shrink-0 w-[85%] sm:w-[60%] md:w-auto p-6 h-full flex flex-col transition-all duration-300 md:hover:-translate-y-1"
-                style={{
-                  background: SURFACE,
-                  border: `1px solid ${BORDER}`,
-                  borderRadius: 18,
-                  boxShadow: '0 2px 8px rgba(15,23,42,0.05)',
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <img
-                    src={t.avatar_url}
-                    alt={t.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                    loading="lazy"
-                  />
-                  <div>
-                    <div className="font-bold text-sm leading-tight" style={{ color: TEXT }}>{t.name}</div>
-                    <div className="text-xs mt-0.5" style={{ color: TEXT_SUBTLE }}>{t.location}</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-0.5 mt-4">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className="w-3.5 h-3.5"
-                      style={{ color: i < t.rating ? RATING : INK_FAINT }}
-                      fill={i < t.rating ? RATING : 'transparent'}
-                    />
-                  ))}
-                </div>
-                <p className="mt-3 text-sm leading-relaxed line-clamp-3 flex-1" style={{ color: TEXT_MUTED }}>
-                  {t.quote}
-                </p>
-              </article>
-            ))}
+          <div className="text-center max-w-2xl mx-auto">
+            <p className="text-2xl md:text-3xl font-extrabold tracking-tight" style={{ color: TEXT }}>
+              Direct stays. Real hosts. Zero commission.
+            </p>
+            <p className="mt-3 text-sm md:text-base leading-relaxed" style={{ color: TEXT_MUTED }}>
+              Book directly with verified hosts — no platform markup, no invented review scores.
+            </p>
           </div>
         </div>
       </section>
@@ -1588,8 +1505,6 @@ function FeaturedCard({ property }: { property: Property }) {
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
   const price = (property.price_per_day || property.price_full_day || 0).toLocaleString();
-  const reviewCount = Number(property.total_reviews) || 0;
-  const rating = Number(property.rating) || 0;
 
   const coverImage = firstImageUrl(property.images);
 
@@ -1652,20 +1567,8 @@ function FeaturedCard({ property }: { property: Property }) {
           <MapPin className="w-3.5 h-3.5 shrink-0" />
           <span className="line-clamp-1">{property.city}</span>
         </div>
-        <div className="flex items-center gap-1.5 mt-2.5 text-sm flex-wrap">
-          {rating > 0 && (
-            <>
-              <Star className="w-4 h-4" style={{ color: RATING }} fill={RATING} />
-              <span className="font-semibold" style={{ color: TEXT }}>{rating.toFixed(1)}</span>
-            </>
-          )}
-          {reviewCount > 0 ? (
-            <span style={{ color: TEXT_SUBTLE }}>
-              ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
-            </span>
-          ) : (
-            <span style={{ color: TEXT_SUBTLE }}>No reviews yet</span>
-          )}
+        <div className="mt-2.5 min-w-0">
+          <PropertyTrustLine property={property} />
         </div>
         <div className="mt-auto pt-3 border-t flex items-center gap-1.5 text-xs font-semibold" style={{ borderColor: BORDER, color: ACCENT_DARK }}>
           <ShieldCheck className="w-3.5 h-3.5" style={{ color: ACCENT }} />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle, MapPin, Star, Shield, Languages, Sparkles, Headphones } from 'lucide-react';
+import { CheckCircle, MapPin, Shield, Languages, Sparkles, Headphones } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { theme } from '../lib/theme';
 import { safeHostDisplayName, safeHostInitial, stripPhoneLike } from '../lib/host';
@@ -13,7 +13,6 @@ interface HostInfo {
   city?: string | null;
   bio?: string | null;
   kyc_status?: string | null;
-  rating?: number | null;
   total_bookings?: number | null;
   created_at?: string | null;
 }
@@ -53,7 +52,7 @@ export default function HostCard({
       try {
         const { data, error } = await supabase
           .from('hosts')
-          .select('id, name, bio, kyc_status, rating, total_bookings, created_at')
+          .select('id, name, bio, kyc_status, total_bookings, created_at')
           .eq('id', hostId)
           .maybeSingle();
         if (cancelled) return;
@@ -184,15 +183,9 @@ export default function HostCard({
                 {host.city ?? fallbackCity}
               </span>
             )}
-            {typeof host.rating === 'number' && host.rating > 0 && (
-              <span className="inline-flex items-center gap-1">
-                <Star className="w-4 h-4" style={{ color: theme.rating }} fill="currentColor" />
-                {host.rating.toFixed(1)}
-                {bookingCount ? (
-                  <span className="text-xpx-subtle">({bookingCount} bookings)</span>
-                ) : null}
-              </span>
-            )}
+            {bookingCount ? (
+              <span className="text-xpx-subtle tabular-nums">{bookingCount} bookings</span>
+            ) : null}
             {memberSinceLabel && (
               <span className="text-xpx-subtle">Member since {memberSinceLabel}</span>
             )}
