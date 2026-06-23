@@ -217,3 +217,10 @@ export function getPropertyTrustDisplay(input: PropertyTrustInput): PropertyTrus
   }
   return { kind: 'trust_chip', label: resolveFallbackChip(input) };
 }
+
+/** Truthful fallback chip label — shown alongside Stay Score even when external rating exists. */
+export function getPropertyTrustChipLabel(
+  input: PropertyTrustInput,
+): 'Host verified' | 'New on XpressBNB' | 'Direct host booking' {
+  return resolveFallbackChip(input);
+}

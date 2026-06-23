@@ -27,6 +27,7 @@ import SEOHead from '../components/SEOHead';
 import SaveListingButton from '../components/SaveListingButton';
 import PropertyTrustLine from '../components/PropertyTrustLine';
 import type { PropertyTrustInput } from '../lib/propertyTrustDisplay';
+import type { ListingQualitySignals } from '../lib/xpressbnbStayScore';
 import { snapshotFromStayLike } from '../lib/savedListingsStorage';
 
 type PropertyType = 'all' | 'hotel' | 'guesthouse' | 'resort' | 'villa' | 'cottage' | 'hostel';
@@ -42,6 +43,7 @@ interface Stay {
   images: string[];
   isVerified?: boolean;
   trustInput: PropertyTrustInput;
+  listingSignals: ListingQualitySignals;
   /** Used to know whether clicking "View" should navigate to a real property page. */
   isFromDb: boolean;
   discountPercent?: number;
@@ -66,6 +68,15 @@ const FALLBACK_STAYS: Stay[] = [
     ],
     isVerified: true,
     trustInput: { is_verified: true },
+    listingSignals: {
+      is_verified: true,
+      images: [
+        'https://images.pexels.com/photos/2104882/pexels-photo-2104882.jpeg?auto=compress&w=900',
+      ],
+      price_per_day: 3800,
+      city: 'Rishikesh',
+      amenities: ['WiFi', 'Parking', 'Mountain View', 'Breakfast'],
+    },
     isFromDb: false,
   },
   {
@@ -80,6 +91,13 @@ const FALLBACK_STAYS: Stay[] = [
     images: ['https://images.pexels.com/photos/261101/pexels-photo-261101.jpeg?auto=compress&w=900'],
     isVerified: true,
     trustInput: { is_verified: true },
+    listingSignals: {
+      is_verified: true,
+      images: ['https://images.pexels.com/photos/261101/pexels-photo-261101.jpeg?auto=compress&w=900'],
+      price_per_day: 6200,
+      city: 'Rishikesh',
+      amenities: ['WiFi', 'Pool', 'Restaurant', 'Parking', 'AC'],
+    },
     isFromDb: false,
   },
   {
@@ -94,6 +112,14 @@ const FALLBACK_STAYS: Stay[] = [
       'https://images.pexels.com/photos/3601425/pexels-photo-3601425.jpeg?auto=compress&w=900',
     ],
     trustInput: { is_verified: false },
+    listingSignals: {
+      images: [
+        'https://images.pexels.com/photos/3601425/pexels-photo-3601425.jpeg?auto=compress&w=900',
+      ],
+      price_per_day: 2900,
+      city: 'Rishikesh',
+      amenities: ['WiFi', 'Breakfast', 'Yoga Hall'],
+    },
     isFromDb: false,
   },
   {
@@ -108,6 +134,14 @@ const FALLBACK_STAYS: Stay[] = [
       'https://images.pexels.com/photos/2102587/pexels-photo-2102587.jpeg?auto=compress&w=900',
     ],
     trustInput: { is_verified: false },
+    listingSignals: {
+      images: [
+        'https://images.pexels.com/photos/2102587/pexels-photo-2102587.jpeg?auto=compress&w=900',
+      ],
+      price_per_day: 9800,
+      city: 'Rishikesh',
+      amenities: ['WiFi', 'Parking', 'Pool', 'Kitchen', 'Mountain View'],
+    },
     isFromDb: false,
   },
 ];
@@ -294,7 +328,7 @@ function StayCard({
             {stay.name}
           </h3>
           <div className="shrink-0 max-w-[45%]">
-            <PropertyTrustLine property={stay.trustInput} />
+            <PropertyTrustLine property={{ ...stay.trustInput, ...stay.listingSignals }} />
           </div>
         </div>
         <p className="mt-1 text-xs text-xpx-muted inline-flex items-center gap-1">
@@ -415,6 +449,22 @@ const RishikeshStaysPage: React.FC = () => {
                   external_listings: p.external_listings,
                   is_verified: p.is_verified,
                   created_at: p.created_at,
+                },
+                listingSignals: {
+                  is_verified: p.is_verified,
+                  images: p.images,
+                  price_per_day: p.price_per_day,
+                  price_full_day: p.price_full_day,
+                  city: p.city,
+                  latitude: p.latitude,
+                  longitude: p.longitude,
+                  bedrooms: p.bedrooms,
+                  bathrooms: p.bathrooms,
+                  max_guests: p.max_guests,
+                  amenities: p.amenities,
+                  is_premium: p.is_premium,
+                  premium_plan: p.premium_plan,
+                  premium_expiry: p.premium_expiry,
                 },
                 discountPercent:
                   typeof p.discount_percent === 'number' ? p.discount_percent : undefined,
