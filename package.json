@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "test:stay-score": "vitest run src/lib/xpressbnbStayScore.test.ts",
+    "test": "vitest run",
     "generate:favicon": "node scripts/generate-favicon.mjs"
   },
   "dependencies": {

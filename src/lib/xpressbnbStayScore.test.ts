@@ -52,6 +52,31 @@ describe('computeXpressbnbStayScore', () => {
     expect(rich.score).toBeLessThanOrEqual(STAY_SCORE_MAX);
   });
 
+  it('handles null arrays and missing optional fields', () => {
+    const result = computeXpressbnbStayScore({
+      images: null,
+      amenities: null,
+      city: null,
+      bedrooms: null,
+      bathrooms: null,
+      max_guests: null,
+      latitude: null,
+      longitude: null,
+      is_premium: null,
+      premium_plan: null,
+      premium_expiry: null,
+    });
+    expect(result.score).toBeGreaterThanOrEqual(STAY_SCORE_MIN);
+    expect(result.score).toBeLessThanOrEqual(STAY_SCORE_MAX);
+  });
+
+  it('stays deterministic for partial listing payload', () => {
+    const partial = { title: 'ignored', price_per_day: 1200, city: 'Noida' };
+    const a = computeXpressbnbStayScore(partial);
+    const b = computeXpressbnbStayScore(partial);
+    expect(a).toEqual(b);
+  });
+
   it('does not throw when optional fields are missing', () => {
     expect(() => computeXpressbnbStayScore({})).not.toThrow();
     expect(() =>

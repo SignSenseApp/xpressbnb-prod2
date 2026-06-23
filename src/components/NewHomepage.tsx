@@ -33,7 +33,7 @@ import { ManageCookiesLink } from './CookieConsent';
 import SaveListingButton from './SaveListingButton';
 import PropertyTrustLine from './PropertyTrustLine';
 import { firstImageUrl, snapshotFromProperty } from '../lib/savedListingsStorage';
-import { fetchActiveProperties, invalidatePublicListingsCache } from '../lib/publicListings';
+import { getPublicListings, invalidatePublicListingsCache } from '../lib/publicListings';
 import XpModeSwitch from './XpModeSwitch';
 
 // Global brand system (premium minimal emerald scale).
@@ -180,8 +180,15 @@ export default function NewHomepage() {
     setLoading(true);
     setListingsError(null);
     try {
-      const data = await fetchActiveProperties({ forceRefresh });
+      const result = await getPublicListings({ forceRefresh });
       if (requestId !== loadPropertiesRef.current) return;
+      if (result.status === 'error') {
+        setProperties([]);
+        setPropertiesByCity({});
+        setListingsError("We couldn't load stays right now. Please try again.");
+        return;
+      }
+      const data = result.listings;
       setProperties(data);
       const grouped: Record<string, Property[]> = {};
       CITIES.forEach((c) => {
@@ -193,7 +200,7 @@ export default function NewHomepage() {
       logSupabaseError('Error loading properties', err);
       setProperties([]);
       setPropertiesByCity({});
-      setListingsError('Could not load stays. Refresh the page or check your connection.');
+      setListingsError("We couldn't load stays right now. Please try again.");
     } finally {
       if (requestId === loadPropertiesRef.current) setLoading(false);
     }
@@ -579,7 +586,8 @@ export default function NewHomepage() {
           {loading ? (
             <FeaturedSkeleton />
           ) : listingsError ? (
-            <div className="py-16 text-center text-sm px-4" style={{ color: '#B91C1C' }}>
+            <div className="py-16 text-center text-sm px-4" style={{ color: TEXT_MUTED }}>
+              <p className="font-semibold text-xpx-text mb-1">We couldn&apos;t load stays right now</p>
               <p>{listingsError}</p>
               <button
                 type="button"

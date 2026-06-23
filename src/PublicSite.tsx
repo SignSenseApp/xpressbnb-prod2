@@ -6,7 +6,7 @@ import AboutPage from './components/AboutPage';
 import BlogPage from './components/BlogPage';
 import PricingPopup from './components/PricingPopup';
 import SEOHead from './components/SEOHead';
-import { supabase } from './lib/supabase';
+import { getPublicListings } from './lib/publicListings';
 import { generateOrganizationStructuredData } from './lib/seo';
 import type { Property } from './lib/database.types';
 import { normalizeCityBucket } from './lib/cityBuckets';
@@ -17,6 +17,7 @@ export default function PublicSite() {
   const [showAbout, setShowAbout] = useState(false);
   const [showBlog, setShowBlog] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [listingsError, setListingsError] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string>('all');
   const [scrollY, setScrollY] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
@@ -114,19 +115,25 @@ export default function PublicSite() {
   };
 
   const loadProperties = async () => {
+    setLoading(true);
+    setListingsError(null);
     try {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('is_active', true)
-        .order('is_verified', { ascending: false })
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setProperties(data || []);
-      setFilteredProperties(data || []);
+      const result = await getPublicListings();
+      if (result.status === 'error') {
+        setProperties([]);
+        setFilteredProperties([]);
+        setListingsError("We couldn't load stays right now. Please try again.");
+        return;
+      }
+      setProperties(result.listings);
+      setFilteredProperties(result.listings);
     } catch (error) {
-      console.error('Error loading properties:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error loading properties:', error);
+      }
+      setProperties([]);
+      setFilteredProperties([]);
+      setListingsError("We couldn't load stays right now. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -264,6 +271,18 @@ export default function PublicSite() {
                 <div className="absolute inset-2 border-4 border-[#3dae68] border-b-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
                 <div className="absolute inset-4 border-4 border-[#50C878] border-t-transparent rounded-full animate-spin" style={{ animationDuration: '0.6s' }} />
               </div>
+            </div>
+          ) : listingsError ? (
+            <div className="text-center py-20 px-4">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">We couldn&apos;t load stays right now</h3>
+              <p className="text-gray-600 mb-5">{listingsError}</p>
+              <button
+                type="button"
+                onClick={() => void loadProperties()}
+                className="px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-[#50C878]"
+              >
+                Retry
+              </button>
             </div>
           ) : filteredProperties.length === 0 ? (
             <div className="text-center py-20">

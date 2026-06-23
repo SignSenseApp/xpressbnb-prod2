@@ -13,12 +13,11 @@ import {
   Mountain,
   SlidersHorizontal,
   X,
-  Loader2,
   CheckCircle,
   Tag,
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { cityDbInList } from '../lib/cityBuckets';
+import { getPublicListingsByCity, invalidatePublicListingsCache } from '../lib/publicListings';
+import type { PublicPropertyListing } from '../lib/publicListings';
 import Header from '../components/Header';
 import BookArtistSection from '../components/BookArtistSection';
 import RishikeshTrustRow from '../components/RishikeshTrustRow';
@@ -49,102 +48,61 @@ interface Stay {
   discountPercent?: number;
 }
 
-/**
- * Curated fallback dataset. Used only when the Supabase query genuinely returns
- * zero rows (e.g. dev DB) so users on rishikesh.html never see an empty page.
- */
-const FALLBACK_STAYS: Stay[] = [
-  {
-    id: 'fb-1',
-    name: 'Ganga View Riverside Cottage',
-    location: 'Tapovan, Rishikesh',
-    description:
-      'A serene cottage perched above the Ganges with panoramic river views and morning yoga decks.',
-    pricePerNight: 3800,
-    type: 'cottage',
-    amenities: ['WiFi', 'Parking', 'Mountain View', 'Breakfast'],
-    images: [
-      'https://images.pexels.com/photos/2104882/pexels-photo-2104882.jpeg?auto=compress&w=900',
-    ],
-    isVerified: true,
-    trustInput: { is_verified: true },
-    listingSignals: {
-      is_verified: true,
-      images: [
-        'https://images.pexels.com/photos/2104882/pexels-photo-2104882.jpeg?auto=compress&w=900',
-      ],
-      price_per_day: 3800,
-      city: 'Rishikesh',
-      amenities: ['WiFi', 'Parking', 'Mountain View', 'Breakfast'],
+const VALID_STAY_TYPES = new Set<Stay['type']>([
+  'hotel',
+  'guesthouse',
+  'resort',
+  'villa',
+  'cottage',
+  'hostel',
+]);
+
+function mapPublicListingToStay(p: PublicPropertyListing): Stay {
+  const amenities = Array.isArray(p.amenities)
+    ? p.amenities.filter((a): a is string => typeof a === 'string')
+    : [];
+  const cleanImages = Array.isArray(p.images)
+    ? p.images.filter((u): u is string => typeof u === 'string' && u.trim().length > 0).map((u) => u.trim())
+    : [];
+  const rawType = (p.property_type ?? 'hotel').toLowerCase();
+  const type: Stay['type'] = VALID_STAY_TYPES.has(rawType as Stay['type'])
+    ? (rawType as Stay['type'])
+    : 'hotel';
+
+  return {
+    id: p.id,
+    name: p.title,
+    location: p.address || p.city,
+    description: p.description ?? '',
+    pricePerNight: p.price_per_day || p.price_full_day || 0,
+    type,
+    amenities,
+    images: cleanImages,
+    isVerified: Boolean(p.is_verified),
+    trustInput: {
+      external_listings: p.external_listings,
+      is_verified: p.is_verified,
+      created_at: p.created_at,
     },
-    isFromDb: false,
-  },
-  {
-    id: 'fb-2',
-    name: 'Laxman Jhula Boutique Resort',
-    location: 'Laxman Jhula, Rishikesh',
-    description:
-      'Boutique resort steps from the iconic suspension bridge with a riverside infinity pool.',
-    pricePerNight: 6200,
-    type: 'resort',
-    amenities: ['WiFi', 'Pool', 'Restaurant', 'Parking', 'AC'],
-    images: ['https://images.pexels.com/photos/261101/pexels-photo-261101.jpeg?auto=compress&w=900'],
-    isVerified: true,
-    trustInput: { is_verified: true },
     listingSignals: {
-      is_verified: true,
-      images: ['https://images.pexels.com/photos/261101/pexels-photo-261101.jpeg?auto=compress&w=900'],
-      price_per_day: 6200,
-      city: 'Rishikesh',
-      amenities: ['WiFi', 'Pool', 'Restaurant', 'Parking', 'AC'],
+      is_verified: p.is_verified,
+      images: p.images,
+      price_per_day: p.price_per_day,
+      price_full_day: p.price_full_day,
+      city: p.city,
+      latitude: p.latitude,
+      longitude: p.longitude,
+      bedrooms: p.bedrooms,
+      bathrooms: p.bathrooms,
+      max_guests: p.max_guests,
+      amenities: p.amenities,
+      is_premium: p.is_premium,
+      premium_plan: p.premium_plan,
+      premium_expiry: p.premium_expiry,
     },
-    isFromDb: false,
-  },
-  {
-    id: 'fb-3',
-    name: 'Tapovan Yoga Retreat House',
-    location: 'Tapovan, Rishikesh',
-    description: 'Dedicated yoga retreat with daily Hatha and Ashtanga sessions plus organic kitchen.',
-    pricePerNight: 2900,
-    type: 'guesthouse',
-    amenities: ['WiFi', 'Breakfast', 'Yoga Hall'],
-    images: [
-      'https://images.pexels.com/photos/3601425/pexels-photo-3601425.jpeg?auto=compress&w=900',
-    ],
-    trustInput: { is_verified: false },
-    listingSignals: {
-      images: [
-        'https://images.pexels.com/photos/3601425/pexels-photo-3601425.jpeg?auto=compress&w=900',
-      ],
-      price_per_day: 2900,
-      city: 'Rishikesh',
-      amenities: ['WiFi', 'Breakfast', 'Yoga Hall'],
-    },
-    isFromDb: false,
-  },
-  {
-    id: 'fb-4',
-    name: 'Himalayan Pine Villa',
-    location: 'Shivpuri, Rishikesh',
-    description: 'Private four-bedroom villa surrounded by pine forest, ideal for families and groups.',
-    pricePerNight: 9800,
-    type: 'villa',
-    amenities: ['WiFi', 'Parking', 'Pool', 'Kitchen', 'Mountain View'],
-    images: [
-      'https://images.pexels.com/photos/2102587/pexels-photo-2102587.jpeg?auto=compress&w=900',
-    ],
-    trustInput: { is_verified: false },
-    listingSignals: {
-      images: [
-        'https://images.pexels.com/photos/2102587/pexels-photo-2102587.jpeg?auto=compress&w=900',
-      ],
-      price_per_day: 9800,
-      city: 'Rishikesh',
-      amenities: ['WiFi', 'Parking', 'Pool', 'Kitchen', 'Mountain View'],
-    },
-    isFromDb: false,
-  },
-];
+    isFromDb: true,
+  };
+}
 
 const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
   { value: 'all', label: 'All stays' },
@@ -381,7 +339,7 @@ function StayCard({
 const RishikeshStaysPage: React.FC = () => {
   const [stays, setStays] = useState<Stay[]>([]);
   const [loading, setLoading] = useState(true);
-  const [warning, setWarning] = useState<string | null>(null);
+  const [listingsError, setListingsError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [type, setType] = useState<PropertyType>('all');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 15000]);
@@ -390,106 +348,33 @@ const RishikeshStaysPage: React.FC = () => {
 
   useEffect(() => {
     let cancelled = false;
-    const fetchStays = async () => {
+    const fetchStays = async (forceRefresh = false) => {
       setLoading(true);
-      setWarning(null);
+      setListingsError(null);
       try {
-        // ilike handles case + accidental whitespace in city values. We use
-        // select('*') so that the page works whether or not optional columns
-        // (discount_percent, offer_label, etc.) have been added to the DB yet.
-        // Prefer active listings first. If none are marked active yet, gracefully
-        // fall back to all city listings so uploaded inventory still appears.
-        // `data` is reassigned below on the fallback query. `dbError` is
-        // read once and never reassigned (prefer-const).
-        const initialResult = await supabase
-          .from('properties')
-          .select('*')
-          .in('city', cityDbInList('Rishikesh'))
-          .eq('is_active', true);
+        const result = await getPublicListingsByCity('Rishikesh', { forceRefresh });
+        if (cancelled) return;
 
-        const dbError = initialResult.error;
-        let data = initialResult.data;
-
-        if (dbError) throw dbError;
-
-        if ((data?.length ?? 0) === 0) {
-          const { data: anyStatusRows, error: anyStatusError } = await supabase
-            .from('properties')
-            .select('*')
-            .in('city', cityDbInList('Rishikesh'));
-          if (anyStatusError) throw anyStatusError;
-          if ((anyStatusRows?.length ?? 0) > 0) {
-            data = anyStatusRows;
-            if (!cancelled) {
-              setWarning('Showing all Rishikesh listings while active status is being updated.');
-            }
-          }
+        if (result.status === 'error') {
+          setStays([]);
+          setListingsError("We couldn't load stays right now. Please try again.");
+          return;
         }
 
-        if (!cancelled) {
-          const rows = data ?? [];
-          if (rows.length > 0) {
-            const mapped: Stay[] = rows.map((p) => {
-              const amenities = Array.isArray(p.amenities) ? p.amenities : [];
-              // Normalize images: drop blanks, ensure absolute https URLs only.
-              const cleanImages = (Array.isArray(p.images) ? p.images : [])
-                .filter((u): u is string => typeof u === 'string' && u.trim().length > 0)
-                .map((u) => u.trim());
-              return {
-                id: p.id,
-                name: p.title ?? 'Unnamed Stay',
-                location: p.address || `${p.city ?? 'Rishikesh'}`,
-                description: p.description ?? '',
-                pricePerNight: Number(p.price_per_day) || 0,
-                type: ((p.property_type as Stay['type']) || 'hotel'),
-                amenities,
-                images: cleanImages,
-                isVerified: Boolean(p.is_verified),
-                trustInput: {
-                  external_listings: p.external_listings,
-                  is_verified: p.is_verified,
-                  created_at: p.created_at,
-                },
-                listingSignals: {
-                  is_verified: p.is_verified,
-                  images: p.images,
-                  price_per_day: p.price_per_day,
-                  price_full_day: p.price_full_day,
-                  city: p.city,
-                  latitude: p.latitude,
-                  longitude: p.longitude,
-                  bedrooms: p.bedrooms,
-                  bathrooms: p.bathrooms,
-                  max_guests: p.max_guests,
-                  amenities: p.amenities,
-                  is_premium: p.is_premium,
-                  premium_plan: p.premium_plan,
-                  premium_expiry: p.premium_expiry,
-                },
-                discountPercent:
-                  typeof p.discount_percent === 'number' ? p.discount_percent : undefined,
-                isFromDb: true,
-              };
-            });
-            setStays(mapped);
-          } else {
-            // No rows in DB — show curated stays so the page is never empty,
-            // and let the user know they're seeing curated content.
-            setStays(FALLBACK_STAYS);
-            setWarning('No live listings yet — showing a curated selection.');
-          }
-        }
+        setStays(result.listings.map(mapPublicListingToStay));
       } catch (err) {
         if (!cancelled) {
-          console.error('Failed to fetch Rishikesh stays', err);
-          setWarning('Could not load live stays. Showing curated picks.');
-          setStays(FALLBACK_STAYS);
+          if (import.meta.env.DEV) {
+            console.error('Failed to fetch Rishikesh stays', err);
+          }
+          setStays([]);
+          setListingsError("We couldn't load stays right now. Please try again.");
         }
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
-    fetchStays();
+    void fetchStays();
     return () => {
       cancelled = true;
     };
@@ -768,16 +653,38 @@ const RishikeshStaysPage: React.FC = () => {
               </div>
             ))}
           </div>
+        ) : listingsError ? (
+          <div className="text-center py-20 px-4">
+            <p className="text-lg font-semibold text-xpx-text mb-2">We couldn&apos;t load stays right now</p>
+            <p className="text-sm text-xpx-muted mb-5">{listingsError}</p>
+            <button
+              type="button"
+              onClick={() => {
+                invalidatePublicListingsCache();
+                setLoading(true);
+                setListingsError(null);
+                void getPublicListingsByCity('Rishikesh', { forceRefresh: true }).then((result) => {
+                  if (result.status === 'success') {
+                    setStays(result.listings.map(mapPublicListingToStay));
+                  } else {
+                    setListingsError("We couldn't load stays right now. Please try again.");
+                  }
+                  setLoading(false);
+                });
+              }}
+              className="px-5 py-2.5 rounded-full text-sm font-semibold text-white"
+              style={{ background: 'var(--xpx-warm)' }}
+            >
+              Retry
+            </button>
+          </div>
+        ) : stays.length === 0 ? (
+          <div className="text-center py-20 text-xpx-muted">
+            <p className="text-lg font-semibold text-xpx-text">No stays found</p>
+            <p className="mt-1 text-sm">We don&apos;t have live Rishikesh listings right now. Check back soon.</p>
+          </div>
         ) : (
           <>
-            {warning && (
-              <p
-                className="mb-4 inline-flex items-center gap-2 text-xs rounded-lg px-3 py-2"
-                style={{ background: 'rgba(217,119,6,0.10)', border: '1px solid rgba(217,119,6,0.32)', color: '#92400E' }}
-              >
-                <Loader2 className="w-3.5 h-3.5" /> {warning}
-              </p>
-            )}
             <div className="flex items-center justify-between mb-5">
               <p className="text-sm text-xpx-muted">
                 Showing <span className="text-xpx-text font-semibold">{filtered.length}</span> stays

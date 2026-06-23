@@ -19,6 +19,7 @@ export type XpressEventName =
   | 'host_whatsapp_click'
   | 'host_call_click'
   | 'property_load_failed'
+  | 'property_list_load_failed'
   | 'pwa_update_available'
   | 'pwa_update_applied';
 

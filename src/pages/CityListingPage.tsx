@@ -7,8 +7,7 @@ import type { Property } from '../lib/database.types';
 import { theme } from '../lib/theme';
 import { buildTeamWhatsAppLink } from '../lib/team';
 import { parseTripFromSearch, formatTripChip } from '../lib/tripSearch';
-import { cityDbInList } from '../lib/cityBuckets';
-import { fetchActiveProperties, invalidatePublicListingsCache } from '../lib/publicListings';
+import { getPublicListingsByCity, invalidatePublicListingsCache } from '../lib/publicListings';
 import { trackXpressEvent } from '../lib/analytics';
 
 interface CityListingPageProps {
@@ -120,17 +119,19 @@ export default function CityListingPage({ city }: CityListingPageProps) {
     setLoading(true);
     setListingsError(null);
     try {
-      const data = await fetchActiveProperties({
-        cityIn: cityDbInList(cityName),
-        forceRefresh,
-      });
+      const result = await getPublicListingsByCity(cityName, { forceRefresh });
       if (requestId !== loadPropertiesRef.current) return;
-      setProperties(data);
+      if (result.status === 'error') {
+        setProperties([]);
+        setListingsError("We couldn't load stays right now. Please try again.");
+        return;
+      }
+      setProperties(result.listings);
     } catch (error) {
       if (requestId !== loadPropertiesRef.current) return;
       logSupabaseError('Error loading city properties', error);
       setProperties([]);
-      setListingsError('Could not load stays. Refresh the page or check your connection.');
+      setListingsError("We couldn't load stays right now. Please try again.");
     } finally {
       if (requestId === loadPropertiesRef.current) setLoading(false);
     }
@@ -334,8 +335,8 @@ export default function CityListingPage({ city }: CityListingPageProps) {
           </div>
         ) : listingsError ? (
           <div className="flex flex-col items-center justify-center py-24 text-center px-4">
-            <h3 className="text-lg font-bold text-xpx-text mb-2">Could not load stays</h3>
-            <p className="text-sm text-red-700 max-w-md leading-relaxed">{listingsError}</p>
+            <h3 className="text-lg font-bold text-xpx-text mb-2">We couldn't load stays right now</h3>
+            <p className="text-sm text-xpx-muted max-w-md leading-relaxed">{listingsError}</p>
             <button
               type="button"
               onClick={() => {

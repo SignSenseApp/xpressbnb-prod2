@@ -30,6 +30,7 @@ import PropertyGallery from '../components/property/PropertyGallery';
 import PropertyReviews from '../components/property/PropertyReviews';
 import PropertySidebar from '../components/property/PropertySidebar';
 import { supabase } from '../lib/supabase';
+import { getPublicPropertyById } from '../lib/publicListings';
 import { getAmenityIcon } from '../lib/amenities';
 import { generatePropertyStructuredData, generateBreadcrumbStructuredData } from '../lib/seo';
 import { listFeaturedPromoCodes } from '../lib/offers';
@@ -65,6 +66,8 @@ import { snapshotFromProperty } from '../lib/savedListingsStorage';
 export default function PropertyPage() {
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -138,35 +141,45 @@ export default function PropertyPage() {
   };
 
   const loadProperty = async (propertyId: string) => {
+    setLoading(true);
+    setNotFound(false);
+    setLoadError(false);
     try {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('id', propertyId)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (!data) {
-        trackXpressEvent('property_load_failed', { property_id: propertyId });
-        navigateHome();
+      const result = await getPublicPropertyById(propertyId);
+      if (result.status === 'success') {
+        const data = result.property;
+        setProperty(data);
+        trackPropertyView(propertyId, data.listing_type ?? '');
+        trackXpressEvent('property_view', {
+          property_id: data.id,
+          property_slug: data.slug ?? undefined,
+          city: data.city,
+        });
+        if (data.host_id) {
+          loadHostName(data.host_id);
+        }
         return;
       }
 
-      setProperty(data);
-      trackPropertyView(propertyId, data.listing_type);
-      trackXpressEvent('property_view', {
-        property_id: data.id,
-        property_slug: data.slug ?? undefined,
-        city: data.city,
-      });
-      if (data.host_id) {
-        loadHostName(data.host_id);
+      if (result.status === 'not_found') {
+        setNotFound(true);
+        trackXpressEvent('property_load_failed', {
+          property_id: propertyId,
+          error_category: 'not_found',
+        });
+        return;
       }
+
+      setLoadError(true);
     } catch (error) {
-      console.error('Error loading property:', error);
-      trackXpressEvent('property_load_failed', { property_id: propertyId });
-      navigateHome();
+      if (import.meta.env.DEV) {
+        console.error('Error loading property:', error);
+      }
+      setLoadError(true);
+      trackXpressEvent('property_load_failed', {
+        property_id: propertyId,
+        error_category: 'load_failed',
+      });
     } finally {
       setLoading(false);
     }
@@ -281,6 +294,59 @@ export default function PropertyPage() {
         />
         <div className="flex items-center justify-center h-96">
           <div className="w-12 h-12 border-4 border-xpx-warm border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="xpx-page">
+        <Header
+          onAboutClick={() => navigateToPage('/?page=about')}
+          onBlogClick={() => navigateToPage('/?page=blog')}
+          onHostLoginClick={() => navigateToPage('/auth/login')}
+        />
+        <div className="flex flex-col items-center justify-center h-96 px-4 text-center">
+          <h1 className="text-lg font-bold text-xpx-text mb-2">We couldn&apos;t load this stay</h1>
+          <p className="text-sm text-xpx-muted max-w-md mb-5">
+            Please try again in a moment.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              const match = window.location.pathname.match(/^\/property\/([a-f0-9-]+)$/);
+              if (match) void loadProperty(match[1]);
+            }}
+            className="px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-xpx-warm"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <div className="xpx-page">
+        <Header
+          onAboutClick={() => navigateToPage('/?page=about')}
+          onBlogClick={() => navigateToPage('/?page=blog')}
+          onHostLoginClick={() => navigateToPage('/auth/login')}
+        />
+        <div className="flex flex-col items-center justify-center h-96 px-4 text-center">
+          <h1 className="text-lg font-bold text-xpx-text mb-2">Stay not found</h1>
+          <p className="text-sm text-xpx-muted max-w-md mb-5">
+            This listing may have been removed or is no longer available.
+          </p>
+          <button
+            type="button"
+            onClick={navigateBack}
+            className="px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-xpx-warm"
+          >
+            Go back
+          </button>
         </div>
       </div>
     );
