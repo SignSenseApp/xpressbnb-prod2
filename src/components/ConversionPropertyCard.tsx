@@ -132,7 +132,7 @@ export default function ConversionPropertyCard({
             <span className="text-base font-bold text-[#111827]">₹{price}</span>
             <span className="text-sm font-medium text-[#6B7280]"> / night</span>
           </p>
-          <p className="mt-0.5 text-[11px] text-[#6B7280]">Total before taxes</p>
+          <p className="mt-0.5 text-[11px] text-[#6B7280]">Host price</p>
         </div>
 
         {imageCount > 0 && (
