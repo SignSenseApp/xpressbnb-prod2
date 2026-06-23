@@ -5,8 +5,7 @@ import {
   subscribeStayScoreIntroOpen,
 } from '../lib/stayScoreIntro';
 import { STAY_SCORE_MICROCOPY } from '../lib/xpressbnbStayScore';
-
-const HERO_IMAGE = '/images/stay-score-hero.png';
+import StayScoreModalHero from './StayScoreModalHero';
 
 const SIGNAL_PILLS = [
   { icon: Camera, label: 'Listing photos' },
@@ -80,37 +79,7 @@ export default function XpressbnbStayScoreIntroModal() {
           aria-hidden
         />
 
-        {/* Hero visual */}
-        <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] overflow-hidden rounded-t-[28px] sm:rounded-t-[28px]">
-          <img
-            src={HERO_IMAGE}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover object-center"
-            loading="eager"
-            decoding="async"
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                'linear-gradient(180deg, rgba(15,23,42,0.08) 0%, rgba(15,23,42,0.02) 40%, rgba(248,250,252,0.92) 100%)',
-            }}
-            aria-hidden
-          />
-          <div className="absolute bottom-3 left-4 right-4 sm:bottom-4 sm:left-5 sm:right-5 flex items-end justify-between gap-3">
-            <div
-              className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white"
-              style={{
-                background: 'rgba(15,23,42,0.45)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255,255,255,0.2)',
-              }}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-sky-200" aria-hidden />
-              Listing quality
-            </div>
-          </div>
-        </div>
+        <StayScoreModalHero />
 
         <button
           type="button"
