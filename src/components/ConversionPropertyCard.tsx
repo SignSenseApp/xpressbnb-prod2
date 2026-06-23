@@ -1,26 +1,52 @@
-import { MapPin, CheckCircle, Shield, Clock } from 'lucide-react';
 import type { Property } from '../lib/database.types';
-import { theme } from '../lib/theme';
-import PropertyTrustLine from './PropertyTrustLine';
+import { computeXpressbnbStayScore } from '../lib/xpressbnbStayScore';
+import { openStayScoreInfo } from '../lib/stayScoreEducation';
 import SaveListingButton from './SaveListingButton';
+import PropertyCardHostRow from './PropertyCardHostRow';
 import { firstImageUrl, snapshotFromProperty } from '../lib/savedListingsStorage';
 import { trackXpressEvent } from '../lib/analytics';
+import {
+  VerifiedShieldIcon,
+  ImageGalleryIcon,
+  LocationPinIcon,
+  GuestsIcon,
+  BedroomIcon,
+  BathroomIcon,
+  StarOutlineIcon,
+  InfoCircleIcon,
+  HomeOutlineIcon,
+  ShieldOutlineIcon,
+  PercentOutlineIcon,
+} from './icons/PropertyCardIcons';
 
 interface ConversionPropertyCardProps {
   property: Property;
   /** Preserve hero search (?checkin=&checkout=&guests=) when opening the listing */
   tripQuery?: string;
+  /** Optional layout classes (e.g. homepage carousel snap widths) */
+  className?: string;
+}
+
+function countImages(images: Property['images']): number {
+  if (!Array.isArray(images)) return 0;
+  return images.filter((item) => typeof item === 'string' && item.trim().length > 0).length;
+}
+
+function formatLocation(city: string, state: string): string {
+  const c = city?.trim() ?? '';
+  const s = state?.trim() ?? '';
+  if (c && s) return `${c}, ${s}`;
+  return c || s || 'Location coming soon';
 }
 
 /**
- * ConversionPropertyCard — light card used in city listings.
- * Mirrors the FeaturedCard look on the homepage so users feel they're
- * inside one product, not three. White surface, soft shadow, busy-photo
- * gradient at the bottom of the image keeps top-pinned text legible.
+ * Finalized XpressBNB property card — pixel-accurate to product spec.
+ * Used in city listings, saved page, and homepage featured carousel.
  */
 export default function ConversionPropertyCard({
   property,
   tripQuery = '',
+  className = '',
 }: ConversionPropertyCardProps) {
   const handleClick = () => {
     trackXpressEvent('property_card_click', {
@@ -33,17 +59,19 @@ export default function ConversionPropertyCard({
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
-  // Single primary marketing badge — picks the most distinguishing trait.
-  const primaryBadge = property.hourly_stay_available
-    ? { label: 'Hourly Stay', color: '#2563EB' }
-    : property.is_private_space
-    ? { label: 'Private Space', color: '#50C878' }
-    : property.instant_booking
-    ? { label: 'Instant Book', color: theme.accent }
-    : null;
-
-  const price = (property.price_per_day || property.price_full_day || 0).toLocaleString();
+  const price = (property.price_per_day || property.price_full_day || 0).toLocaleString('en-IN');
   const coverImage = firstImageUrl(property.images);
+  const imageCount = countImages(property.images);
+  const stayScore = computeXpressbnbStayScore(property);
+  const locationLabel = formatLocation(property.city, property.state);
+  const guests = property.max_guests ?? 0;
+  const bedrooms = property.bedrooms ?? 0;
+  const bathrooms = property.bathrooms ?? 0;
+
+  const openStayScore = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    openStayScoreInfo();
+  };
 
   return (
     <article
@@ -53,142 +81,143 @@ export default function ConversionPropertyCard({
       onKeyDown={(e) => {
         if (e.key === 'Enter') handleClick();
       }}
-      className="h-full flex flex-col cursor-pointer overflow-hidden rounded-2xl transition-shadow duration-200 md:hover:shadow-[0_12px_32px_rgba(15,23,42,0.10)] motion-reduce:transition-none active:scale-[0.99] group focus:outline-none focus:ring-2 focus:ring-[var(--accent)] xpx-tap"
-      style={{
-        background: 'var(--xpx-surface)',
-        border: '1px solid var(--xpx-border)',
-        boxShadow: 'var(--xpx-shadow-card)',
-      }}
+      className={`xpx-property-card group flex h-full w-full max-w-[380px] cursor-pointer flex-col overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#16A34A] motion-reduce:transition-none active:scale-[0.99] md:mx-auto ${className}`}
     >
-      {/* Image — fixed 4:3 ratio prevents layout shift while photos load */}
-      <div className="xpx-card-media">
+      {/* Hero image */}
+      <div className="xpx-property-card-media">
         {coverImage ? (
           <img
             src={coverImage}
             alt={property.title}
             loading="lazy"
             decoding="async"
-            className="w-full h-full object-cover transition-transform duration-500 ease-out motion-reduce:transition-none md:group-hover:scale-[1.03]"
+            className="h-full w-full object-cover transition-transform duration-500 ease-out motion-reduce:transition-none md:group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-xpx-subtle text-sm">
+          <div className="flex h-full w-full items-center justify-center text-sm text-[#6B7280]">
             No image
           </div>
         )}
 
-        {/* Bottom gradient for legibility on busy photos */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: 'linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.45) 100%)',
-          }}
-        />
+        {property.is_verified && (
+          <div className="absolute left-3 top-3 z-10">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-[#16A34A] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+              <VerifiedShieldIcon className="h-3.5 w-3.5" />
+              Verified
+            </span>
+          </div>
+        )}
 
         <SaveListingButton
           propertyId={property.id}
           getSnapshot={() => snapshotFromProperty(property)}
         />
 
-        {/* Top-left badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-          {property.is_couple_friendly && (
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold"
-              style={{
-                background: theme.accentLight,
-                color: '#3dae68',
-                border: `1px solid ${theme.accentBorder}`,
-              }}
-            >
-              Couple Friendly
-            </span>
-          )}
-          {property.is_verified && (
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold"
-              style={{
-                background: theme.accentLight,
-                color: '#3dae68',
-                border: `1px solid ${theme.accentBorder}`,
-              }}
-            >
-              <CheckCircle className="w-3 h-3" style={{ color: theme.accent }} />
-              Verified
-            </span>
-          )}
-          {primaryBadge && (
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold text-white"
-              style={{ background: primaryBadge.color }}
-            >
-              {primaryBadge.label}
-            </span>
-          )}
+        {/* Floating glass price card */}
+        <div
+          className="absolute bottom-3 left-3 z-10 rounded-xl px-3 py-2"
+          style={{
+            background: 'rgba(255,255,255,0.92)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+          }}
+        >
+          <p className="leading-tight">
+            <span className="text-base font-bold text-[#111827]">₹{price}</span>
+            <span className="text-sm font-medium text-[#6B7280]"> / night</span>
+          </p>
+          <p className="mt-0.5 text-[11px] text-[#6B7280]">Total before taxes</p>
         </div>
 
-        {/* Hourly indicator */}
-        {property.hourly_stay_available && (
+        {imageCount > 0 && (
           <div
-            className="absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold text-white"
-            style={{ background: 'rgba(37,99,235,0.92)' }}
+            className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium text-white"
+            style={{ background: 'rgba(0,0,0,0.55)' }}
           >
-            <Clock className="w-3 h-3" />
-            Hourly
+            <ImageGalleryIcon className="h-3.5 w-3.5" />
+            <span className="tabular-nums">1 / {imageCount}</span>
           </div>
         )}
-
       </div>
 
-      {/* Content */}
-      <div className="flex flex-1 flex-col p-4 space-y-3 min-w-0">
+      {/* Card body */}
+      <div className="flex min-w-0 flex-1 flex-col gap-3.5 px-5 pb-5 pt-4">
+        {/* Title */}
         <div className="min-w-0">
-          <h3 className="font-bold text-[15px] sm:text-base text-xpx-text line-clamp-2 leading-snug transition-colors group-hover:text-[var(--accent-dark)]">
+          <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-[#111827] sm:text-base">
             {property.title}
           </h3>
-          <div className="flex items-center gap-1.5 mt-1.5 text-xpx-muted text-xs min-w-0">
-            <MapPin className="w-3.5 h-3.5 flex-shrink-0" aria-hidden />
-            <span className="line-clamp-1 truncate">{property.city}</span>
+          <div className="mt-1.5 flex min-w-0 items-center gap-1.5 text-xs text-[#6B7280]">
+            <LocationPinIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span className="truncate">{locationLabel}</span>
           </div>
         </div>
 
-        {/* Trust */}
-        <div className="flex items-center gap-1.5 flex-wrap min-w-0 max-w-full">
-          <PropertyTrustLine property={property} />
-          {property.no_brokerage && (
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold"
-              style={{ background: 'rgba(80,200,120,0.10)', border: '1px solid rgba(80,200,120,0.32)', color: '#3dae68' }}
-            >
-              <CheckCircle className="w-3 h-3" />
-              No Brokerage
-            </span>
-          )}
-          {property.pay_at_property && (
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold"
-              style={{ background: 'rgba(37,99,235,0.10)', border: '1px solid rgba(37,99,235,0.32)', color: '#1D4ED8' }}
-            >
-              <Shield className="w-3 h-3" />
-              Pay Later
-            </span>
-          )}
+        {/* Host row */}
+        <PropertyCardHostRow
+          hostId={property.host_id}
+          propertyVerified={property.is_verified}
+        />
+
+        {/* Specs grid */}
+        <div className="grid grid-cols-3 divide-x divide-[#E5E7EB] py-1">
+          <SpecCell icon={<GuestsIcon className="h-[18px] w-[18px]" />} value={guests} label="Guests" />
+          <SpecCell icon={<BedroomIcon className="h-[18px] w-[18px]" />} value={bedrooms} label="Bedroom" />
+          <SpecCell icon={<BathroomIcon className="h-[18px] w-[18px]" />} value={bathrooms} label="Bathroom" />
         </div>
 
-        {/* Footer row */}
-        <div className="mt-auto pt-2 xpx-divider flex items-center justify-between gap-2">
-          <div className="flex items-baseline gap-1">
-            <span className="text-xl font-extrabold text-xpx-text">₹{price}</span>
-            <span className="text-xs text-xpx-subtle font-medium">/night</span>
-          </div>
-          <span
-            className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold"
-            style={{ background: 'rgba(80,200,120,0.10)', border: '1px solid rgba(80,200,120,0.32)', color: '#3dae68' }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#50C878' }} />
-            Best Price
+        {/* XpressBNB Stay Score */}
+        <button
+          type="button"
+          onClick={openStayScore}
+          className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#16A34A]"
+          style={{ background: '#F1FAF5' }}
+          aria-label={stayScore.label}
+        >
+          <StarOutlineIcon className="h-4 w-4 shrink-0 text-[#16A34A]" aria-hidden />
+          <span className="min-w-0 flex-1 text-sm font-semibold text-[#16A34A]">
+            {stayScore.label}
           </span>
+          <InfoCircleIcon className="h-4 w-4 shrink-0 text-[#6B7280]" aria-hidden />
+        </button>
+
+        {/* Trust row */}
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 pt-0.5">
+          <TrustItem icon={<HomeOutlineIcon className="h-3.5 w-3.5" />} label="Direct with host" />
+          <TrustItem icon={<ShieldOutlineIcon className="h-3.5 w-3.5" />} label="No platform fee" />
+          <TrustItem icon={<PercentOutlineIcon className="h-3.5 w-3.5" />} label="Zero commission" />
         </div>
       </div>
     </article>
+  );
+}
+
+function SpecCell({
+  icon,
+  value,
+  label,
+}: {
+  icon: React.ReactNode;
+  value: number;
+  label: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-0.5 px-1 text-center">
+      <span className="text-[#6B7280]" aria-hidden>
+        {icon}
+      </span>
+      <span className="text-sm font-bold tabular-nums text-[#111827]">{value}</span>
+      <span className="text-[10px] text-[#6B7280]">{label}</span>
+    </div>
+  );
+}
+
+function TrustItem({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#16A34A] sm:text-[11px]">
+      <span aria-hidden>{icon}</span>
+      {label}
+    </span>
   );
 }

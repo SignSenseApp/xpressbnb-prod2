@@ -290,7 +290,7 @@ html.lenis body {
     }
   }
 
-  /** Stable 4:3 image frame — prevents CLS on card grids */
+  /** Stable 4:3 image frame — prevents CLS on card grids (legacy cards) */
   .xpx-card-media {
     position: relative;
     aspect-ratio: 4 / 3;
@@ -301,6 +301,34 @@ html.lenis body {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  /** Finalized property card — product spec tokens */
+  .xpx-property-card {
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+  }
+
+  .xpx-property-card-media {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+    background: #f8fafc;
+  }
+
+  .xpx-property-card-media > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @media (min-width: 768px) {
+    .xpx-property-card-media {
+      height: auto;
+      aspect-ratio: 4 / 3;
+    }
   }
 
   /** Desktop booking sidebar — sticky only when viewport is tall enough */

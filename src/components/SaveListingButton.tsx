@@ -2,6 +2,7 @@ import { Heart } from 'lucide-react';
 import { useSavedListings } from '../hooks/useSavedListings';
 import type { SavedListingSnapshot } from '../lib/savedListingsStorage';
 import { theme } from '../lib/theme';
+import { HeartOutlineIcon } from './icons/PropertyCardIcons';
 
 type SaveListingButtonProps = {
   propertyId: string;
@@ -25,12 +26,12 @@ export default function SaveListingButton({
   const { isSaved, toggleSnapshot } = useSavedListings();
   const saved = isSaved(propertyId);
 
-  const dim = size === 'md' ? 'w-11 h-11' : 'w-8 h-8';
-  const icon = 'w-4 h-4';
+  const dim = size === 'md' ? 'w-11 h-11' : variant === 'card' ? 'w-10 h-10' : 'w-8 h-8';
+  const icon = variant === 'card' ? 'w-[18px] h-[18px]' : 'w-4 h-4';
 
   const positionClass =
     variant === 'card'
-      ? `absolute top-3 ${align === 'left' ? 'left-3' : 'right-3'} ${dim}`
+      ? `absolute top-3 z-10 ${align === 'left' ? 'left-3' : 'right-3'} ${dim}`
       : 'inline-flex items-center gap-1.5 px-3 py-2';
 
   return (
@@ -44,20 +45,27 @@ export default function SaveListingButton({
       style={
         variant === 'card'
           ? {
-              background: 'rgba(255,255,255,0.92)',
-              backdropFilter: 'blur(8px)',
-              boxShadow: '0 4px 12px rgba(15,23,42,0.12)',
+              background: '#FFFFFF',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
             }
           : { minHeight: 44 }
       }
       aria-label={saved ? 'Remove from saved' : 'Save stay'}
       aria-pressed={saved}
     >
-      <Heart
-        className={`${icon} transition-colors`}
-        style={{ color: saved ? '#f97316' : theme.accent }}
-        fill={saved ? '#f97316' : 'none'}
-      />
+      {variant === 'card' ? (
+        saved ? (
+          <Heart className={`${icon} text-[#f97316]`} fill="#f97316" aria-hidden />
+        ) : (
+          <HeartOutlineIcon className={`${icon} text-[#111827]`} aria-hidden />
+        )
+      ) : (
+        <Heart
+          className={`${icon} transition-colors`}
+          style={{ color: saved ? '#f97316' : theme.accent }}
+          fill={saved ? '#f97316' : 'none'}
+        />
+      )}
       {variant === 'inline' && (
         <span className="hidden sm:inline">{saved ? 'Saved' : 'Save'}</span>
       )}
