@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Search,
-  ChevronRight,
-  ChevronLeft,
   Star,
   MapPin,
   Calendar,
@@ -30,7 +28,7 @@ import { normalizeCityBucket } from '../lib/cityBuckets';
 import { openHomeOverlay } from '../lib/navigation';
 import { TEAM_EMAIL } from '../lib/team';
 import { ManageCookiesLink } from './CookieConsent';
-import ConversionPropertyCard from './ConversionPropertyCard';
+import FeaturedStaysCarousel from './FeaturedStaysCarousel';
 import { firstImageUrl } from '../lib/savedListingsStorage';
 import { getPublicListings, invalidatePublicListingsCache } from '../lib/publicListings';
 import XpModeSwitch from './XpModeSwitch';
@@ -53,7 +51,6 @@ const FOOTER_LOGO_ACCENT = ACCENT;
 const FOOTER_LINK_HOVER = ACCENT;
 const FOOTER_DIVIDER = 'rgba(255,255,255,0.08)';
 const FOOTER_COPY = 'rgba(255,255,255,0.35)';
-const INK_FAINT = 'rgba(15,23,42,0.18)';
 
 /**
  * Pexels CDN: keep `w` modest for first paint (LCP). Pattern:
@@ -604,7 +601,7 @@ export default function NewHomepage() {
               No properties available right now.
             </div>
           ) : (
-            <HorizontalScrollCards properties={featuredProperties} />
+            <FeaturedStaysCarousel properties={featuredProperties} />
           )}
         </div>
       </section>
@@ -1428,83 +1425,6 @@ function SectionHeader({
         <p className="text-sm md:text-[15px] mt-1.5" style={{ color: TEXT_MUTED }}>{subtitle}</p>
       </div>
       {action}
-    </div>
-  );
-}
-
-function HorizontalScrollCards({ properties }: { properties: Property[] }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  const checkScroll = () => {
-    if (!ref.current) return;
-    const { scrollLeft, scrollWidth, clientWidth } = ref.current;
-    setCanScrollLeft(scrollLeft > 4);
-    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 4);
-  };
-
-  useEffect(() => {
-    checkScroll();
-  }, [properties]);
-
-  const scroll = (dir: 'left' | 'right') => {
-    if (!ref.current) return;
-    ref.current.scrollBy({ left: dir === 'left' ? -320 : 320, behavior: 'smooth' });
-  };
-
-  return (
-    <div className="relative group/scroll">
-      {canScrollLeft && (
-        <button
-          onClick={() => scroll('left')}
-          className="md:hidden absolute left-1 top-1/2 -translate-y-1/2 z-[1] w-9 h-9 rounded-full items-center justify-center transition-all flex"
-          style={{
-            background: SURFACE,
-            border: `1px solid ${BORDER}`,
-            boxShadow: '0 6px 16px rgba(15,23,42,0.12)',
-          }}
-        >
-          <ChevronLeft className="w-4 h-4" style={{ color: TEXT }} />
-        </button>
-      )}
-      {canScrollRight && (
-        <button
-          onClick={() => scroll('right')}
-          className="md:hidden absolute right-1 top-1/2 -translate-y-1/2 z-[1] w-9 h-9 rounded-full items-center justify-center transition-all flex"
-          style={{
-            background: SURFACE,
-            border: `1px solid ${BORDER}`,
-            boxShadow: '0 6px 16px rgba(15,23,42,0.12)',
-          }}
-        >
-          <ChevronRight className="w-4 h-4" style={{ color: TEXT }} />
-        </button>
-      )}
-      <div
-        ref={ref}
-        onScroll={checkScroll}
-        className="flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5 overflow-x-auto md:overflow-visible scrollbar-hide snap-x snap-mandatory pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        style={{ WebkitOverflowScrolling: 'touch' }}
-      >
-        {properties.map(p => (
-          <ConversionPropertyCard
-            key={p.id}
-            property={p}
-            className="snap-start shrink-0 w-[88vw] min-w-[88vw] max-w-[88vw] sm:w-[72vw] sm:min-w-[72vw] sm:max-w-[72vw] md:w-auto md:min-w-0 md:max-w-[380px]"
-          />
-        ))}
-      </div>
-
-      <div className="flex items-center justify-center gap-1.5 mt-5 md:hidden">
-        {properties.slice(0, 6).map((_, i) => (
-          <span
-            key={i}
-            className="w-1.5 h-1.5 rounded-full"
-            style={{ background: i === 0 ? ACCENT : INK_FAINT }}
-          />
-        ))}
-      </div>
     </div>
   );
 }

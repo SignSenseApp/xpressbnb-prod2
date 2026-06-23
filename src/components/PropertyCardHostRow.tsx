@@ -50,12 +50,12 @@ export default function PropertyCardHostRow({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2.5 min-h-[32px]">
+      <div className="flex min-h-[28px] items-center gap-2">
         <div
-          className="w-8 h-8 rounded-full shrink-0 animate-pulse"
+          className="h-7 w-7 shrink-0 animate-pulse rounded-full"
           style={{ background: 'rgba(17,24,39,0.06)' }}
         />
-        <div className="h-4 w-28 rounded animate-pulse" style={{ background: 'rgba(17,24,39,0.06)' }} />
+        <div className="h-3.5 w-24 animate-pulse rounded" style={{ background: 'rgba(17,24,39,0.06)' }} />
       </div>
     );
   }
@@ -64,25 +64,26 @@ export default function PropertyCardHostRow({
   const initial = safeHostInitial(hostName ?? displayName);
 
   return (
-    <div className="flex items-center gap-2.5 min-w-0">
+    <div className="flex min-w-0 items-center gap-2 flex-nowrap">
       <div
-        className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold text-white overflow-hidden"
+        className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full text-[11px] font-semibold text-white"
         style={{ background: '#16A34A' }}
         aria-hidden
       >
         {initial}
       </div>
-      <div className="flex items-center gap-2 min-w-0 flex-wrap">
-        <span className="text-sm font-semibold text-[#111827] truncate">
-          Hosted by {displayName}
-        </span>
+      <div className="flex min-w-0 flex-1 items-center gap-1.5 flex-nowrap">
+        <p className="min-w-0 truncate leading-tight">
+          <span className="text-xs font-normal text-[#6B7280]">Hosted by </span>
+          <span className="text-xs font-medium text-[#374151] md:text-[13px]">{displayName}</span>
+        </p>
         {hostVerified && (
           <span
-            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold shrink-0"
-            style={{ background: '#F1FAF5', color: '#16A34A' }}
+            className="inline-flex h-[22px] shrink-0 items-center gap-0.5 rounded-full px-2 text-[11px] font-normal leading-none text-[#16A34A]"
+            style={{ background: '#F1FAF5' }}
           >
-            <VerifiedShieldIcon className="w-3 h-3" />
-            Host verified
+            <VerifiedShieldIcon className="h-2.5 w-2.5" aria-hidden />
+            Verified
           </span>
         )}
       </div>
