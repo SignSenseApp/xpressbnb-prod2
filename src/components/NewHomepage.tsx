@@ -32,7 +32,6 @@ import { TEAM_EMAIL } from '../lib/team';
 import { ManageCookiesLink } from './CookieConsent';
 import SaveListingButton from './SaveListingButton';
 import PropertyTrustLine from './PropertyTrustLine';
-import StayScoreImageBadge from './StayScoreImageBadge';
 import { firstImageUrl, snapshotFromProperty } from '../lib/savedListingsStorage';
 import { fetchActiveProperties, invalidatePublicListingsCache } from '../lib/publicListings';
 import XpModeSwitch from './XpModeSwitch';
@@ -1549,11 +1548,6 @@ function FeaturedCard({ property }: { property: Property }) {
           <span style={{ color: ACCENT_DARK }}>{property.is_verified ? 'Verified' : 'Community'}</span>
         </div>
         <div
-          className="absolute bottom-3 left-3 z-[2] max-w-[calc(100%-6rem)]"
-        >
-          <StayScoreImageBadge signals={property} />
-        </div>
-        <div
           className="absolute bottom-3 right-3 px-3 py-1.5 rounded-full text-xs font-semibold"
           style={{
             background: 'rgba(255,255,255,0.94)',
@@ -1574,7 +1568,7 @@ function FeaturedCard({ property }: { property: Property }) {
           <span className="line-clamp-1">{property.city}</span>
         </div>
         <div className="mt-2.5 min-w-0">
-          <PropertyTrustLine property={property} omitStayScore />
+          <PropertyTrustLine property={property} />
         </div>
         <div className="mt-auto pt-3 border-t flex items-center gap-1.5 text-xs font-semibold" style={{ borderColor: BORDER, color: ACCENT_DARK }}>
           <ShieldCheck className="w-3.5 h-3.5" style={{ color: ACCENT }} />

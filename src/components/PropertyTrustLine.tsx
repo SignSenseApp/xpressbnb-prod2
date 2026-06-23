@@ -4,7 +4,7 @@ import {
   getPropertyTrustDisplay,
   type PropertyTrustInput,
 } from '../lib/propertyTrustDisplay';
-import { openStayScoreIntro } from '../lib/stayScoreIntro';
+import { openStayScoreInfo } from '../lib/stayScoreEducation';
 import {
   computeXpressbnbStayScore,
   type ListingQualitySignals,
@@ -15,7 +15,7 @@ export type PropertyTrustLineInput = PropertyTrustInput & ListingQualitySignals;
 interface PropertyTrustLineProps {
   property: PropertyTrustLineInput;
   variant?: 'compact' | 'page';
-  /** Hide inline score when the image badge already shows it. */
+  /** Hide inline score when duplicated elsewhere on the card. */
   omitStayScore?: boolean;
   className?: string;
 }
@@ -46,11 +46,11 @@ function TrustChip({
 function StayScoreBadge({
   label,
   variant,
-  showInfo,
+  onOpenInfo,
 }: {
   label: string;
   variant: 'compact' | 'page';
-  showInfo?: boolean;
+  onOpenInfo: (e: React.MouseEvent) => void;
 }) {
   const sizeClass =
     variant === 'page' ? 'text-xs sm:text-sm px-2.5 py-1' : 'text-[10px] px-2 py-0.5';
@@ -66,27 +66,28 @@ function StayScoreBadge({
         border: '1px solid var(--xpx-border)',
         boxShadow: '0 1px 3px rgba(15,23,42,0.05)',
       }}
-      aria-label={label}
     >
-      <Sparkles
-        className={`${iconClass} shrink-0 ml-0.5`}
-        style={{ color: 'var(--xpx-trust)' }}
-        aria-hidden
-      />
-      <span className="truncate">{label}</span>
-      {showInfo && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            openStayScoreIntro();
-          }}
-          className="inline-flex items-center justify-center w-5 h-5 rounded-full text-xpx-subtle hover:text-xpx-text hover:bg-slate-900/5"
-          aria-label="What is XpressBNB Stay Score?"
-        >
-          <Info className="w-3 h-3" />
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={onOpenInfo}
+        className="inline-flex items-center gap-0.5 min-w-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+        aria-label={label}
+      >
+        <Sparkles
+          className={`${iconClass} shrink-0 ml-0.5`}
+          style={{ color: 'var(--xpx-trust)' }}
+          aria-hidden
+        />
+        <span className="truncate">{label}</span>
+      </button>
+      <button
+        type="button"
+        onClick={onOpenInfo}
+        className="inline-flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 rounded-full text-xpx-subtle hover:text-xpx-text hover:bg-slate-900/5 shrink-0"
+        aria-label="What is XpressBNB Stay Score?"
+      >
+        <Info className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+      </button>
     </span>
   );
 }
@@ -107,6 +108,11 @@ export default function PropertyTrustLine({
   const externalClass =
     variant === 'page' ? 'text-sm sm:text-[15px]' : 'text-[10px] sm:text-xs';
 
+  const openInfo = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    openStayScoreInfo();
+  };
+
   return (
     <div className={`flex flex-col gap-1 min-w-0 ${className}`}>
       <div className="flex flex-wrap items-center gap-1.5 min-w-0">
@@ -118,18 +124,23 @@ export default function PropertyTrustLine({
           </span>
         )}
         {!omitStayScore && (
-          <StayScoreBadge
-            label={stayScore.label}
-            variant={variant}
-            showInfo={variant === 'page'}
-          />
+          <StayScoreBadge label={stayScore.label} variant={variant} onOpenInfo={openInfo} />
         )}
         <TrustChip label={chipLabel} variant={variant} />
       </div>
       {variant === 'page' && (
-        <p className="text-[11px] sm:text-xs text-xpx-subtle leading-snug max-w-xl">
-          {stayScore.microcopy}
-        </p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <p className="text-[11px] sm:text-xs text-xpx-subtle leading-snug max-w-xl">
+            {stayScore.microcopy}
+          </p>
+          <button
+            type="button"
+            onClick={openInfo}
+            className="text-[11px] sm:text-xs font-semibold text-xpx-text underline underline-offset-2 hover:opacity-80"
+          >
+            How it works
+          </button>
+        </div>
       )}
     </div>
   );

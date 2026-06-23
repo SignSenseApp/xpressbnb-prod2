@@ -30,7 +30,8 @@ import Preloader from './components/Preloader';
 import MobileBottomNav from './components/MobileBottomNav';
 import InstallAppPrompt from './components/InstallAppPrompt';
 import { CookieConsentBanner } from './components/CookieConsent';
-import XpressbnbStayScoreIntroModal from './components/XpressbnbStayScoreIntroModal';
+import StayScoreInfoSheet from './components/StayScoreInfoSheet';
+import StayScoreEducationTooltip from './components/StayScoreEducationTooltip';
 import { closeHomeOverlay, getHomeOverlayPage } from './lib/navigation';
 
 function syncLocation() {
@@ -211,7 +212,8 @@ export default function AppRouter() {
       <Preloader isLoading={showPreloader} />
       {renderContent()}
       <CookieConsentBanner />
-      <XpressbnbStayScoreIntroModal />
+      <StayScoreInfoSheet />
+      <StayScoreEducationTooltip />
       <InstallAppPrompt hidden={currentPath.startsWith('/booking/')} />
       <MobileBottomNav currentPath={currentPath} onNavigate={handleNavigate} />
     </>
