@@ -78,11 +78,11 @@ export default function PropertySidebar({
 
   return (
     <div
-      className="rounded-3xl p-5 sm:p-6"
+      className="rounded-3xl p-5 sm:p-6 lg:max-h-none"
       style={{
         background: 'var(--xpx-surface)',
         border: '1px solid var(--xpx-border-strong)',
-        boxShadow: '0 18px 56px rgba(15,23,42,0.10)',
+        boxShadow: '0 12px 40px rgba(15,23,42,0.08)',
       }}
     >
       {/* Headline price */}

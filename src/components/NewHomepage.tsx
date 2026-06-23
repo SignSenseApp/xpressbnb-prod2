@@ -1486,7 +1486,7 @@ function HorizontalScrollCards({ properties }: { properties: Property[] }) {
       <div
         ref={ref}
         onScroll={checkScroll}
-        className="flex md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 overflow-x-auto md:overflow-visible scrollbar-hide snap-x snap-mandatory pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5 overflow-x-auto md:overflow-visible scrollbar-hide snap-x snap-mandatory pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {properties.map(p => (
@@ -1519,20 +1519,21 @@ function FeaturedCard({ property }: { property: Property }) {
   return (
     <article
       onClick={handleClick}
-      className="snap-start shrink-0 w-[82vw] min-w-[82vw] max-w-[82vw] sm:w-[74vw] sm:min-w-[74vw] sm:max-w-[74vw] md:w-auto md:min-w-0 md:max-w-none cursor-pointer rounded-[20px] overflow-hidden transition-all duration-300 md:hover:-translate-y-1.5 group h-full flex flex-col"
+      className="snap-start shrink-0 w-[88vw] min-w-[88vw] max-w-[88vw] sm:w-[72vw] sm:min-w-[72vw] sm:max-w-[72vw] md:w-auto md:min-w-0 md:max-w-none cursor-pointer rounded-[16px] overflow-hidden transition-shadow duration-200 md:hover:shadow-[0_12px_32px_rgba(15,23,42,0.10)] motion-reduce:transition-none group h-full flex flex-col"
       style={{
         background: SURFACE,
         border: `1px solid #E5E7EB`,
-        boxShadow: '0 8px 18px rgba(15,23,42,0.06)',
+        boxShadow: 'var(--xpx-shadow-card)',
       }}
     >
-      <div className="relative h-[220px] overflow-hidden">
+      <div className="xpx-card-media">
         {coverImage ? (
           <img
             src={coverImage}
             alt={property.title}
             loading="lazy"
-            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+            decoding="async"
+            className="w-full h-full object-cover md:group-hover:scale-[1.02] transition-transform duration-500 motion-reduce:transition-none"
           />
         ) : (
           <div
@@ -1567,13 +1568,13 @@ function FeaturedCard({ property }: { property: Property }) {
         </div>
       </div>
 
-      <div className="p-4 flex-1 flex flex-col">
-        <h3 className="font-bold text-base leading-tight line-clamp-1" style={{ color: TEXT }}>
+      <div className="p-4 flex-1 flex flex-col min-w-0">
+        <h3 className="font-bold text-[15px] leading-snug line-clamp-2" style={{ color: TEXT }}>
           {property.title}
         </h3>
-        <div className="mt-1.5 flex items-center gap-1.5 text-sm" style={{ color: TEXT_MUTED }}>
-          <MapPin className="w-3.5 h-3.5 shrink-0" />
-          <span className="line-clamp-1">{property.city}</span>
+        <div className="mt-1.5 flex items-center gap-1.5 text-sm min-w-0" style={{ color: TEXT_MUTED }}>
+          <MapPin className="w-3.5 h-3.5 shrink-0" aria-hidden />
+          <span className="line-clamp-1 truncate">{property.city}</span>
         </div>
         <div className="mt-2.5 min-w-0">
           <PropertyTrustLine property={property} />
@@ -1589,14 +1590,14 @@ function FeaturedCard({ property }: { property: Property }) {
 
 function FeaturedSkeleton() {
   return (
-    <div className="flex md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 overflow-hidden">
+    <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5 overflow-hidden">
       {[1, 2, 3, 4, 5].map(i => (
         <div
           key={i}
-          className="shrink-0 w-[78vw] min-w-[78vw] max-w-[78vw] md:w-auto md:min-w-0 md:max-w-none rounded-[20px] overflow-hidden"
+          className="shrink-0 w-[78vw] min-w-[78vw] max-w-[78vw] md:w-auto md:min-w-0 md:max-w-none rounded-[16px] overflow-hidden"
           style={{ background: SURFACE, border: `1px solid ${BORDER}` }}
         >
-          <div className="h-[220px] animate-pulse" style={{ background: SURFACE_LIGHT }} />
+          <div className="xpx-card-media animate-pulse" style={{ background: SURFACE_LIGHT }} />
           <div className="p-4 space-y-2">
             <div className="h-4 w-3/4 rounded animate-pulse" style={{ background: SURFACE_LIGHT }} />
             <div className="h-3 w-1/2 rounded animate-pulse" style={{ background: SURFACE_LIGHT }} />

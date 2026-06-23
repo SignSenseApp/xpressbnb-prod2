@@ -146,18 +146,16 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
         })}
       </div>
 
-      {/* Mobile — horizontal scroll snap strip. Uses native momentum scrolling
-          and a small bottom-right counter so it feels like the iOS photo
-          viewer. We compute the active index from scrollLeft. */}
-      <div className="sm:hidden -mx-3 relative">
+      {/* Mobile — horizontal scroll snap strip with reserved height to avoid CLS */}
+      <div className="sm:hidden relative">
         <div
           ref={stripRef}
           onScroll={onMobileScroll}
-          className="flex gap-2 overflow-x-auto scrollbar-hide px-3"
+          className="flex gap-2 overflow-x-auto scrollbar-hide px-1 overscroll-x-contain"
           style={{
             scrollSnapType: 'x mandatory',
             WebkitOverflowScrolling: 'touch',
-            scrollBehavior: 'smooth',
+            scrollBehavior: 'auto',
           }}
         >
           {safeImages.map((img, i) => (
@@ -165,7 +163,7 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
               key={`m-${i}`}
               type="button"
               onClick={() => openAt(i)}
-              className="shrink-0 w-full aspect-[4/3] rounded-2xl overflow-hidden focus:outline-none"
+              className="shrink-0 w-[calc(100%-0.5rem)] aspect-[4/3] rounded-2xl overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--xpx-warm)]"
               style={{ scrollSnapAlign: 'center' }}
               aria-label={`View photo ${i + 1} of ${total}`}
             >
@@ -174,13 +172,14 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
                 alt={`${title} — photo ${i + 1}`}
                 className="w-full h-full object-cover"
                 loading={i === 0 ? 'eager' : 'lazy'}
+                decoding="async"
               />
             </button>
           ))}
         </div>
         {/* Counter pill — bottom right, mirroring native iOS photo viewer. */}
         <span
-          className="absolute bottom-3 right-5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tabular-nums"
+          className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold tabular-nums pointer-events-none"
           style={{
             background: 'rgba(15,23,42,0.6)',
             color: '#FFFFFF',

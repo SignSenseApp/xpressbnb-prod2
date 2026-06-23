@@ -200,7 +200,8 @@ export default function CityListingPage({ city }: CityListingPageProps) {
         <div className="xpx-container flex items-center gap-3 py-3.5 sm:py-4">
           <button
             onClick={() => window.history.back()}
-            className="p-2 -ml-1 hover:bg-slate-100 rounded-full transition-colors active:scale-95 text-xpx-text"
+            className="p-2.5 -ml-1 hover:bg-slate-100 rounded-full transition-colors active:scale-95 text-xpx-text min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
+            aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -246,7 +247,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
         )}
 
         {/* Quick filter chips + sort — momentum-scroll horizontally on mobile */}
-        <div className="xpx-container flex items-center gap-2.5 pb-3.5 sm:pb-4 overflow-x-auto scrollbar-hide scroll-momentum">
+        <div className="xpx-container flex items-center gap-2.5 pb-3.5 sm:pb-4 overflow-x-auto scrollbar-hide scroll-momentum max-w-full overscroll-x-contain">
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value as typeof sortBy)}
@@ -323,10 +324,10 @@ export default function CityListingPage({ city }: CityListingPageProps) {
       {/* Grid */}
       <div className="xpx-container pt-6 sm:pt-8 pb-28">
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 items-stretch">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="space-y-2">
-                <div className="aspect-[4/3] rounded-2xl animate-pulse" style={{ background: 'rgba(15,23,42,0.06)' }} />
+                <div className="xpx-card-media rounded-2xl animate-pulse" style={{ background: 'rgba(15,23,42,0.06)' }} />
                 <div className="h-3.5 w-3/4 rounded animate-pulse" style={{ background: 'rgba(15,23,42,0.06)' }} />
                 <div className="h-3 w-1/2 rounded animate-pulse" style={{ background: 'rgba(15,23,42,0.06)' }} />
                 <div className="h-3.5 w-1/3 rounded animate-pulse" style={{ background: 'rgba(15,23,42,0.06)' }} />
@@ -389,7 +390,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
             </p>
             {/* Single-column on the smallest phones so the cards breathe;
                 two columns from sm: up. */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="xpx-marketplace-grid">
               {filteredProperties.map(property => (
                 <ConversionPropertyCard
                   key={property.id}

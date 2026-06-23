@@ -53,21 +53,22 @@ export default function ConversionPropertyCard({
       onKeyDown={(e) => {
         if (e.key === 'Enter') handleClick();
       }}
-      className="cursor-pointer overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 active:scale-[0.98] group focus:outline-none focus:ring-2 focus:ring-[var(--accent)] xpx-tap"
+      className="h-full flex flex-col cursor-pointer overflow-hidden rounded-2xl transition-shadow duration-200 md:hover:shadow-[0_12px_32px_rgba(15,23,42,0.10)] motion-reduce:transition-none active:scale-[0.99] group focus:outline-none focus:ring-2 focus:ring-[var(--accent)] xpx-tap"
       style={{
         background: 'var(--xpx-surface)',
         border: '1px solid var(--xpx-border)',
-        boxShadow: '0 12px 40px rgba(15,23,42,0.06)',
+        boxShadow: 'var(--xpx-shadow-card)',
       }}
     >
-      {/* Image */}
-      <div className="relative h-44 sm:h-52 overflow-hidden" style={{ background: 'var(--xpx-surface-light)' }}>
+      {/* Image — fixed 4:3 ratio prevents layout shift while photos load */}
+      <div className="xpx-card-media">
         {coverImage ? (
           <img
             src={coverImage}
             alt={property.title}
             loading="lazy"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+            decoding="async"
+            className="w-full h-full object-cover transition-transform duration-500 ease-out motion-reduce:transition-none md:group-hover:scale-[1.03]"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-xpx-subtle text-sm">
@@ -139,19 +140,19 @@ export default function ConversionPropertyCard({
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-3">
-        <div>
-          <h3 className="font-bold text-base text-xpx-text line-clamp-1 leading-tight transition-colors group-hover:text-[var(--accent-dark)]">
+      <div className="flex flex-1 flex-col p-4 space-y-3 min-w-0">
+        <div className="min-w-0">
+          <h3 className="font-bold text-[15px] sm:text-base text-xpx-text line-clamp-2 leading-snug transition-colors group-hover:text-[var(--accent-dark)]">
             {property.title}
           </h3>
-          <div className="flex items-center gap-1 mt-1 text-xpx-muted text-xs">
-            <MapPin className="w-3 h-3 flex-shrink-0" />
-            <span className="line-clamp-1">{property.city}</span>
+          <div className="flex items-center gap-1.5 mt-1.5 text-xpx-muted text-xs min-w-0">
+            <MapPin className="w-3.5 h-3.5 flex-shrink-0" aria-hidden />
+            <span className="line-clamp-1 truncate">{property.city}</span>
           </div>
         </div>
 
         {/* Trust */}
-        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+        <div className="flex items-center gap-1.5 flex-wrap min-w-0 max-w-full">
           <PropertyTrustLine property={property} />
           {property.no_brokerage && (
             <span
@@ -174,7 +175,7 @@ export default function ConversionPropertyCard({
         </div>
 
         {/* Footer row */}
-        <div className="pt-2 xpx-divider flex items-center justify-between">
+        <div className="mt-auto pt-2 xpx-divider flex items-center justify-between gap-2">
           <div className="flex items-baseline gap-1">
             <span className="text-xl font-extrabold text-xpx-text">₹{price}</span>
             <span className="text-xs text-xpx-subtle font-medium">/night</span>

@@ -420,7 +420,7 @@ export default function PropertyPage() {
         onHostLoginClick={() => navigateToPage('/auth/login')}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-5 pb-24 lg:pb-16">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-5 xpx-property-page-main">
         {/* Top action row — Back link on the left, Share menu on the right. */}
         <div className="flex items-center justify-between gap-3">
           <button
@@ -936,7 +936,7 @@ export default function PropertyPage() {
             id="booking-sidebar"
             className={
               !showBooking
-                ? 'lg:sticky lg:top-24 scroll-mt-24'
+                ? 'xpx-booking-sidebar-sticky scroll-mt-24 lg:self-start'
                 : 'scroll-mt-24 pb-28 lg:pb-0'
             }
           >
@@ -995,17 +995,14 @@ export default function PropertyPage() {
           the user one tap away from the booking sidebar at all times. */}
       {!showBooking && (
         <div
-          className="lg:hidden fixed bottom-0 left-0 right-0 z-40"
+          className="lg:hidden fixed bottom-0 left-0 right-0 z-40 xpx-mobile-booking-bar"
           style={{
-            background: 'rgba(255,255,255,0.95)',
-            backdropFilter: 'blur(20px) saturate(1.6)',
-            WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+            background: 'rgba(255,255,255,0.96)',
             borderTop: '1px solid var(--xpx-border)',
-            boxShadow: '0 -10px 32px rgba(15,23,42,0.10)',
-            paddingBottom: 'env(safe-area-inset-bottom)',
+            boxShadow: '0 -4px 20px rgba(15,23,42,0.08)',
           }}
         >
-          <div className="px-4 py-3 flex items-center justify-between gap-3">
+          <div className="px-4 py-3 flex items-center justify-between gap-3 max-w-7xl mx-auto">
             <div className="min-w-0">
               <div className="flex items-baseline gap-1">
                 <span className="text-lg font-extrabold text-xpx-text tabular-nums">
@@ -1020,11 +1017,10 @@ export default function PropertyPage() {
             <button
               type="button"
               onClick={handleRequestToBookClick}
-              className="px-5 py-3 rounded-full font-bold text-sm text-white transition-transform motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.97]"
+              className="shrink-0 px-5 py-3 rounded-full font-bold text-sm text-white transition-transform motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.97] min-h-[48px] min-w-[44px]"
               style={{
                 background: 'var(--xpx-cta)',
-                boxShadow: '0 8px 24px rgba(255,56,92,0.36)',
-                minHeight: 48,
+                boxShadow: '0 4px 16px rgba(255,56,92,0.28)',
               }}
             >
               Request to book
