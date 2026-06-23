@@ -26,6 +26,7 @@ import RishikeshExperiencesSection from '../components/RishikeshExperiencesSecti
 import SEOHead from '../components/SEOHead';
 import SaveListingButton from '../components/SaveListingButton';
 import PropertyTrustLine from '../components/PropertyTrustLine';
+import StayScoreImageBadge from '../components/StayScoreImageBadge';
 import type { PropertyTrustInput } from '../lib/propertyTrustDisplay';
 import type { ListingQualitySignals } from '../lib/xpressbnbStayScore';
 import { snapshotFromStayLike } from '../lib/savedListingsStorage';
@@ -297,6 +298,9 @@ function StayCard({
             </span>
           )}
         </div>
+        <div className="absolute top-3 right-3 z-[2] max-w-[45%]">
+          <StayScoreImageBadge signals={stay.listingSignals} />
+        </div>
         <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5 max-w-[80%]">
           {secondaryBadges.slice(0, 2).map((b) => (
             <span
@@ -328,7 +332,10 @@ function StayCard({
             {stay.name}
           </h3>
           <div className="shrink-0 max-w-[45%]">
-            <PropertyTrustLine property={{ ...stay.trustInput, ...stay.listingSignals }} />
+            <PropertyTrustLine
+              property={{ ...stay.trustInput, ...stay.listingSignals }}
+              omitStayScore
+            />
           </div>
         </div>
         <p className="mt-1 text-xs text-xpx-muted inline-flex items-center gap-1">

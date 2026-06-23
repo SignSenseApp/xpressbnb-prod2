@@ -2,6 +2,7 @@ import { MapPin, CheckCircle, Shield, Clock } from 'lucide-react';
 import type { Property } from '../lib/database.types';
 import { theme } from '../lib/theme';
 import PropertyTrustLine from './PropertyTrustLine';
+import StayScoreImageBadge from './StayScoreImageBadge';
 import SaveListingButton from './SaveListingButton';
 import { firstImageUrl, snapshotFromProperty } from '../lib/savedListingsStorage';
 import { trackXpressEvent } from '../lib/analytics';
@@ -136,6 +137,9 @@ export default function ConversionPropertyCard({
           </div>
         )}
 
+        <div className="absolute bottom-3 left-3 z-[2] max-w-[calc(100%-5rem)]">
+          <StayScoreImageBadge signals={property} />
+        </div>
       </div>
 
       {/* Content */}
@@ -152,7 +156,7 @@ export default function ConversionPropertyCard({
 
         {/* Trust */}
         <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-          <PropertyTrustLine property={property} />
+          <PropertyTrustLine property={property} omitStayScore />
           {property.no_brokerage && (
             <span
               className="inline-flex items-center gap-1 rounded-full px-2 py-1 font-semibold"
