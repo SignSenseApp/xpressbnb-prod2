@@ -1,5 +1,5 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
-import { Cookie, Settings2, X } from 'lucide-react';
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
+import { X } from 'lucide-react';
 import {
   acceptAllCookies,
   acceptEssentialCookiesOnly,
@@ -10,6 +10,9 @@ import {
   subscribeCookieConsent,
 } from '../lib/cookieConsent';
 import { openHomeOverlay } from '../lib/navigation';
+
+const PRIMARY_BLUE = '#2563EB';
+const PRIMARY_BLUE_HOVER = '#1D4ED8';
 
 function useCookieBannerVisible() {
   return useSyncExternalStore(
@@ -26,6 +29,7 @@ function CookieSettingsModal({
   open: boolean;
   onClose: () => void;
 }) {
+  const titleId = useId();
   const existing = getCookieConsent();
   const [analytics, setAnalytics] = useState(existing?.analytics ?? false);
   const [marketing, setMarketing] = useState(existing?.marketing ?? false);
@@ -38,6 +42,20 @@ function CookieSettingsModal({
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open, onClose]);
+
   if (!open) return null;
 
   const save = () => {
@@ -46,28 +64,48 @@ function CookieSettingsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-label="Cookie settings">
-      <button type="button" aria-label="Close" className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
+    <div
+      className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      role="presentation"
+    >
+      <button
+        type="button"
+        aria-label="Close cookie settings"
+        className="absolute inset-0 bg-black/50"
+        onClick={onClose}
+      />
       <div
-        className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="relative w-[calc(100%-20px)] sm:w-full sm:max-w-md max-h-[calc(100dvh-20px)] flex flex-col rounded-[22px] sm:rounded-[20px] overflow-hidden mb-[10px] sm:mb-0"
         style={{
-          background: 'var(--xpx-surface)',
-          border: '1px solid var(--xpx-border)',
-          boxShadow: '0 24px 64px rgba(15,23,42,0.2)',
+          background: 'var(--xpx-surface, #ffffff)',
+          border: '1px solid var(--xpx-border, #E5E7EB)',
+          boxShadow: '0 20px 60px rgba(15,23,42,0.16)',
         }}
       >
-        <div className="p-5 sm:p-6">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
           <div className="flex items-start justify-between gap-3 mb-5">
             <div>
-              <p className="xpx-eyebrow">Cookie settings</p>
-              <h2 className="text-lg font-extrabold text-xpx-text tracking-tight">Choose what we can use</h2>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-xpx-subtle">
+                Cookie settings
+              </p>
+              <h2 id={titleId} className="text-lg font-extrabold text-xpx-text tracking-tight mt-1">
+                Choose what we can use
+              </h2>
             </div>
-            <button type="button" onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 text-xpx-muted" aria-label="Close">
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-full text-xpx-muted hover:text-xpx-text hover:bg-slate-100 transition-colors duration-150"
+              aria-label="Close"
+            >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          <div className="space-y-3 mb-6">
+          <div className="space-y-3">
             <ConsentRow
               title="Essential"
               description="Login sessions, security, and saving your preferences. Always on."
@@ -87,28 +125,38 @@ function CookieSettingsModal({
               onChange={setMarketing}
             />
           </div>
+        </div>
 
-          <div className="flex flex-col sm:flex-row gap-2">
-            <button
-              type="button"
-              onClick={save}
-              className="flex-1 py-3 rounded-xl text-sm font-bold text-white"
-              style={{ background: 'var(--xpx-warm)' }}
-            >
-              Save preferences
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                acceptAllCookies();
-                onClose();
-              }}
-              className="flex-1 py-3 rounded-xl text-sm font-semibold"
-              style={{ background: 'var(--xpx-surface-light)', border: '1px solid var(--xpx-border)', color: 'var(--xpx-text)' }}
-            >
-              Accept all
-            </button>
-          </div>
+        <div
+          className="shrink-0 px-5 py-4 sm:px-6 border-t flex flex-col sm:flex-row gap-2"
+          style={{
+            borderColor: 'var(--xpx-border, #E5E7EB)',
+            paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+            background: 'var(--xpx-surface, #ffffff)',
+          }}
+        >
+          <button
+            type="button"
+            onClick={save}
+            className="flex-1 py-3 rounded-xl text-sm font-bold text-white transition-colors duration-150 hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            style={{ background: PRIMARY_BLUE }}
+          >
+            Save preferences
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              acceptAllCookies();
+              onClose();
+            }}
+            className="flex-1 py-3 rounded-xl text-sm font-semibold text-xpx-text transition-colors duration-150 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+            style={{
+              background: 'var(--xpx-surface-light, #F8FAFC)',
+              border: '1px solid var(--xpx-border, #E5E7EB)',
+            }}
+          >
+            Accept all
+          </button>
         </div>
       </div>
     </div>
@@ -143,11 +191,13 @@ function ConsentRow({
         aria-checked={checked}
         disabled={disabled}
         onClick={() => onChange?.(!checked)}
-        className="relative shrink-0 mt-0.5 w-10 h-6 rounded-full transition-colors disabled:opacity-60"
-        style={{ background: checked ? 'var(--xpx-warm)' : 'var(--xpx-border-strong)' }}
+        className="relative shrink-0 mt-0.5 w-10 h-6 rounded-full transition-colors duration-150 disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+        style={{
+          background: checked ? PRIMARY_BLUE : 'var(--xpx-border-strong, #CBD5E1)',
+        }}
       >
         <span
-          className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+          className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-150"
           style={{ transform: checked ? 'translateX(16px)' : 'translateX(0)' }}
           aria-hidden
         />
@@ -156,91 +206,165 @@ function ConsentRow({
   );
 }
 
+function PrivacyCopy() {
+  return (
+    <p className="text-sm sm:text-[15px] text-xpx-muted leading-relaxed">
+      Essential cookies keep you signed in and the site running. With your permission we also use
+      analytics and marketing cookies to improve XpressBnB and measure ad performance.{' '}
+      <button
+        type="button"
+        onClick={() => openHomeOverlay('privacy')}
+        className="font-semibold underline underline-offset-2 text-xpx-text hover:opacity-80 transition-opacity duration-150"
+      >
+        Privacy Policy
+      </button>
+    </p>
+  );
+}
+
 export function CookieConsentBanner() {
   const visible = useCookieBannerVisible();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.documentElement.style.setProperty('--xpx-cookie-banner-h', visible ? '132px' : '0px');
+    document.documentElement.style.setProperty('--xpx-cookie-banner-h', '0px');
     return () => {
       document.documentElement.style.removeProperty('--xpx-cookie-banner-h');
     };
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, [visible]);
 
-  if (!visible) return <CookieSettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />;
+  useEffect(() => {
+    if (!visible) return;
+    dialogRef.current?.focus();
+  }, [visible]);
+
+  if (!visible) {
+    return <CookieSettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />;
+  }
+
+  const openSettings = () => setSettingsOpen(true);
 
   return (
     <>
-      <div
-        className="fixed left-0 right-0 bottom-0 z-[55] animate-fade-in-up"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-        role="region"
-        aria-label="Cookie consent"
-      >
+      <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6" role="presentation">
+        <div className="absolute inset-0 bg-black/55" aria-hidden />
+
         <div
-          className="mx-auto max-w-5xl px-4 py-4 sm:px-6 sm:py-5"
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          tabIndex={-1}
+          className="relative z-[1] flex flex-col w-[calc(100%-20px)] sm:w-full sm:max-w-[800px] max-h-[calc(100dvh-20px)] sm:max-h-[min(88vh,640px)] mb-[10px] sm:mb-0 rounded-[22px] sm:rounded-[20px] overflow-hidden outline-none"
           style={{
-            background: 'rgba(255,255,255,0.97)',
-            borderTop: '1px solid var(--xpx-border-strong)',
-            boxShadow: '0 -8px 32px rgba(15,23,42,0.08)',
-            backdropFilter: 'blur(12px)',
+            background: 'var(--xpx-surface, #ffffff)',
+            border: '1px solid var(--xpx-border, #E5E7EB)',
+            boxShadow: '0 24px 64px rgba(15,23,42,0.18)',
           }}
         >
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="flex items-start gap-3 flex-1 min-w-0">
-              <div
-                className="hidden sm:flex shrink-0 w-10 h-10 rounded-xl items-center justify-center"
-                style={{ background: 'rgba(5,150,105,0.12)', color: '#047857' }}
-              >
-                <Cookie className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-xpx-text leading-snug">We use cookies</p>
-                <p className="text-xs sm:text-sm text-xpx-muted mt-1 leading-relaxed">
-                  Essential cookies keep you signed in and the site running. With your permission we also use analytics and
-                  marketing cookies to improve XpressBnB.{' '}
-                  <button
-                    type="button"
-                    onClick={() => openHomeOverlay('privacy')}
-                    className="font-semibold underline underline-offset-2 hover:text-xpx-text"
-                    style={{ color: 'var(--xpx-warm-dark)' }}
-                  >
-                    Privacy Policy
-                  </button>
-                </p>
-              </div>
+          {/* Scrollable legal copy */}
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 pt-6 pb-4 sm:px-8 sm:pt-8 sm:pb-5">
+            <h2
+              id={titleId}
+              className="text-xl sm:text-2xl font-extrabold text-xpx-text tracking-tight leading-tight"
+            >
+              We care about your privacy
+            </h2>
+            <div className="mt-3 sm:mt-4">
+              <PrivacyCopy />
             </div>
+          </div>
 
-            <div className="flex flex-col xs:flex-row sm:flex-col lg:flex-row gap-2 shrink-0 w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={() => acceptAllCookies()}
-                className="px-4 py-2.5 rounded-xl text-sm font-bold text-white whitespace-nowrap"
-                style={{ background: 'var(--xpx-warm)', boxShadow: '0 4px 14px rgba(5,150,105,0.25)' }}
-              >
-                Accept all
-              </button>
+          {/* Desktop actions */}
+          <div
+            className="hidden sm:flex shrink-0 items-center justify-between gap-4 px-8 py-5 border-t"
+            style={{
+              borderColor: 'var(--xpx-border, #E5E7EB)',
+              background: 'var(--xpx-surface, #ffffff)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={openSettings}
+              className="text-sm font-semibold text-xpx-text underline underline-offset-4 hover:opacity-80 transition-opacity duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 rounded-sm"
+            >
+              More settings
+            </button>
+            <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => acceptEssentialCookiesOnly()}
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap"
+                className="min-w-[120px] h-11 px-5 rounded-xl text-sm font-semibold text-xpx-text transition-colors duration-150 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                 style={{
-                  background: 'var(--xpx-surface-light)',
-                  border: '1px solid var(--xpx-border)',
-                  color: 'var(--xpx-text)',
+                  background: 'var(--xpx-surface, #ffffff)',
+                  border: '1px solid var(--xpx-border-strong, #CBD5E1)',
                 }}
               >
-                Essential only
+                Reject All
               </button>
               <button
                 type="button"
-                onClick={() => setSettingsOpen(true)}
-                className="px-3 py-2.5 rounded-xl text-sm font-medium inline-flex items-center justify-center gap-1.5 whitespace-nowrap text-xpx-muted hover:text-xpx-text"
+                onClick={() => acceptAllCookies()}
+                className="min-w-[120px] h-11 px-6 rounded-xl text-sm font-bold text-white transition-colors duration-150 hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                style={{ background: PRIMARY_BLUE }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = PRIMARY_BLUE_HOVER;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = PRIMARY_BLUE;
+                }}
               >
-                <Settings2 className="w-4 h-4" />
-                Settings
+                Accept
               </button>
             </div>
+          </div>
+
+          {/* Mobile sticky actions */}
+          <div
+            className="sm:hidden shrink-0 px-5 pt-3 border-t flex flex-col gap-2.5"
+            style={{
+              borderColor: 'var(--xpx-border, #E5E7EB)',
+              paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+              background: 'var(--xpx-surface, #ffffff)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => acceptAllCookies()}
+              className="w-full h-12 rounded-xl text-sm font-bold text-white transition-opacity duration-150 active:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              style={{ background: PRIMARY_BLUE }}
+            >
+              Accept
+            </button>
+            <button
+              type="button"
+              onClick={() => acceptEssentialCookiesOnly()}
+              className="w-full h-12 rounded-xl text-sm font-semibold text-xpx-text transition-colors duration-150 active:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+              style={{
+                background: 'var(--xpx-surface, #ffffff)',
+                border: '1px solid var(--xpx-border-strong, #CBD5E1)',
+              }}
+            >
+              Reject All
+            </button>
+            <button
+              type="button"
+              onClick={openSettings}
+              className="w-full py-2 text-sm font-semibold text-xpx-text underline underline-offset-4 hover:opacity-80 transition-opacity duration-150"
+            >
+              More settings
+            </button>
           </div>
         </div>
       </div>
