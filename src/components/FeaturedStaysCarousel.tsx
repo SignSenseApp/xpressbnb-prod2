@@ -1,27 +1,19 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Property } from '../lib/database.types';
 import ConversionPropertyCard from './ConversionPropertyCard';
+import { useInViewport, usePrefersReducedMotion } from '../hooks/useGalleryMotion';
 
-const AUTOPLAY_MS = 5000;
-const TRANSITION_MS = 450;
-const RESUME_AFTER_INTERACTION_MS = 3000;
-const SWIPE_THRESHOLD_PX = 48;
+const MOBILE_AUTOPLAY_MS = 4000;
+const TRANSITION_MS = 600;
+const RESUME_AFTER_MS = 5000;
+const SWIPE_THRESHOLD_PX = 40;
+const VELOCITY_THRESHOLD = 0.35;
 const GAP_PX = 16;
+const MOBILE_PEEK_RATIO = 0.85;
+const EASE_OUT = 'cubic-bezier(0.25, 0.1, 0.25, 1)';
 
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const sync = () => setReduced(mq.matches);
-    sync();
-    mq.addEventListener('change', sync);
-    return () => mq.removeEventListener('change', sync);
-  }, []);
-
-  return reduced;
-}
+type VelocitySample = { x: number; t: number };
 
 function visibleSlideCount(containerWidth: number): number {
   if (containerWidth >= 1280) return 4;
@@ -32,21 +24,38 @@ function visibleSlideCount(containerWidth: number): number {
 
 function slideWidthForContainer(containerWidth: number, visible: number): number {
   if (visible <= 1) {
-    return Math.min(380, Math.round(containerWidth * 0.88));
+    return Math.min(380, Math.round(containerWidth * MOBILE_PEEK_RATIO));
   }
   const totalGap = GAP_PX * (visible - 1);
   return Math.min(380, Math.floor((containerWidth - totalGap) / visible));
 }
+
+const CarouselSlide = memo(function CarouselSlide({
+  property,
+  width,
+  hidden,
+}: {
+  property: Property;
+  width: number;
+  hidden: boolean;
+}) {
+  return (
+    <div className="shrink-0" style={{ width }} aria-hidden={hidden}>
+      <ConversionPropertyCard property={property} className="mx-0 w-full max-w-none md:mx-0" />
+    </div>
+  );
+});
 
 type FeaturedStaysCarouselProps = {
   properties: Property[];
 };
 
 /**
- * GPU-accelerated Featured Stays carousel — autoplay, infinite loop, touch swipe.
- * Replaces scrollLeft-based HorizontalScrollCards.
+ * GPU-accelerated Featured Stays carousel — VRBO-level mobile UX.
+ * Mobile: peek layout, velocity swipe, idle autoplay. Desktop: manual arrows.
  */
 export default function FeaturedStaysCarousel({ properties }: FeaturedStaysCarouselProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const resumeTimerRef = useRef<number | null>(null);
   const autoplayTimerRef = useRef<number | null>(null);
@@ -70,11 +79,14 @@ export default function FeaturedStaysCarousel({ properties }: FeaturedStaysCarou
   const dragStartY = useRef(0);
   const dragAxisLock = useRef<'x' | 'y' | null>(null);
   const pointerIdRef = useRef<number | null>(null);
+  const velocitySamples = useRef<VelocitySample[]>([]);
 
   const prefersReducedMotion = usePrefersReducedMotion();
+  const inViewport = useInViewport(rootRef, 0.25);
 
-  const visible = visibleSlideCount(containerWidth || (typeof window !== 'undefined' ? window.innerWidth : 360));
-  const slideWidth = containerWidth > 0 ? slideWidthForContainer(containerWidth, visible) : 320;
+  const visible = visibleSlideCount(containerWidth || 360);
+  const isMobileLayout = visible <= 1;
+  const slideWidth = containerWidth > 0 ? slideWidthForContainer(containerWidth, visible) : 306;
   const stride = slideWidth + GAP_PX;
 
   const logicalIndex = loopEnabled
@@ -82,7 +94,7 @@ export default function FeaturedStaysCarousel({ properties }: FeaturedStaysCarou
     : Math.min(trackIndex, Math.max(count - 1, 0));
 
   const baseOffset = -trackIndex * stride;
-  const translateX = baseOffset + (isDragging ? dragOffset : 0);
+  const translateX = baseOffset + dragOffset;
 
   const clearResumeTimer = useCallback(() => {
     if (resumeTimerRef.current != null) {
@@ -107,7 +119,7 @@ export default function FeaturedStaysCarousel({ properties }: FeaturedStaysCarou
     clearResumeTimer();
     resumeTimerRef.current = window.setTimeout(() => {
       setIsPaused(false);
-    }, RESUME_AFTER_INTERACTION_MS);
+    }, RESUME_AFTER_MS);
   }, [clearResumeTimer]);
 
   const goNext = useCallback(() => {
@@ -161,25 +173,40 @@ export default function FeaturedStaysCarousel({ properties }: FeaturedStaysCarou
     if (!node) return;
 
     const observer = new ResizeObserver((entries) => {
-      const width = entries[0]?.contentRect.width ?? 0;
-      setContainerWidth(width);
+      setContainerWidth(entries[0]?.contentRect.width ?? 0);
     });
     observer.observe(node);
     setContainerWidth(node.getBoundingClientRect().width);
-
     return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
     clearAutoplayTimer();
-    if (prefersReducedMotion || isPaused || isDragging || count <= 1) return;
+    if (
+      !isMobileLayout ||
+      !inViewport ||
+      prefersReducedMotion ||
+      isPaused ||
+      isDragging ||
+      count <= 1
+    ) {
+      return;
+    }
 
     autoplayTimerRef.current = window.setInterval(() => {
       goNextRef.current();
-    }, AUTOPLAY_MS);
+    }, MOBILE_AUTOPLAY_MS);
 
     return clearAutoplayTimer;
-  }, [clearAutoplayTimer, count, isDragging, isPaused, prefersReducedMotion]);
+  }, [
+    clearAutoplayTimer,
+    count,
+    inViewport,
+    isDragging,
+    isMobileLayout,
+    isPaused,
+    prefersReducedMotion,
+  ]);
 
   useEffect(
     () => () => {
@@ -189,16 +216,37 @@ export default function FeaturedStaysCarousel({ properties }: FeaturedStaysCarou
     [clearAutoplayTimer, clearResumeTimer],
   );
 
+  const computeVelocity = (): number => {
+    const samples = velocitySamples.current;
+    if (samples.length < 2) return 0;
+    const first = samples[0];
+    const last = samples[samples.length - 1];
+    const dt = last.t - first.t;
+    if (dt <= 0) return 0;
+    return (last.x - first.x) / dt;
+  };
+
   const finishDrag = useCallback(
     (deltaX: number) => {
+      const velocity = computeVelocity();
+      velocitySamples.current = [];
       setIsDragging(false);
-      setDragOffset(0);
       dragAxisLock.current = null;
       pointerIdRef.current = null;
 
-      if (Math.abs(deltaX) >= SWIPE_THRESHOLD_PX) {
+      if (Math.abs(velocity) >= VELOCITY_THRESHOLD) {
+        setEnableTransition(true);
+        setDragOffset(0);
+        if (velocity < 0) goNext();
+        else goPrev();
+      } else if (Math.abs(deltaX) >= SWIPE_THRESHOLD_PX) {
+        setEnableTransition(true);
+        setDragOffset(0);
         if (deltaX < 0) goNext();
         else goPrev();
+      } else {
+        setEnableTransition(true);
+        setDragOffset(0);
       }
 
       scheduleResume();
@@ -213,7 +261,9 @@ export default function FeaturedStaysCarousel({ properties }: FeaturedStaysCarou
     dragStartY.current = e.clientY;
     dragAxisLock.current = null;
     pointerIdRef.current = e.pointerId;
+    velocitySamples.current = [{ x: e.clientX, t: performance.now() }];
     setIsDragging(true);
+    setEnableTransition(false);
     setDragOffset(0);
     e.currentTarget.setPointerCapture(e.pointerId);
   };
@@ -223,6 +273,7 @@ export default function FeaturedStaysCarousel({ properties }: FeaturedStaysCarou
 
     const dx = e.clientX - dragStartX.current;
     const dy = e.clientY - dragStartY.current;
+    const now = performance.now();
 
     if (dragAxisLock.current == null) {
       if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
@@ -232,6 +283,9 @@ export default function FeaturedStaysCarousel({ properties }: FeaturedStaysCarou
 
     e.preventDefault();
     setDragOffset(dx);
+
+    velocitySamples.current.push({ x: e.clientX, t: now });
+    if (velocitySamples.current.length > 6) velocitySamples.current.shift();
   };
 
   const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -267,13 +321,7 @@ export default function FeaturedStaysCarousel({ properties }: FeaturedStaysCarou
   if (count === 0) return null;
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => {
-        if (!isDragging) setIsPaused(false);
-      }}
-    >
+    <div ref={rootRef} className="relative">
       {loopEnabled && (
         <>
           <button
@@ -320,7 +368,7 @@ export default function FeaturedStaysCarousel({ properties }: FeaturedStaysCarou
             transition:
               isDragging || !enableTransition
                 ? 'none'
-                : `transform ${TRANSITION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                : `transform ${TRANSITION_MS}ms ${EASE_OUT}`,
             willChange: 'transform',
           }}
           onTransitionEnd={handleTransitionEnd}
@@ -330,17 +378,12 @@ export default function FeaturedStaysCarousel({ properties }: FeaturedStaysCarou
           onPointerCancel={onPointerCancel}
         >
           {extendedSlides.map((property, index) => (
-            <div
+            <CarouselSlide
               key={`${property.id}-${index}`}
-              className="shrink-0"
-              style={{ width: slideWidth }}
-              aria-hidden={loopEnabled ? index !== trackIndex : index !== logicalIndex}
-            >
-              <ConversionPropertyCard
-                property={property}
-                className="mx-0 w-full max-w-none md:mx-0"
-              />
-            </div>
+              property={property}
+              width={slideWidth}
+              hidden={loopEnabled ? index !== trackIndex : index !== logicalIndex}
+            />
           ))}
         </div>
       </div>

@@ -3,7 +3,6 @@ import {
   useInViewport,
   useIsDesktop,
   usePrefersReducedMotion,
-  useScrollPause,
 } from '../hooks/useGalleryMotion';
 import {
   galleryTransitionStyle,
@@ -11,11 +10,10 @@ import {
 } from '../hooks/useTransformGallery';
 import { listPropertyImages } from '../lib/propertyImages';
 
-const DESKTOP_HOVER_AUTOPLAY_MS = 2500;
-const MOBILE_IDLE_AUTOPLAY_MS = 4000;
+const DESKTOP_HOVER_AUTOPLAY_MS = 1200;
 const HOVER_RESET_MS = 400;
-const MOBILE_RESUME_MS = 3000;
-const TRANSITION_MS = 450;
+const FADE_MS = 500;
+const SWIPE_TRANSITION_MS = 450;
 
 type PropertyCardGalleryProps = {
   images: Parameters<typeof listPropertyImages>[0];
@@ -48,71 +46,54 @@ export default function PropertyCardGallery({
   const reducedMotion = usePrefersReducedMotion();
   const inViewport = useInViewport(rootRef, 0.4);
 
+  const [fadeIndex, setFadeIndex] = useState(0);
   const [touchPaused, setTouchPaused] = useState(false);
-  const [scrollPaused, setScrollPaused] = useState(false);
-  const [resumePaused, setResumePaused] = useState(false);
-
-  useScrollPause(setScrollPaused);
 
   const desktopHoverActive =
     isDesktop && isCardHovered && inViewport && count > 1 && !reducedMotion;
 
-  const mobileIdleActive =
-    !isDesktop && inViewport && count > 1 && !reducedMotion;
-
-  const paused = touchPaused || scrollPaused || resumePaused;
-
   const gallery = useTransformGallery({
     slideCount: count,
     loop: true,
-    autoplayMs: desktopHoverActive
-      ? DESKTOP_HOVER_AUTOPLAY_MS
-      : mobileIdleActive
-        ? MOBILE_IDLE_AUTOPLAY_MS
-        : null,
-    active: inViewport && count > 1,
-    paused,
-    transitionMs: TRANSITION_MS,
-    resumeAfterMs: MOBILE_RESUME_MS,
-    swipeEnabled: count > 1,
+    autoplayMs: null,
+    active: !isDesktop && count > 1,
+    paused: touchPaused,
+    transitionMs: SWIPE_TRANSITION_MS,
+    swipeEnabled: !isDesktop && count > 1,
     reducedMotion,
   });
 
   useEffect(() => {
-    onIndexChange?.(gallery.logicalIndex);
-  }, [gallery.logicalIndex, onIndexChange]);
+    if (isDesktop) {
+      onIndexChange?.(fadeIndex);
+    } else {
+      onIndexChange?.(gallery.logicalIndex);
+    }
+  }, [fadeIndex, gallery.logicalIndex, isDesktop, onIndexChange]);
+
+  useEffect(() => {
+    if (!desktopHoverActive) return;
+    const id = window.setInterval(() => {
+      setFadeIndex((i) => (i + 1) % count);
+    }, DESKTOP_HOVER_AUTOPLAY_MS);
+    return () => window.clearInterval(id);
+  }, [count, desktopHoverActive]);
 
   useEffect(() => {
     if (!isDesktop || isCardHovered) return;
-    const timer = window.setTimeout(() => {
-      gallery.resetToFirst();
-    }, HOVER_RESET_MS);
+    const timer = window.setTimeout(() => setFadeIndex(0), HOVER_RESET_MS);
     return () => window.clearTimeout(timer);
-  }, [isCardHovered, isDesktop, gallery.resetToFirst]);
-
-  useEffect(() => {
-    if (gallery.isDragging) {
-      setTouchPaused(true);
-      setResumePaused(true);
-      return;
-    }
-    if (!touchPaused && !scrollPaused) return;
-    const timer = window.setTimeout(() => {
-      setTouchPaused(false);
-      setResumePaused(false);
-    }, MOBILE_RESUME_MS);
-    return () => window.clearTimeout(timer);
-  }, [gallery.isDragging, scrollPaused, touchPaused]);
+  }, [isCardHovered, isDesktop]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     setTouchPaused(true);
-    setResumePaused(true);
     gallery.onPointerDown(e);
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     gallery.onPointerUp(e);
     if (gallery.didSwipe()) onSwipe?.();
+    window.setTimeout(() => setTouchPaused(false), 3000);
   };
 
   if (count === 0) {
@@ -141,6 +122,30 @@ export default function PropertyCardGallery({
     );
   }
 
+  if (isDesktop) {
+    return (
+      <div ref={rootRef} className="xpx-property-card-media relative overflow-hidden">
+        {images.map((src, i) => (
+          <img
+            key={src}
+            src={src}
+            alt={alt}
+            loading={i === 0 ? 'lazy' : 'lazy'}
+            decoding="async"
+            draggable={false}
+            className="absolute inset-0 h-full w-full object-cover motion-reduce:transition-none"
+            style={{
+              opacity: i === fadeIndex ? 1 : 0,
+              transition: reducedMotion ? 'none' : `opacity ${FADE_MS}ms ease-out`,
+              zIndex: i === fadeIndex ? 1 : 0,
+            }}
+          />
+        ))}
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div ref={rootRef} className="xpx-property-card-media overflow-hidden">
       <div ref={gallery.containerRef} className="h-full w-full overflow-hidden">
@@ -150,7 +155,7 @@ export default function PropertyCardGallery({
             gallery.translateX,
             gallery.enableTransition,
             gallery.isDragging,
-            TRANSITION_MS,
+            SWIPE_TRANSITION_MS,
           )}
           onTransitionEnd={gallery.handleTransitionEnd}
           onPointerDown={handlePointerDown}

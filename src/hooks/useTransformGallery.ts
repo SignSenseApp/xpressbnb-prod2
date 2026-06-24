@@ -70,7 +70,7 @@ export function useTransformGallery({
     ? (trackIndex - 1 + count) % count
     : Math.min(Math.max(trackIndex, 0), Math.max(count - 1, 0));
 
-  const translateX = -trackIndex * containerWidth + (isDragging ? dragOffset : 0);
+  const translateX = -trackIndex * containerWidth + dragOffset;
 
   const clearResumeTimer = useCallback(() => {
     if (resumeTimerRef.current != null) {
@@ -180,14 +180,18 @@ export function useTransformGallery({
   const finishDrag = useCallback(
     (deltaX: number) => {
       setIsDragging(false);
-      setDragOffset(0);
       dragAxisLock.current = null;
       pointerIdRef.current = null;
 
       if (Math.abs(deltaX) >= SWIPE_THRESHOLD_PX) {
         didSwipeRef.current = true;
+        setEnableTransition(true);
+        setDragOffset(0);
         if (deltaX < 0) goNext();
         else goPrev();
+      } else {
+        setEnableTransition(true);
+        setDragOffset(0);
       }
 
       scheduleResume();
