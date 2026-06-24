@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import Header from '../components/Header';
 import SEOHead from '../components/SEOHead';
 import GuestTripConfirmation from '../components/GuestTripConfirmation';
+import BookingNotificationSheet from '../components/BookingNotificationSheet';
+import { isPushSupported } from '../lib/pushSubscription';
 import { supabase } from '../lib/supabase';
 import {
   loadBookingConfirmationSnapshot,
@@ -30,6 +32,7 @@ function parseBookingIdFromPath(): string | null {
 export default function BookingConfirmationPage() {
   const [bookingId, setBookingId] = useState(() => parseBookingIdFromPath());
   const [state, setState] = useState<LoadState>({ status: 'loading' });
+  const [showNotifSheet, setShowNotifSheet] = useState(false);
 
   useEffect(() => {
     const syncId = () => setBookingId(parseBookingIdFromPath());
@@ -227,6 +230,28 @@ export default function BookingConfirmationPage() {
     };
   }, [bookingId]);
 
+  useEffect(() => {
+    if (state.status !== 'ready') return;
+
+    const timer = window.setTimeout(() => {
+      if (!isPushSupported()) return;
+
+      let dismissed = false;
+      try {
+        dismissed = localStorage.getItem('xbnb_notif_dismissed') === 'true';
+      } catch {
+        /* non-fatal */
+      }
+
+      const alreadyGranted = Notification.permission === 'granted';
+      if (!dismissed && !alreadyGranted) {
+        setShowNotifSheet(true);
+      }
+    }, 1500);
+
+    return () => window.clearTimeout(timer);
+  }, [state.status]);
+
   return (
     <div className="min-h-screen bg-[var(--xpx-bg)]">
       <SEOHead
@@ -279,6 +304,14 @@ export default function BookingConfirmationPage() {
           <GuestTripConfirmation snapshot={state.snapshot} source={state.source} onBackHome={goHome} />
         )}
       </main>
+
+      {showNotifSheet && bookingId && (
+        <BookingNotificationSheet
+          bookingId={bookingId}
+          isVisible={showNotifSheet}
+          onDismiss={() => setShowNotifSheet(false)}
+        />
+      )}
     </div>
   );
 }

@@ -52,3 +52,20 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
 });
+
+self.addEventListener('push', (event) => {
+  const data = event.data?.json() ?? {};
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? 'XpressBnB', {
+      body: data.body ?? 'Your host responded.',
+      icon: '/favicon-192.png',
+      badge: '/favicon-48.png',
+      data: { url: data.url ?? '/' },
+    }),
+  );
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(clients.openWindow(e.notification.data.url));
+});
