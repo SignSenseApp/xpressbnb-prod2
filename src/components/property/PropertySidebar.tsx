@@ -108,7 +108,7 @@ export default function PropertySidebar({
         </div>
         <p className="text-[11px] text-xpx-subtle mt-1">
           {nights > 0
-            ? 'Trip total below includes all fees & taxes'
+            ? 'Trip total below — host price + fees (no GST added by us)'
             : 'Nightly rate — select dates to see full total'}
         </p>
       </div>
@@ -205,12 +205,6 @@ export default function PropertySidebar({
             <dt className="text-xpx-muted">Service fee</dt>
             <dd className="text-xpx-text font-medium tabular-nums">
               ₹{breakdown.serviceFee.toLocaleString('en-IN')}
-            </dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-xpx-muted">Taxes</dt>
-            <dd className="text-xpx-text font-medium tabular-nums">
-              ₹{breakdown.taxes.toLocaleString('en-IN')}
             </dd>
           </div>
           <div

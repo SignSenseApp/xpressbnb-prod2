@@ -1193,8 +1193,7 @@ export default function PropertyPage() {
                     <span className="text-xs text-xpx-muted">total</span>
                   </div>
                   <p className="text-[10.5px] text-xpx-subtle leading-tight">
-                    {bookingNights} {bookingNights === 1 ? 'night' : 'nights'} · incl. fees &amp;
-                    taxes
+                    {bookingNights} {bookingNights === 1 ? 'night' : 'nights'} · incl. fees · no GST from us
                   </p>
                 </>
               ) : (
@@ -1206,7 +1205,7 @@ export default function PropertyPage() {
                     <span className="text-xs text-xpx-muted">/ night</span>
                   </div>
                   <p className="text-[10.5px] text-xpx-subtle leading-tight">
-                    Starting price · taxes &amp; fees apply
+                    Starting price · host sets the rate
                   </p>
                 </>
               )}

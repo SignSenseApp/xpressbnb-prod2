@@ -11,8 +11,9 @@ export interface BookingTotalBreakdown {
 }
 
 /**
- * Authoritative booking total: accommodation subtotal plus cleaning,
- * service, and tax fees. `basePrice` is the calendar nightly sum (not per-night).
+ * Authoritative booking total: accommodation subtotal plus host-side fees.
+ * XpressBNB does not add GST or platform tax — `taxes` stays 0 for display/RPC.
+ * `basePrice` is the calendar nightly sum (not per-night).
  */
 export function calculateBookingTotal(
   basePrice: number,
@@ -34,9 +35,9 @@ export function calculateBookingTotal(
   const baseTotal = basePrice;
   const cleaningFee = 500;
   const serviceFee = Math.round(baseTotal * 0.1);
-  const taxes = Math.round((baseTotal + cleaningFee + serviceFee) * 0.05);
+  const taxes = 0;
   const fees = cleaningFee + serviceFee;
-  const grandTotal = baseTotal + cleaningFee + serviceFee + taxes;
+  const grandTotal = baseTotal + cleaningFee + serviceFee;
 
   return {
     baseTotal,

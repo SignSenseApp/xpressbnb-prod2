@@ -54,6 +54,75 @@ function formatLocation(city: string, state: string): string {
   return c || s || 'Location coming soon';
 }
 
+/** Flip host price tag after sustained card attention (hover or in-view). */
+const PRICE_TAG_ENGAGEMENT_MS = 8000;
+
+function HostPriceTag({ price, engaged }: { price: string; engaged: boolean }) {
+  const [flipped, setFlipped] = useState(false);
+
+  useEffect(() => {
+    if (!engaged) {
+      setFlipped(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setFlipped(true), PRICE_TAG_ENGAGEMENT_MS);
+    return () => window.clearTimeout(timer);
+  }, [engaged]);
+
+  return (
+    <div
+      className="pointer-events-none absolute bottom-3 left-3 z-10"
+      style={{ perspective: '640px' }}
+    >
+      <div
+        className="relative rounded-xl transition-transform duration-700 motion-reduce:transition-none"
+        style={{
+          transformStyle: 'preserve-3d',
+          transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+          minWidth: '7.5rem',
+        }}
+      >
+        <div
+          className="rounded-xl px-3 py-2"
+          style={{
+            background: 'rgba(255,255,255,0.92)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+            backfaceVisibility: 'hidden',
+          }}
+        >
+          <p className="leading-tight">
+            <span className="text-base font-bold text-[#111827]">₹{price}</span>
+            <span className="text-sm font-medium text-[#6B7280]"> / night</span>
+          </p>
+          <p className="mt-0.5 text-[11px] text-[#6B7280]">Direct from Host</p>
+        </div>
+        <div
+          className="absolute inset-0 flex flex-col justify-center rounded-xl px-3 py-2 text-center"
+          style={{
+            background: 'linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%)',
+            border: '1px solid rgba(5,150,105,0.28)',
+            boxShadow: '0 4px 16px rgba(5,150,105,0.12)',
+            backfaceVisibility: 'hidden',
+            transform: 'rotateY(180deg)',
+          }}
+        >
+          <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#059669]">
+            0% platform cut
+          </p>
+          <p className="mt-1 text-[10px] font-semibold leading-snug text-[#111827]">
+            Host sets the price
+          </p>
+          <p className="mt-0.5 text-[9px] leading-tight text-[#6B7280]">
+            We just connect you — never charge guests
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Finalized XpressBNB property card — pixel-accurate to product spec.
  * Used in city listings, saved page, and homepage featured carousel.
@@ -71,6 +140,8 @@ export default memo(function ConversionPropertyCard({
   const swipeRef = useRef(false);
   const [isHovered, setIsHovered] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const [cardInView, setCardInView] = useState(false);
+  const [priceTagEngaged, setPriceTagEngaged] = useState(false);
 
   useEffect(() => {
     const node = cardRef.current;
@@ -78,16 +149,21 @@ export default memo(function ConversionPropertyCard({
 
     const observer = new IntersectionObserver(
       (entries) => {
+        const visible = entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.55);
+        setCardInView(visible);
         if (entries.some((entry) => entry.isIntersecting)) {
           prefetchPropertyOnViewport();
-          observer.disconnect();
         }
       },
-      { rootMargin: '200px 0px', threshold: 0 },
+      { rootMargin: '0px', threshold: [0, 0.55, 0.85] },
     );
     observer.observe(node);
     return () => observer.disconnect();
   }, [property.id]);
+
+  useEffect(() => {
+    setPriceTagEngaged(isHovered || cardInView);
+  }, [isHovered, cardInView]);
 
   const handlePrefetchInteraction = () => {
     prefetchPropertyOnInteraction(property);
@@ -205,22 +281,8 @@ export default memo(function ConversionPropertyCard({
           getSnapshot={() => snapshotFromProperty(property)}
         />
 
-        {/* Floating glass price card */}
-        <div
-          className="pointer-events-none absolute bottom-3 left-3 z-10 rounded-xl px-3 py-2"
-          style={{
-            background: 'rgba(255,255,255,0.92)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-          }}
-        >
-          <p className="leading-tight">
-            <span className="text-base font-bold text-[#111827]">₹{price}</span>
-            <span className="text-sm font-medium text-[#6B7280]"> / night</span>
-          </p>
-          <p className="mt-0.5 text-[11px] text-[#6B7280]">Direct from Host</p>
-        </div>
+        {/* Floating glass price card — flips to host-first message after ~8s attention */}
+        <HostPriceTag price={price} engaged={priceTagEngaged} />
 
         {imageCount > 0 && (
           <div

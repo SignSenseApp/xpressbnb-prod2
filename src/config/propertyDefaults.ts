@@ -292,12 +292,12 @@ export function computeFeeBreakdown(nightlyTotal: number, nights: number): FeeBr
   // Service & taxes scale with the nightly total so longer stays don't
   // suffer disproportionate fees.
   const serviceFee = Math.round(nightlyTotal * 0.1);
-  const taxes = Math.round((nightlyTotal + cleaningFee + serviceFee) * 0.05);
+  const taxes = 0;
   return {
     nightlyTotal,
     cleaningFee,
     serviceFee,
     taxes,
-    total: nightlyTotal + cleaningFee + serviceFee + taxes,
+    total: nightlyTotal + cleaningFee + serviceFee,
   };
 }
