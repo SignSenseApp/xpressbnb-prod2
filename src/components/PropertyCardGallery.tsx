@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   useInViewport,
   useIsDesktop,
+  usePageVisible,
   usePrefersReducedMotion,
 } from '../hooks/useGalleryMotion';
 import {
@@ -15,7 +16,11 @@ import {
   propertyCardImageSrcSet,
 } from '../lib/propertyImages';
 
-const DESKTOP_HOVER_AUTOPLAY_MS = 1200;
+/** Intentional hover dwell before desktop preview autoplay (VRBO-style). */
+const HOVER_INTENT_MS = 400;
+/** Desktop preview advance interval — 1.8–2.2s target band. */
+const DESKTOP_HOVER_AUTOPLAY_MS = 2000;
+/** Fade back to first slide after hover exit. */
 const HOVER_RESET_MS = 400;
 const FADE_MS = 500;
 const SWIPE_TRANSITION_MS = 450;
@@ -79,12 +84,20 @@ export default function PropertyCardGallery({
   const isDesktop = useIsDesktop();
   const reducedMotion = usePrefersReducedMotion();
   const inViewport = useInViewport(rootRef, 0.4);
+  const pageVisible = usePageVisible();
 
   const [fadeIndex, setFadeIndex] = useState(0);
+  const [hoverIntentReady, setHoverIntentReady] = useState(false);
   const [touchPaused, setTouchPaused] = useState(false);
 
   const desktopHoverActive =
-    isDesktop && isCardHovered && inViewport && count > 1 && !reducedMotion;
+    isDesktop &&
+    isCardHovered &&
+    hoverIntentReady &&
+    inViewport &&
+    pageVisible &&
+    count > 1 &&
+    !reducedMotion;
 
   const gallery = useTransformGallery({
     slideCount: count,
@@ -96,6 +109,18 @@ export default function PropertyCardGallery({
     swipeEnabled: !isDesktop && count > 1,
     reducedMotion,
   });
+
+  useEffect(() => {
+    if (!isDesktop || !isCardHovered) {
+      setHoverIntentReady(false);
+      return;
+    }
+    const id = window.setTimeout(() => setHoverIntentReady(true), HOVER_INTENT_MS);
+    return () => {
+      window.clearTimeout(id);
+      setHoverIntentReady(false);
+    };
+  }, [isCardHovered, isDesktop]);
 
   useEffect(() => {
     if (isDesktop) {
@@ -118,6 +143,14 @@ export default function PropertyCardGallery({
     const timer = window.setTimeout(() => setFadeIndex(0), HOVER_RESET_MS);
     return () => window.clearTimeout(timer);
   }, [isCardHovered, isDesktop]);
+
+  const desktopRenderIndices = useMemo(() => {
+    const indices = new Set<number>([0, fadeIndex]);
+    if (hoverIntentReady || desktopHoverActive) {
+      indices.add((fadeIndex + 1) % count);
+    }
+    return indices;
+  }, [count, desktopHoverActive, fadeIndex, hoverIntentReady]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     setTouchPaused(true);
@@ -158,21 +191,25 @@ export default function PropertyCardGallery({
   if (isDesktop) {
     return (
       <div ref={rootRef} className="xpx-property-card-media relative overflow-hidden">
-        {images.map((originalSrc, i) => (
-          <CardImage
-            key={originalSrc}
-            originalSrc={originalSrc}
-            alt={alt}
-            loading={i === 0 ? 'eager' : 'lazy'}
-            draggable={false}
-            className="absolute inset-0 h-full w-full object-cover motion-reduce:transition-none"
-            style={{
-              opacity: i === fadeIndex ? 1 : 0,
-              transition: reducedMotion ? 'none' : `opacity ${FADE_MS}ms ease-out`,
-              zIndex: i === fadeIndex ? 1 : 0,
-            }}
-          />
-        ))}
+        {images.map((originalSrc, i) => {
+          if (!desktopRenderIndices.has(i)) return null;
+          return (
+            <CardImage
+              key={originalSrc}
+              originalSrc={originalSrc}
+              alt={i === fadeIndex ? alt : ''}
+              loading={i === 0 ? 'eager' : 'lazy'}
+              draggable={false}
+              aria-hidden={i !== fadeIndex}
+              className="absolute inset-0 h-full w-full object-cover motion-reduce:transition-none md:group-hover:scale-[1.03] transition-transform duration-500 ease-out"
+              style={{
+                opacity: i === fadeIndex ? 1 : 0,
+                transition: reducedMotion ? 'none' : `opacity ${FADE_MS}ms ease-out`,
+                zIndex: i === fadeIndex ? 1 : 0,
+              }}
+            />
+          );
+        })}
         {children}
       </div>
     );

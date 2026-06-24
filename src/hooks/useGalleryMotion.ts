@@ -52,6 +52,20 @@ export function useInViewport<T extends Element>(
   return visible;
 }
 
+export function usePageVisible(): boolean {
+  const [visible, setVisible] = useState(
+    () => typeof document === 'undefined' || !document.hidden,
+  );
+
+  useEffect(() => {
+    const sync = () => setVisible(!document.hidden);
+    document.addEventListener('visibilitychange', sync);
+    return () => document.removeEventListener('visibilitychange', sync);
+  }, []);
+
+  return visible;
+}
+
 export function useScrollPause(setPaused: (v: boolean) => void, debounceMs = 150): void {
   useEffect(() => {
     let timer: number | null = null;
