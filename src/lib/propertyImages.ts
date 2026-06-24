@@ -86,10 +86,15 @@ function buildResizedImageUrl(url: string, width: number, quality: number): stri
   return trimmed;
 }
 
+/** Resize-aware URL for property page hero at a given width. */
+export function propertyHeroImageUrl(url: string, width: number): string {
+  return buildResizedImageUrl(url, width, HERO_IMAGE_QUALITY);
+}
+
 /** Fallback `src` for property page hero — largest hero width. */
 export function propertyHeroImageSrc(url: string): string {
   const maxW = PROPERTY_HERO_IMAGE_WIDTHS[PROPERTY_HERO_IMAGE_WIDTHS.length - 1];
-  return buildResizedImageUrl(url, maxW, HERO_IMAGE_QUALITY);
+  return propertyHeroImageUrl(url, maxW);
 }
 
 /** Responsive srcset for property page hero images. */

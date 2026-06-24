@@ -387,6 +387,24 @@ export async function getPublicPropertyBySlug(slug: string): Promise<PublicPrope
   return { status: 'error', code: 'load_failed' };
 }
 
+/**
+ * Warm property data for navigation — seeds from grid row, hits cache, or deduped fetch.
+ * Safe to call from card hover/touch; no-op when already cached.
+ */
+export function prefetchPublicPropertyById(
+  id: string,
+  knownListing?: PublicPropertyListing | null,
+): void {
+  const trimmed = id.trim();
+  if (!trimmed) return;
+  if (findCachedListingById(trimmed)) return;
+  if (knownListing?.id === trimmed) {
+    cachePropertyById(knownListing);
+    return;
+  }
+  void getPublicPropertyById(trimmed);
+}
+
 /** Fetch a single active listing by id (current /property/:id routes). */
 export async function getPublicPropertyById(id: string): Promise<PublicPropertyFetchResult> {
   const trimmed = id.trim();

@@ -1,4 +1,4 @@
-import { memo, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import type { Property } from '../lib/database.types';
 import { computeXpressbnbStayScore } from '../lib/xpressbnbStayScore';
 import { openStayScoreInfo } from '../lib/stayScoreEducation';
@@ -8,6 +8,10 @@ import PropertyCardGallery from './PropertyCardGallery';
 import { snapshotFromProperty } from '../lib/savedListingsStorage';
 import { listPropertyImages } from '../lib/propertyImages';
 import { trackXpressEvent } from '../lib/analytics';
+import {
+  prefetchPropertyOnInteraction,
+  prefetchPropertyOnViewport,
+} from '../lib/propertyPrefetch';
 import {
   VerifiedShieldIcon,
   ImageGalleryIcon,
@@ -50,9 +54,31 @@ export default memo(function ConversionPropertyCard({
   tripQuery = '',
   className = '',
 }: ConversionPropertyCardProps) {
+  const cardRef = useRef<HTMLElement>(null);
   const swipeRef = useRef(false);
   const [isHovered, setIsHovered] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
+
+  useEffect(() => {
+    const node = cardRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          prefetchPropertyOnViewport();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px 0px', threshold: 0 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [property.id]);
+
+  const handlePrefetchInteraction = () => {
+    prefetchPropertyOnInteraction(property);
+  };
 
   const handleClick = () => {
     if (swipeRef.current) {
@@ -84,9 +110,14 @@ export default memo(function ConversionPropertyCard({
 
   return (
     <article
+      ref={cardRef}
       onClick={handleClick}
-      onMouseEnter={() => setIsHovered(true)}
+      onMouseEnter={() => {
+        setIsHovered(true);
+        handlePrefetchInteraction();
+      }}
       onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={handlePrefetchInteraction}
       role="link"
       tabIndex={0}
       onKeyDown={(e) => {

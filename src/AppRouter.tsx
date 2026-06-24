@@ -8,8 +8,9 @@ import { CookieConsentBanner } from './components/CookieConsent';
 import RouteFallback from './components/RouteFallback';
 import { closeHomeOverlay, getHomeOverlayPage } from './lib/navigation';
 import { markIntroPreloaderSeen, shouldShowIntroPreloader } from './lib/pwa';
+import { loadPropertyPageModule } from './lib/propertyRouteChunk';
 
-const PropertyPage = lazy(() => import('./pages/PropertyPage'));
+const PropertyPage = lazy(() => loadPropertyPageModule());
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'));
 const CityListingPage = lazy(() => import('./pages/CityListingPage'));
 const RishikeshStaysPage = lazy(() => import('./pages/RishikeshStaysPage'));
