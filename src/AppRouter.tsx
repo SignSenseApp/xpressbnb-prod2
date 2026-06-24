@@ -6,7 +6,7 @@ import InstallAppPrompt from './components/InstallAppPrompt';
 import NearbyLocationShell from './components/nearby/NearbyLocationShell';
 import { CookieConsentBanner } from './components/CookieConsent';
 import RouteFallback from './components/RouteFallback';
-import { closeHomeOverlay, getHomeOverlayPage } from './lib/navigation';
+import { closeHomeOverlay, getHomeOverlayPage, navigateTo, XPX_NAVIGATE_EVENT } from './lib/navigation';
 import { markIntroPreloaderSeen } from './lib/pwa';
 import { loadPropertyPageModule } from './lib/propertyRouteChunk';
 
@@ -51,13 +51,19 @@ export default function AppRouter() {
   const [locationKey, setLocationKey] = useState(() => syncLocation().key);
 
   useEffect(() => {
-    const handlePopState = () => {
+    const syncFromLocation = () => {
       const loc = syncLocation();
       setCurrentPath(loc.path);
       setLocationKey(loc.key);
     };
+    const handlePopState = () => syncFromLocation();
+    const handleXpxNavigate = () => syncFromLocation();
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener(XPX_NAVIGATE_EVENT, handleXpxNavigate);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener(XPX_NAVIGATE_EVENT, handleXpxNavigate);
+    };
   }, []);
 
   useEffect(() => {
@@ -76,19 +82,13 @@ export default function AppRouter() {
         (currentPath.startsWith('/auth') || currentPath === '/' || currentPath === '/host');
       if (shouldRedirectToDashboard) {
         const dashboardPath = `/host/${host.id}/dashboard/overview`;
-        window.history.pushState({}, '', dashboardPath);
-        const loc = syncLocation();
-        setCurrentPath(loc.path);
-        setLocationKey(loc.key);
+        navigateTo(dashboardPath, { replace: true });
       }
     }
   }, [user, host, sessionReady, currentPath, locationKey]);
 
   const handleNavigate = (path: string) => {
-    window.history.pushState({}, '', path);
-    const loc = syncLocation();
-    setCurrentPath(loc.path);
-    setLocationKey(loc.key);
+    navigateTo(path);
   };
 
   const renderContent = () => {
@@ -135,9 +135,7 @@ export default function AppRouter() {
         const page = match ? match[1] : 'overview';
 
         const handleHostNavigate = (newPage: string) => {
-          const newPath = `/host/${host.id}/dashboard/${newPage}`;
-          window.history.pushState({}, '', newPath);
-          setCurrentPath(newPath);
+          navigateTo(`/host/${host.id}/dashboard/${newPage}`);
         };
 
         return (
@@ -187,7 +185,9 @@ export default function AppRouter() {
 
   return (
     <NearbyLocationShell autoPrompt={isGuestMarketplace}>
-      <Suspense fallback={<RouteFallback />}>{renderContent()}</Suspense>
+      <Suspense fallback={<RouteFallback />}>
+        <div key={locationKey}>{renderContent()}</div>
+      </Suspense>
       <CookieConsentBanner />
       <Suspense fallback={null}>
         <StayScoreInfoSheet />

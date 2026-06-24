@@ -45,6 +45,7 @@ import {
 } from '../config/propertyDefaults';
 import { safeHostDisplayName } from '../lib/host';
 import { parseTripFromSearch } from '../lib/tripSearch';
+import { navigateTo } from '../lib/navigation';
 import { orchestratedScrollTo, orchestratedScrollToId } from '../lib/scrollOrchestrator';
 import { scrollToElement } from '../lib/smoothScroll';
 import { recordRecentlyViewed } from '../lib/recentlyViewed';
@@ -171,8 +172,7 @@ export default function PropertyPage() {
   }, []);
 
   const navigateHome = () => {
-    window.history.pushState({}, '', '/');
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigateTo('/');
   };
 
   const navigateBack = () => {
@@ -184,8 +184,7 @@ export default function PropertyPage() {
   };
 
   const navigateToPage = (page: string) => {
-    window.history.pushState({}, '', page);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigateTo(page);
   };
 
   const getOrCreateSessionId = () => {
@@ -408,6 +407,85 @@ export default function PropertyPage() {
     trackXpressEvent('booking_step_completed', { booking_step: 'guests' });
   }, []);
 
+  useEffect(() => {
+    if (!property || loading || !isMobileLayout) return;
+    if (!tripFromSearch.checkin || !tripFromSearch.checkout) return;
+    setSidebarForced(true);
+    const timer = window.setTimeout(() => {
+      scrollToBookingCalendar();
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [
+    property,
+    loading,
+    isMobileLayout,
+    tripFromSearch.checkin,
+    tripFromSearch.checkout,
+    scrollToBookingCalendar,
+  ]);
+
+  const renderBookingColumn = () => (
+    <>
+      {mountSidebar ? (
+        <>
+          <Suspense fallback={<SidebarFallback />}>
+            <PropertySidebar
+              property={property!}
+              checkIn={selectedCheckIn}
+              checkOut={selectedCheckOut}
+              nightlyTotal={totalPrice}
+              onDateRangeSelect={handleDateRangeSelect}
+              numGuests={numGuests}
+              onGuestsChange={handleGuestsChange}
+              hasValidDates={hasValidDates}
+              onCheckAvailability={handleCheckAvailability}
+              onRequestToBook={handleOpenBookingForm}
+              hideBookingCtas={showBooking}
+              onMakeOffer={() => setShowOfferModal(true)}
+              promoCode={featuredPromo?.code ?? null}
+              promoLabel={featuredPromo?.label ?? null}
+              initialCalendarCheckIn={tripFromSearch.checkin ?? null}
+              initialCalendarCheckOut={tripFromSearch.checkout ?? null}
+            />
+          </Suspense>
+          {showBooking && hasValidDates && (
+            <div
+              className="mt-5 rounded-3xl p-5 sm:p-6"
+              style={{
+                background: 'var(--xpx-surface)',
+                border: '1px solid var(--xpx-border-strong)',
+                boxShadow: '0 18px 56px rgba(15,23,42,0.10)',
+              }}
+            >
+              <p className="xpx-eyebrow mb-3">Request to book</p>
+              <Suspense
+                fallback={
+                  <div className="flex justify-center py-12" aria-hidden>
+                    <div className="w-10 h-10 border-4 border-xpx-warm border-t-transparent rounded-full animate-spin" />
+                  </div>
+                }
+              >
+                <BookingForm
+                  property={property!}
+                  onSuccess={({ bookingId }) => {
+                    navigateTo(`/booking/${bookingId}`);
+                  }}
+                  checkInDate={selectedCheckIn}
+                  checkOutDate={selectedCheckOut}
+                  calculatedPrice={totalPrice}
+                  numGuests={numGuests}
+                  onEditDates={handleEditDates}
+                />
+              </Suspense>
+            </div>
+          )}
+        </>
+      ) : (
+        <SidebarFallback />
+      )}
+    </>
+  );
+
   if (loading) {
     return (
       <div className="xpx-page">
@@ -544,7 +622,7 @@ export default function PropertyPage() {
         onHostLoginClick={() => navigateToPage('/auth/login')}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-5 xpx-property-page-main">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-5 xpx-property-page-main flex flex-col">
         {/* Top action row — Back link on the left, Share menu on the right. */}
         <div className="flex items-center justify-between gap-3">
           <button
@@ -647,13 +725,8 @@ export default function PropertyPage() {
           </div>
         </div>
 
-        {/* Image gallery */}
-        <div className="mt-3 sm:mt-4">
-          <PropertyGallery images={property.images ?? []} title={propertyTitle} />
-        </div>
-
-        {/* Two-column content + sticky sidebar */}
-        <div className="mt-7 sm:mt-10 grid lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px] gap-8 lg:gap-10 xl:gap-12 items-start">
+        {/* Two-column content + sticky sidebar — before gallery on mobile for instant booking */}
+        <div className="order-1 lg:order-2 mt-5 sm:mt-7 lg:mt-10 grid lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px] gap-8 lg:gap-10 xl:gap-12 items-start">
           <div className="min-w-0 space-y-9 sm:space-y-12">
             {/* 1. TITLE BLOCK */}
             <header>
@@ -1077,65 +1150,13 @@ export default function PropertyPage() {
               showBooking ? ' pb-28 lg:pb-0' : ''
             }`}
           >
-            {mountSidebar ? (
-              <>
-                <Suspense fallback={<SidebarFallback />}>
-                  <PropertySidebar
-                    property={property}
-                    checkIn={selectedCheckIn}
-                    checkOut={selectedCheckOut}
-                    nightlyTotal={totalPrice}
-                    onDateRangeSelect={handleDateRangeSelect}
-                    numGuests={numGuests}
-                    onGuestsChange={handleGuestsChange}
-                    hasValidDates={hasValidDates}
-                    onCheckAvailability={handleCheckAvailability}
-                    onRequestToBook={handleOpenBookingForm}
-                    hideBookingCtas={showBooking}
-                    onMakeOffer={() => setShowOfferModal(true)}
-                    promoCode={featuredPromo?.code ?? null}
-                    promoLabel={featuredPromo?.label ?? null}
-                    initialCalendarCheckIn={tripFromSearch.checkin ?? null}
-                    initialCalendarCheckOut={tripFromSearch.checkout ?? null}
-                  />
-                </Suspense>
-                {showBooking && hasValidDates && (
-                  <div
-                    className="mt-5 rounded-3xl p-5 sm:p-6"
-                    style={{
-                      background: 'var(--xpx-surface)',
-                      border: '1px solid var(--xpx-border-strong)',
-                      boxShadow: '0 18px 56px rgba(15,23,42,0.10)',
-                    }}
-                  >
-                    <p className="xpx-eyebrow mb-3">Request to book</p>
-                    <Suspense
-                      fallback={
-                        <div className="flex justify-center py-12" aria-hidden>
-                          <div className="w-10 h-10 border-4 border-xpx-warm border-t-transparent rounded-full animate-spin" />
-                        </div>
-                      }
-                    >
-                      <BookingForm
-                        property={property}
-                        onSuccess={({ bookingId }) => {
-                          window.history.pushState({}, '', `/booking/${bookingId}`);
-                          window.dispatchEvent(new PopStateEvent('popstate'));
-                        }}
-                        checkInDate={selectedCheckIn}
-                        checkOutDate={selectedCheckOut}
-                        calculatedPrice={totalPrice}
-                        numGuests={numGuests}
-                        onEditDates={handleEditDates}
-                      />
-                    </Suspense>
-                  </div>
-                )}
-              </>
-            ) : (
-              <SidebarFallback />
-            )}
+            {renderBookingColumn()}
           </aside>
+        </div>
+
+        {/* Image gallery — after booking on mobile; before content grid on desktop */}
+        <div className="order-2 lg:order-1 mt-4 sm:mt-5 lg:mt-3">
+          <PropertyGallery images={property.images ?? []} title={propertyTitle} />
         </div>
       </main>
 

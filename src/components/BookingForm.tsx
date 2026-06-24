@@ -15,7 +15,6 @@ import { applyDiscounts, findPromoCode, type PromoCodeDef } from '../lib/offers'
 import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
 import { parseInquirySubmitResult, type FrequentAmigoStatus } from '../lib/inquiryHostContact';
 import GuestPhoneOtpStep from './GuestPhoneOtpStep';
-import InquirySuccessModal from './InquirySuccessModal';
 import BookingProgressBar from './booking/BookingProgressBar';
 import type { BookingOtpVerifyResult } from '../lib/bookingOtp';
 import { normalizePhoneDigits } from '../lib/bookingOtp';
@@ -118,11 +117,7 @@ export default function BookingForm({
   });
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [bookingSuccess, setBookingSuccess] = useState(false);
-  const [completedBookingId, setCompletedBookingId] = useState<string | null>(null);
-  const [inquiryHostName, setInquiryHostName] = useState<string | null>(null);
-  const [inquiryHostPhone, setInquiryHostPhone] = useState<string | null>(null);
-  const [frequentAmigo, setFrequentAmigo] = useState<FrequentAmigoStatus | null>(null);
+  const inquirySubmittedRef = useRef(false);
 
   const [promoInput, setPromoInput] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<PromoCodeDef | null>(null);
@@ -224,11 +219,7 @@ export default function BookingForm({
     hostPhone: string,
     amigo?: FrequentAmigoStatus,
   ) => {
-    setCompletedBookingId(bookingId);
-    setInquiryHostName(hostName);
-    setInquiryHostPhone(hostPhone);
-    setFrequentAmigo(amigo ?? null);
-    setBookingSuccess(true);
+    inquirySubmittedRef.current = true;
 
     saveBookingConfirmationSnapshot({
       v: 1,
@@ -259,6 +250,12 @@ export default function BookingForm({
     });
 
     setLoading(false);
+    trackXpressEvent('inquiry_success', {
+      ...analyticsScope,
+      inquiry_type: 'book_pay_later',
+      booking_step: 'complete',
+    });
+    onSuccess({ bookingId });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -393,27 +390,6 @@ export default function BookingForm({
     }
   };
 
-  if (bookingSuccess && completedBookingId && inquiryHostName && inquiryHostPhone) {
-    return (
-      <div style={{ padding: '8px 0 4px' }}>
-        <InquirySuccessModal
-          variant="booking"
-          hostName={inquiryHostName}
-          hostPhone={inquiryHostPhone}
-          propertyTitle={property.title}
-          checkInLabel={checkInDate?.toLocaleDateString('en-IN') ?? ''}
-          checkOutLabel={checkOutDate?.toLocaleDateString('en-IN') ?? ''}
-          estimatedTotal={totalPrice}
-          includeDecoration={includeDecoration}
-          externalListings={property.external_listings}
-          frequentAmigo={frequentAmigo}
-          onViewConfirmation={() => onSuccess({ bookingId: completedBookingId })}
-          analyticsScope={analyticsScope}
-        />
-      </div>
-    );
-  }
-
   const guestCap = Math.max(1, property.max_guests || 1);
   const safeGuestCount = Math.min(Math.max(1, numGuests), guestCap);
   const hasDates = Boolean(checkInDate && checkOutDate);
@@ -436,14 +412,13 @@ export default function BookingForm({
         ...analyticsScope,
         booking_step: 'verify',
       });
-      orchestratedScrollTo('booking_submit', { highlight: true });
     }
     prevVerifiedRef.current = Boolean(phoneVerification);
   }, [phoneVerification, analyticsScope]);
 
   useEffect(() => {
     const onAbandon = () => {
-      if (bookingSuccess || loading) return;
+      if (inquirySubmittedRef.current || loading) return;
       if (!hasDates && !hasDetails && !phoneVerification) return;
       const step = !hasDates
         ? 'dates'
@@ -459,7 +434,7 @@ export default function BookingForm({
     };
     window.addEventListener('pagehide', onAbandon);
     return () => window.removeEventListener('pagehide', onAbandon);
-  }, [analyticsScope, bookingSuccess, hasDates, hasDetails, loading, phoneVerification]);
+  }, [analyticsScope, hasDates, hasDetails, loading, phoneVerification]);
 
   const bookingStep = phoneVerification
     ? 4

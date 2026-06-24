@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Header from '../components/Header';
 import SEOHead from '../components/SEOHead';
 import GuestTripConfirmation from '../components/GuestTripConfirmation';
@@ -7,6 +7,7 @@ import {
   loadBookingConfirmationSnapshot,
   type BookingConfirmationSnapshot,
 } from '../lib/bookingConfirmationStorage';
+import { navigateTo, XPX_NAVIGATE_EVENT } from '../lib/navigation';
 
 type LoadState =
   | { status: 'loading' }
@@ -17,8 +18,7 @@ const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function navigateToPage(page: string) {
-  window.history.pushState({}, '', page);
-  window.dispatchEvent(new PopStateEvent('popstate'));
+  navigateTo(page);
 }
 
 function parseBookingIdFromPath(): string | null {
@@ -28,12 +28,21 @@ function parseBookingIdFromPath(): string | null {
 }
 
 export default function BookingConfirmationPage() {
-  const bookingId = useMemo(() => parseBookingIdFromPath(), []);
+  const [bookingId, setBookingId] = useState(() => parseBookingIdFromPath());
   const [state, setState] = useState<LoadState>({ status: 'loading' });
 
+  useEffect(() => {
+    const syncId = () => setBookingId(parseBookingIdFromPath());
+    window.addEventListener('popstate', syncId);
+    window.addEventListener(XPX_NAVIGATE_EVENT, syncId);
+    return () => {
+      window.removeEventListener('popstate', syncId);
+      window.removeEventListener(XPX_NAVIGATE_EVENT, syncId);
+    };
+  }, []);
+
   const goHome = useCallback(() => {
-    window.history.pushState({}, '', '/');
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigateTo('/');
   }, []);
 
   // Live host decisions: when the host accepts/rejects, push the new

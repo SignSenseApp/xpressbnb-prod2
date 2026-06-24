@@ -7,6 +7,7 @@ import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStora
 import { parseInquirySubmitResult, type FrequentAmigoStatus } from '../lib/inquiryHostContact';
 import GuestPhoneOtpStep from './GuestPhoneOtpStep';
 import InquirySuccessModal from './InquirySuccessModal';
+import { navigateTo } from '../lib/navigation';
 import type { BookingOtpVerifyResult } from '../lib/bookingOtp';
 import { normalizePhoneDigits } from '../lib/bookingOtp';
 import {
@@ -245,8 +246,7 @@ export default function OfferModal({
 
   const goToConfirmation = () => {
     if (!completedBookingId) return;
-    window.history.pushState({}, '', `/booking/${completedBookingId}`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigateTo(`/booking/${completedBookingId}`);
     onClose();
   };
 

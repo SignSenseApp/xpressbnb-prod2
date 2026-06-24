@@ -1,6 +1,7 @@
 import { X, MapPin, Users, Bed, Bath, ChevronLeft, ChevronRight, Share2, Copy, Check, CheckCircle } from 'lucide-react';
 import type { Property } from '../lib/database.types';
 import BookingForm from './BookingForm';
+import { navigateTo } from '../lib/navigation';
 import PropertyMapView from './PropertyMapView';
 import { useMemo, useState } from 'react';
 import { getAmenityIcon } from '../lib/amenities';
@@ -303,8 +304,7 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                       property={property}
                       onSuccess={({ bookingId }) => {
                         onClose();
-                        window.history.pushState({}, '', `/booking/${bookingId}`);
-                        window.dispatchEvent(new PopStateEvent('popstate'));
+                        navigateTo(`/booking/${bookingId}`);
                       }}
                       checkInDate={defaultCheckIn}
                       checkOutDate={defaultCheckOut}
