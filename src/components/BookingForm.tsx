@@ -454,6 +454,14 @@ export default function BookingForm({
       onSubmit={handleSubmit}
       className="space-y-5 max-w-full overflow-x-hidden pb-[max(1rem,env(safe-area-inset-bottom))]"
     >
+      {numberOfDays > 0 && (
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-xl -mt-1">
+          <span className="text-sm text-gray-500">Total</span>
+          <span className="text-base font-bold text-gray-900 tabular-nums">
+            ₹{totalPrice.toLocaleString('en-IN')}
+          </span>
+        </div>
+      )}
       <BookingProgressBar currentStep={bookingStep} labels={[...BOOKING_STEP_LABELS]} />
       <BookingStepLabels
         currentStep={bookingStep}
