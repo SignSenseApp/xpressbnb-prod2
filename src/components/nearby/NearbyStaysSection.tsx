@@ -96,10 +96,10 @@ export default function NearbyStaysSection({
 
   const sectionSubtitle =
     phase === 'ready'
-      ? 'Curated homes around your location — no search needed'
+      ? 'Vacation rentals sorted by distance from you'
       : phase === 'fallback'
-        ? 'Exceptional stays within reach'
-        : 'Handpicked properties based on where you are';
+        ? 'Rentals in cities closest to you'
+        : 'Homes and apartments based on your area';
 
   return (
     <section id="nearby" className="scroll-mt-28 xpx-section" style={{ background: '#FAFAF8' }}>
@@ -135,7 +135,7 @@ export default function NearbyStaysSection({
                 style={{ background: '#059669' }}
               >
                 <Navigation className="h-3.5 w-3.5" />
-                Use my location
+                Use current location
               </button>
             ) : null}
           </div>
@@ -240,12 +240,12 @@ function NearbyLocationCTA({
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="text-lg font-extrabold text-xpx-text">
-          {blocked ? 'Location is off in your browser' : 'Discover stays around you'}
+          {blocked ? 'Location is turned off' : 'Show rentals near you'}
         </h3>
         <p className="mt-1.5 text-sm text-xpx-muted leading-relaxed">
           {blocked
-            ? 'Enable location in your browser settings to see curated homes near you — or explore our live destinations below.'
-            : 'Enable location once to instantly surface exceptional stays nearby. No manual search required.'}
+            ? 'Turn on location in your browser to see nearby homes — or pick a destination below.'
+            : 'Use your current location to see homes and apartments nearby, or search by city instead.'}
         </p>
       </div>
       {onEnable && !blocked && (
@@ -256,7 +256,7 @@ function NearbyLocationCTA({
           style={{ background: '#059669' }}
         >
           <Navigation className="h-4 w-4" />
-          Enable location
+          Use current location
         </button>
       )}
     </div>

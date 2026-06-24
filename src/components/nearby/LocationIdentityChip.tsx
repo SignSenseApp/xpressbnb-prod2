@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ChevronDown, MapPin, Navigation, RefreshCw } from 'lucide-react';
 import { useNearbyLocationOptional } from '../../contexts/NearbyLocationContext';
 import { LIVE_EXPLORE_CITIES } from '../../config/exploreCities';
+import { navigateTo } from '../../lib/navigation';
 
 type LocationIdentityChipProps = {
   variant?: 'light' | 'dark';
@@ -9,7 +10,7 @@ type LocationIdentityChipProps = {
 };
 
 /**
- * Persistent location identity — Airbnb-style "📍 Delhi" chip in header areas.
+ * Header location chip — VRBO-style city label with destination picker fallback.
  */
 export default function LocationIdentityChip({
   variant = 'dark',
@@ -34,8 +35,7 @@ export default function LocationIdentityChip({
 
   const handleExploreCity = (slug: string) => {
     setMenuOpen(false);
-    window.history.pushState({}, '', `/stays/${slug}`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigateTo(`/stays/${slug}`);
   };
 
   return (
@@ -55,7 +55,7 @@ export default function LocationIdentityChip({
       >
         <MapPin className="h-3.5 w-3.5 shrink-0" style={{ color: isLight ? '#6ee7b7' : '#059669' }} />
         <span className="truncate">
-          {displayCity ? displayCity : permission === 'granted' ? 'Near you' : 'Set location'}
+          {displayCity ? displayCity : permission === 'granted' ? 'Nearby' : 'Add location'}
         </span>
         <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-70" />
       </button>
@@ -84,7 +84,7 @@ export default function LocationIdentityChip({
                 className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-xpx-text hover:bg-slate-50"
               >
                 <RefreshCw className={`h-4 w-4 text-[#059669] ${isLoading ? 'animate-spin' : ''}`} />
-                Refresh location
+                Update location
               </button>
             ) : (
               <button
@@ -97,12 +97,12 @@ export default function LocationIdentityChip({
                 className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-xpx-text hover:bg-slate-50"
               >
                 <Navigation className="h-4 w-4 text-[#059669]" />
-                Use my location
+                Use current location
               </button>
             )}
 
-            <p className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: chipMuted }}>
-              Explore cities
+            <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider" style={{ color: chipMuted }}>
+              Popular destinations
             </p>
             {LIVE_EXPLORE_CITIES.slice(0, 5).map((city) => (
               <button
@@ -121,12 +121,11 @@ export default function LocationIdentityChip({
               role="menuitem"
               onClick={() => {
                 setMenuOpen(false);
-                window.history.pushState({}, '', '/explore');
-                window.dispatchEvent(new PopStateEvent('popstate'));
+                navigateTo('/explore');
               }}
               className="mt-1 flex w-full items-center justify-center rounded-xl px-3 py-2 text-xs font-semibold text-[#059669] hover:bg-emerald-50"
             >
-              View all destinations
+              Search all destinations
             </button>
           </div>
         </>

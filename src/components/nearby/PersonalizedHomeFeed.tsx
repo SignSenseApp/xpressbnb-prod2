@@ -120,10 +120,12 @@ export default function PersonalizedHomeFeed({
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-xpx-text truncate">
               {getTimeGreeting()}
-              {cityName ? `, ${cityName}` : ''} 👋
+              {cityName ? `, ${cityName}` : ''}
             </h1>
             <p className="text-sm text-xpx-muted mt-0.5 truncate">
-              Exceptional stays curated for you
+              {cityName
+                ? `Vacation rentals near ${cityName}`
+                : 'Homes and apartments near you'}
             </p>
           </div>
           <LocationIdentityChip variant="dark" />

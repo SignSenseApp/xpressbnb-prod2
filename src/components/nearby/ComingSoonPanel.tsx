@@ -42,7 +42,8 @@ export default function ComingSoonPanel({
           We&apos;re coming soon
         </h3>
         <p className="mt-3 text-sm sm:text-[15px] leading-relaxed text-xpx-muted max-w-xl">
-          We&apos;re expanding to {area} and carefully onboarding exceptional stays.
+          We&apos;re adding more vacation rentals in {area}. In the meantime, browse homes in
+          cities we already serve.
         </p>
 
         <div className="mt-6 flex flex-col sm:flex-row gap-3">
