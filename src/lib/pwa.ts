@@ -38,7 +38,7 @@ export function registerServiceWorker(): void {
     window.location.reload();
   });
 
-  window.addEventListener('load', () => {
+  const register = () => {
     navigator.serviceWorker
       .register('/sw.js')
       .then((registration) => {
@@ -57,7 +57,13 @@ export function registerServiceWorker(): void {
       .catch(() => {
         /* non-fatal — site still works without SW */
       });
-  });
+  };
+
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(() => register(), { timeout: 4000 });
+  } else {
+    window.addEventListener('load', register, { once: true });
+  }
 }
 
 export function attachInstallPromptListener(onAvailable?: () => void): void {

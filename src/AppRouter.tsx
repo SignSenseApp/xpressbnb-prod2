@@ -1,38 +1,40 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useAuth } from './contexts/AuthContext';
-import PropertyPage from './pages/PropertyPage';
-import BookingConfirmationPage from './pages/BookingConfirmationPage';
-import CityListingPage from './pages/CityListingPage';
-import RishikeshStaysPage from './pages/RishikeshStaysPage';
-import ExploreCitiesPage from './pages/ExploreCitiesPage';
-import SavedListingsPage from './pages/SavedListingsPage';
 import NewHomepage from './components/NewHomepage';
-import AuthRouter from './pages/auth/AuthRouter';
-import HostDashboardLayout from './pages/host/HostDashboardLayout';
-import OverviewPage from './pages/host/OverviewPage';
-import PropertiesPage from './pages/host/PropertiesPage';
-import BookingsPage from './pages/host/BookingsPage';
-import SettingsPage from './pages/host/SettingsPage';
-import CalendarPage from './pages/host/CalendarPage';
-import CalendarSyncPage from './pages/host/CalendarSyncPage';
-import EarningsPage from './pages/host/EarningsPage';
-import AnalyticsPage from './pages/host/AnalyticsPage';
-import ReviewsPage from './pages/host/ReviewsPage';
-import SubscriptionPage from './pages/host/SubscriptionPage';
-import SupportPage from './pages/host/SupportPage';
-import ImportPage from './pages/host/ImportPage';
-import OpsConsolePage from './pages/ops/OpsConsolePage';
-import AboutPage from './components/AboutPage';
-import BlogPage from './components/BlogPage';
-import PrivacyPolicyPage from './components/PrivacyPolicyPage';
-import TermsPage from './components/TermsPage';
 import Preloader from './components/Preloader';
 import MobileBottomNav from './components/MobileBottomNav';
 import InstallAppPrompt from './components/InstallAppPrompt';
 import { CookieConsentBanner } from './components/CookieConsent';
-import StayScoreInfoSheet from './components/StayScoreInfoSheet';
-import StayScoreEducationTooltip from './components/StayScoreEducationTooltip';
+import RouteFallback from './components/RouteFallback';
 import { closeHomeOverlay, getHomeOverlayPage } from './lib/navigation';
+
+const PropertyPage = lazy(() => import('./pages/PropertyPage'));
+const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'));
+const CityListingPage = lazy(() => import('./pages/CityListingPage'));
+const RishikeshStaysPage = lazy(() => import('./pages/RishikeshStaysPage'));
+const ExploreCitiesPage = lazy(() => import('./pages/ExploreCitiesPage'));
+const SavedListingsPage = lazy(() => import('./pages/SavedListingsPage'));
+const AuthRouter = lazy(() => import('./pages/auth/AuthRouter'));
+const OpsConsolePage = lazy(() => import('./pages/ops/OpsConsolePage'));
+const AboutPage = lazy(() => import('./components/AboutPage'));
+const BlogPage = lazy(() => import('./components/BlogPage'));
+const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
+const TermsPage = lazy(() => import('./components/TermsPage'));
+const StayScoreInfoSheet = lazy(() => import('./components/StayScoreInfoSheet'));
+const StayScoreEducationTooltip = lazy(() => import('./components/StayScoreEducationTooltip'));
+const HostDashboardLayout = lazy(() => import('./pages/host/HostDashboardLayout'));
+const OverviewPage = lazy(() => import('./pages/host/OverviewPage'));
+const PropertiesPage = lazy(() => import('./pages/host/PropertiesPage'));
+const BookingsPage = lazy(() => import('./pages/host/BookingsPage'));
+const SettingsPage = lazy(() => import('./pages/host/SettingsPage'));
+const CalendarPage = lazy(() => import('./pages/host/CalendarPage'));
+const CalendarSyncPage = lazy(() => import('./pages/host/CalendarSyncPage'));
+const EarningsPage = lazy(() => import('./pages/host/EarningsPage'));
+const AnalyticsPage = lazy(() => import('./pages/host/AnalyticsPage'));
+const ReviewsPage = lazy(() => import('./pages/host/ReviewsPage'));
+const SubscriptionPage = lazy(() => import('./pages/host/SubscriptionPage'));
+const SupportPage = lazy(() => import('./pages/host/SupportPage'));
+const ImportPage = lazy(() => import('./pages/host/ImportPage'));
 
 function syncLocation() {
   return {
@@ -80,9 +82,6 @@ export default function AppRouter() {
 
   useEffect(() => {
     if (!loading && user && host) {
-      // Never bounce a recovering user away from /auth/reset-password — Supabase
-      // creates a temporary session for PASSWORD_RECOVERY and we must let the
-      // user complete the form before redirecting anywhere else.
       const isResettingPassword = currentPath.startsWith('/auth/reset-password');
       const isOpsConsole = currentPath.startsWith('/ops');
       const homeOverlay = getHomeOverlayPage();
@@ -151,9 +150,6 @@ export default function AppRouter() {
       return <CityListingPage city={citySlug} />;
     }
 
-    // Authenticated, but the host profile could not be loaded/created. Surface a
-    // retry instead of silently falling through to the public homepage (which is
-    // what made login "do nothing"). Public routes above still render normally.
     if (user && !host) {
       return <HostProfileError onRetry={() => window.location.reload()} onSignOut={signOut} />;
     }
@@ -163,7 +159,7 @@ export default function AppRouter() {
         const match = currentPath.match(/\/host\/[^/]+\/dashboard\/(.+)/);
         const page = match ? match[1] : 'overview';
 
-        const handleNavigate = (newPage: string) => {
+        const handleHostNavigate = (newPage: string) => {
           setIsRouteLoading(true);
           const newPath = `/host/${host.id}/dashboard/${newPage}`;
           window.history.pushState({}, '', newPath);
@@ -172,11 +168,11 @@ export default function AppRouter() {
         };
 
         return (
-          <HostDashboardLayout currentPage={page} onNavigate={handleNavigate} hostId={host.id}>
-            {page === 'overview' && <OverviewPage onNavigate={handleNavigate} />}
+          <HostDashboardLayout currentPage={page} onNavigate={handleHostNavigate} hostId={host.id}>
+            {page === 'overview' && <OverviewPage onNavigate={handleHostNavigate} />}
             {page === 'properties' && <PropertiesPage />}
             {page === 'calendar' && <CalendarPage hostId={host.id} />}
-            {page === 'bookings' && <BookingsPage onNavigate={handleNavigate} />}
+            {page === 'bookings' && <BookingsPage onNavigate={handleHostNavigate} />}
             {page === 'calendar-sync' && <CalendarSyncPage />}
             {page === 'import' && <ImportPage />}
             {page === 'earnings' && <EarningsPage />}
@@ -210,10 +206,12 @@ export default function AppRouter() {
   return (
     <>
       <Preloader isLoading={showPreloader} />
-      {renderContent()}
+      <Suspense fallback={<RouteFallback />}>{renderContent()}</Suspense>
       <CookieConsentBanner />
-      <StayScoreInfoSheet />
-      <StayScoreEducationTooltip />
+      <Suspense fallback={null}>
+        <StayScoreInfoSheet />
+        <StayScoreEducationTooltip />
+      </Suspense>
       <InstallAppPrompt hidden={currentPath.startsWith('/booking/')} />
       <MobileBottomNav currentPath={currentPath} onNavigate={handleNavigate} />
     </>

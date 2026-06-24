@@ -115,6 +115,7 @@ export default function PropertyCardGallery({
           alt={alt}
           loading="lazy"
           decoding="async"
+          fetchPriority="high"
           className="h-full w-full object-cover transition-transform duration-500 ease-out motion-reduce:transition-none md:group-hover:scale-[1.03]"
         />
         {children}
@@ -130,8 +131,9 @@ export default function PropertyCardGallery({
             key={src}
             src={src}
             alt={alt}
-            loading={i === 0 ? 'lazy' : 'lazy'}
+            loading={i === 0 ? 'eager' : 'lazy'}
             decoding="async"
+            fetchPriority={i === 0 ? 'high' : 'low'}
             draggable={false}
             className="absolute inset-0 h-full w-full object-cover motion-reduce:transition-none"
             style={{
@@ -168,8 +170,9 @@ export default function PropertyCardGallery({
               key={`${slideIndex}-${i}`}
               src={resolveSlideUrl(images, slideIndex)}
               alt={alt}
-              loading={i <= 2 ? 'eager' : 'lazy'}
+              loading={i <= 1 ? 'eager' : 'lazy'}
               decoding="async"
+              fetchPriority={i === 1 ? 'high' : 'low'}
               draggable={false}
               className="h-full w-full shrink-0 object-cover select-none"
               style={{ width: gallery.slideWidth || '100%' }}

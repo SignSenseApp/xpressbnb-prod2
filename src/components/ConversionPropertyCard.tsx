@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { memo, useRef, useState } from 'react';
 import type { Property } from '../lib/database.types';
 import { computeXpressbnbStayScore } from '../lib/xpressbnbStayScore';
 import { openStayScoreInfo } from '../lib/stayScoreEducation';
@@ -45,7 +45,7 @@ function formatLocation(city: string, state: string): string {
  * Finalized XpressBNB property card — pixel-accurate to product spec.
  * Used in city listings, saved page, and homepage featured carousel.
  */
-export default function ConversionPropertyCard({
+export default memo(function ConversionPropertyCard({
   property,
   tripQuery = '',
   className = '',
@@ -198,7 +198,7 @@ export default function ConversionPropertyCard({
       </div>
     </article>
   );
-}
+});
 
 function SpecCell({
   icon,
