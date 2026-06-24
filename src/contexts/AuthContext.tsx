@@ -33,6 +33,11 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   host: Host | null;
+  /** True after the initial `getSession()` call completes (guest or signed-in). */
+  sessionReady: boolean;
+  /** True while the signed-in user's host profile is being loaded or created. */
+  hostLoading: boolean;
+  /** @deprecated Prefer `sessionReady` / `hostLoading`. True until session resolves or host profile finishes loading. */
   loading: boolean;
   signUp: (email: string, password: string, name: string, phone: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -92,16 +97,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [host, setHost] = useState<Host | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [sessionReady, setSessionReady] = useState(false);
+  const [hostLoading, setHostLoading] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setSessionReady(true);
       if (session?.user) {
-        loadHostProfile(session.user.id);
-      } else {
-        setLoading(false);
+        setHostLoading(true);
+        void loadHostProfile(session.user.id);
       }
     });
 
@@ -113,11 +119,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setSession(session);
       setUser(session?.user ?? null);
+      setSessionReady(true);
       if (session?.user) {
-        loadHostProfile(session.user.id);
+        setHostLoading(true);
+        void loadHostProfile(session.user.id);
       } else {
         setHost(null);
-        setLoading(false);
+        setHostLoading(false);
       }
     });
 
@@ -197,7 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logSupabaseError('Error loading host profile', error);
       setHost(null);
     } finally {
-      setLoading(false);
+      setHostLoading(false);
     }
   };
 
@@ -298,7 +306,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         session,
         host,
-        loading,
+        sessionReady,
+        hostLoading,
+        loading: !sessionReady || hostLoading,
         signUp,
         signIn,
         signInWithGoogle,

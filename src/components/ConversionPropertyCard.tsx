@@ -8,6 +8,7 @@ import PropertyCardGallery from './PropertyCardGallery';
 import { snapshotFromProperty } from '../lib/savedListingsStorage';
 import { listPropertyImages } from '../lib/propertyImages';
 import { trackXpressEvent } from '../lib/analytics';
+import { formatEmotionalNearbyBadge } from '../lib/nearbyDistanceCopy';
 import {
   prefetchPropertyOnInteraction,
   prefetchPropertyOnViewport,
@@ -32,6 +33,12 @@ interface ConversionPropertyCardProps {
   tripQuery?: string;
   /** Optional layout classes (e.g. homepage carousel snap widths) */
   className?: string;
+  /** Distance from user when shown in nearby context */
+  nearbyDistanceKm?: number;
+  /** Analytics source for nearby funnel */
+  nearbySource?: string;
+  /** User city for emotional distance copy */
+  userCity?: string | null;
 }
 
 function countImages(images: Property['images']): number {
@@ -53,6 +60,9 @@ export default memo(function ConversionPropertyCard({
   property,
   tripQuery = '',
   className = '',
+  nearbyDistanceKm,
+  nearbySource,
+  userCity,
 }: ConversionPropertyCardProps) {
   const cardRef = useRef<HTMLElement>(null);
   const swipeRef = useRef(false);
@@ -89,9 +99,28 @@ export default memo(function ConversionPropertyCard({
       property_id: property.id,
       property_slug: property.slug ?? undefined,
       city: property.city,
+      ...(nearbyDistanceKm != null
+        ? {
+            nearby_source: nearbySource ?? 'nearby',
+            distance_km_bucket: formatEmotionalNearbyBadge(nearbyDistanceKm, { userCity }).distanceKmBucket,
+          }
+        : {}),
     });
+    if (nearbyDistanceKm != null) {
+      trackXpressEvent('nearby_card_clicked', {
+        property_id: property.id,
+        property_slug: property.slug ?? undefined,
+        city: property.city,
+        nearby_source: nearbySource ?? 'nearby',
+        distance_km_bucket: formatEmotionalNearbyBadge(nearbyDistanceKm, { userCity }).distanceKmBucket,
+      });
+    }
     const q = tripQuery.startsWith('?') ? tripQuery : tripQuery ? `?${tripQuery}` : '';
-    window.history.pushState({}, '', `/property/${property.id}${q}`);
+    const nearbyParam =
+      nearbyDistanceKm != null
+        ? `${q ? '&' : '?'}nearby=${encodeURIComponent(nearbySource ?? 'nearby')}`
+        : '';
+    window.history.pushState({}, '', `/property/${property.id}${q}${nearbyParam}`);
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
@@ -99,6 +128,10 @@ export default memo(function ConversionPropertyCard({
   const imageCount = countImages(property.images);
   const stayScore = computeXpressbnbStayScore(property);
   const locationLabel = formatLocation(property.city, property.state);
+  const nearbyBadge =
+    nearbyDistanceKm != null
+      ? formatEmotionalNearbyBadge(nearbyDistanceKm, { userCity })
+      : null;
   const guests = property.max_guests ?? 0;
   const bedrooms = property.bedrooms ?? 0;
   const bathrooms = property.bathrooms ?? 0;
@@ -140,6 +173,22 @@ export default memo(function ConversionPropertyCard({
             <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-[#16A34A] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
               <VerifiedShieldIcon className="h-3.5 w-3.5" />
               Verified
+            </span>
+          </div>
+        )}
+
+        {nearbyBadge && (
+          <div className="absolute left-3 top-12 z-10 max-w-[calc(100%-5rem)]">
+            <span
+              className="inline-flex flex-col rounded-full px-2.5 py-1 text-[10px] font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+              style={{ background: 'rgba(5,150,105,0.92)' }}
+            >
+              <span>{nearbyBadge.primary}</span>
+              {(nearbyBadge.secondary || nearbyBadge.emotionalTag) && (
+                <span className="font-medium opacity-90">
+                  {nearbyBadge.secondary ?? nearbyBadge.emotionalTag}
+                </span>
+              )}
             </span>
           </div>
         )}

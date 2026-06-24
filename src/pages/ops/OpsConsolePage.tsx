@@ -79,7 +79,7 @@ function propertyHref(id: string, slug: string | null) {
 }
 
 export default function OpsConsolePage({ onNavigate }: OpsConsolePageProps) {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, sessionReady, signOut } = useAuth();
   const [snapshot, setSnapshot] = useState<OpsSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,12 +103,12 @@ export default function OpsConsolePage({ onNavigate }: OpsConsolePageProps) {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && user) {
+    if (sessionReady && user) {
       void load();
-    } else if (!authLoading && !user) {
+    } else if (sessionReady && !user) {
       setLoading(false);
     }
-  }, [authLoading, user, load]);
+  }, [sessionReady, user, load]);
 
   const handleDeactivate = async (propertyId: string, title: string) => {
     const ok = window.confirm(
@@ -125,7 +125,7 @@ export default function OpsConsolePage({ onNavigate }: OpsConsolePageProps) {
     await load();
   };
 
-  if (authLoading) {
+  if (!sessionReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <RefreshCw className="w-8 h-8 animate-spin text-emerald-600" />

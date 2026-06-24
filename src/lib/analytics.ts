@@ -1,6 +1,11 @@
-/** GA4 funnel events — no PII. Measurement ID is configured in index.html. */
+/** GA4 funnel events — no PII. gtag loads deferred via initDeferredAnalytics(). */
+
+import type { CookieConsentState } from './cookieConsent';
 
 export const GA4_MEASUREMENT_ID = 'G-HLZN3RJKTN';
+
+/** Google Ads conversion tag — configured when marketing cookie consent is granted. */
+export const GOOGLE_ADS_ID = 'AW-17923088071';
 
 export type XpressEventName =
   | 'property_view'
@@ -21,7 +26,26 @@ export type XpressEventName =
   | 'property_load_failed'
   | 'property_list_load_failed'
   | 'pwa_update_available'
-  | 'pwa_update_applied';
+  | 'pwa_update_applied'
+  | 'location_prompt_shown'
+  | 'location_permission_granted'
+  | 'location_permission_denied'
+  | 'nearby_results_loaded'
+  | 'nearby_fallback_shown'
+  | 'nearby_city_detected'
+  | 'nearby_card_clicked'
+  | 'nearby_booking_started'
+  | 'nearby_booking_completed'
+  | 'auto_scroll_triggered'
+  | 'booking_step_completed'
+  | 'booking_abandonment'
+  | 'nearby_feed_viewed'
+  | 'map_opened'
+  | 'map_property_clicked'
+  | 'property_recommended'
+  | 'destination_recommended'
+  | 'booking_progress_step'
+  | 'nearby_returning_user';
 
 export type InquiryType = 'book_pay_later' | 'make_offer';
 
@@ -39,6 +63,11 @@ export type XpressEventParams = {
   booking_step?: string;
   error_category?: string;
   response_time_bucket?: string;
+  distance_km_bucket?: string;
+  nearby_source?: string;
+  abandonment_step?: string;
+  feed_rail?: string;
+  recommendation_type?: string;
 };
 
 declare global {
@@ -46,6 +75,141 @@ declare global {
     gtag?: (...args: unknown[]) => void;
     dataLayer?: unknown[];
   }
+}
+
+type GtagLoadOptions = {
+  ga4: boolean;
+  ads: boolean;
+};
+
+let gtagScriptLoaded = false;
+let gtagScriptLoading = false;
+let gtagLoadAborted = false;
+let gtagLoadScheduled = false;
+let pendingLoad: GtagLoadOptions = { ga4: false, ads: false };
+const configuredIds = new Set<string>();
+
+/** In-memory gtag stub — queues commands until googletagmanager.com script loads. */
+export function ensureGtagStub(): void {
+  if (typeof window === 'undefined') return;
+  window.dataLayer = window.dataLayer || [];
+  if (typeof window.gtag !== 'function') {
+    window.gtag = function gtag(...args: unknown[]) {
+      window.dataLayer?.push(args);
+    };
+  }
+}
+
+function mergePendingLoad(options: GtagLoadOptions): void {
+  pendingLoad = {
+    ga4: pendingLoad.ga4 || options.ga4,
+    ads: pendingLoad.ads || options.ads,
+  };
+}
+
+function scheduleDeferredGtagLoad(options: GtagLoadOptions): void {
+  if (typeof window === 'undefined' || gtagLoadAborted) return;
+  if (!options.ga4 && !options.ads) return;
+
+  mergePendingLoad(options);
+
+  if (gtagScriptLoaded) {
+    applyGtagConfigs(pendingLoad);
+    return;
+  }
+
+  if (gtagLoadScheduled) return;
+  gtagLoadScheduled = true;
+
+  const run = () => {
+    if (gtagLoadAborted) return;
+    void loadGtagScript();
+  };
+
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(run, { timeout: 4000 });
+  } else {
+    window.addEventListener('load', () => window.setTimeout(run, 1), { once: true });
+  }
+}
+
+function applyGtagConfigs(options: GtagLoadOptions): void {
+  if (typeof window.gtag !== 'function') return;
+
+  if (options.ga4 && !configuredIds.has(GA4_MEASUREMENT_ID)) {
+    window.gtag('config', GA4_MEASUREMENT_ID);
+    configuredIds.add(GA4_MEASUREMENT_ID);
+  }
+
+  if (options.ads && !configuredIds.has(GOOGLE_ADS_ID)) {
+    window.gtag('config', GOOGLE_ADS_ID, { anonymize_ip: true });
+    configuredIds.add(GOOGLE_ADS_ID);
+  }
+}
+
+async function loadGtagScript(): Promise<void> {
+  if (gtagScriptLoaded || gtagScriptLoading || gtagLoadAborted) return;
+  if (!pendingLoad.ga4 && !pendingLoad.ads) return;
+
+  gtagScriptLoading = true;
+  ensureGtagStub();
+
+  const loaderId = pendingLoad.ga4 ? GA4_MEASUREMENT_ID : GOOGLE_ADS_ID;
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${loaderId}`;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('gtag.js failed to load'));
+      document.head.appendChild(script);
+    });
+
+    window.gtag!('js', new Date());
+    applyGtagConfigs(pendingLoad);
+    gtagScriptLoaded = true;
+  } catch {
+    /* non-fatal — analytics must never break booking */
+  } finally {
+    gtagScriptLoading = false;
+  }
+}
+
+/** Prevent a scheduled idle load when the user opts out of analytics. */
+export function abortDeferredGtagLoad(): void {
+  gtagLoadAborted = true;
+}
+
+/** Apply cookie consent to GA4 / Google Ads loading (called from cookieConsent). */
+export function applyGtagConsent(analytics: boolean, marketing: boolean): void {
+  ensureGtagStub();
+
+  if (!analytics) {
+    abortDeferredGtagLoad();
+    return;
+  }
+
+  gtagLoadAborted = false;
+  scheduleDeferredGtagLoad({ ga4: true, ads: marketing });
+}
+
+/**
+ * Boot-time analytics init — stub gtag immediately (no network), load library on idle.
+ * Called from initCookieConsent() before React render.
+ */
+export function initDeferredAnalytics(stored: CookieConsentState | null): void {
+  ensureGtagStub();
+
+  if (stored) {
+    if (stored.analytics) {
+      applyGtagConsent(stored.analytics, stored.marketing);
+    }
+    return;
+  }
+
+  // No consent decision yet — defer GA4 off the critical path; Ads wait for marketing consent.
+  scheduleDeferredGtagLoad({ ga4: true, ads: false });
 }
 
 export function getDeviceClass(): DeviceClass {
@@ -91,7 +255,9 @@ export function trackXpressEvent(
   params?: Partial<XpressEventParams>,
 ): void {
   try {
-    if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
+    if (typeof window === 'undefined') return;
+    ensureGtagStub();
+    if (typeof window.gtag !== 'function') return;
 
     const payload: Record<string, string> = {
       device_class: getDeviceClass(),

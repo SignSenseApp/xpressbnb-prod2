@@ -1,13 +1,13 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import NewHomepage from './components/NewHomepage';
-import Preloader from './components/Preloader';
 import MobileBottomNav from './components/MobileBottomNav';
 import InstallAppPrompt from './components/InstallAppPrompt';
+import NearbyLocationShell from './components/nearby/NearbyLocationShell';
 import { CookieConsentBanner } from './components/CookieConsent';
 import RouteFallback from './components/RouteFallback';
 import { closeHomeOverlay, getHomeOverlayPage } from './lib/navigation';
-import { markIntroPreloaderSeen, shouldShowIntroPreloader } from './lib/pwa';
+import { markIntroPreloaderSeen } from './lib/pwa';
 import { loadPropertyPageModule } from './lib/propertyRouteChunk';
 
 const PropertyPage = lazy(() => loadPropertyPageModule());
@@ -46,7 +46,7 @@ function syncLocation() {
 }
 
 export default function AppRouter() {
-  const { user, host, loading, signOut } = useAuth();
+  const { user, host, sessionReady, hostLoading, signOut } = useAuth();
   const [currentPath, setCurrentPath] = useState(() => syncLocation().path);
   const [locationKey, setLocationKey] = useState(() => syncLocation().key);
 
@@ -61,13 +61,11 @@ export default function AppRouter() {
   }, []);
 
   useEffect(() => {
-    if (!loading) {
-      markIntroPreloaderSeen();
-    }
-  }, [loading]);
+    markIntroPreloaderSeen();
+  }, []);
 
   useEffect(() => {
-    if (!loading && user && host) {
+    if (sessionReady && user && host) {
       const isResettingPassword = currentPath.startsWith('/auth/reset-password');
       const isOpsConsole = currentPath.startsWith('/ops');
       const homeOverlay = getHomeOverlayPage();
@@ -84,14 +82,7 @@ export default function AppRouter() {
         setLocationKey(loc.key);
       }
     }
-  }, [user, host, loading, currentPath, locationKey]);
-
-  if (loading) {
-    if (shouldShowIntroPreloader()) {
-      return <Preloader isLoading />;
-    }
-    return <RouteFallback />;
-  }
+  }, [user, host, sessionReady, currentPath, locationKey]);
 
   const handleNavigate = (path: string) => {
     window.history.pushState({}, '', path);
@@ -135,12 +126,11 @@ export default function AppRouter() {
       return <CityListingPage city={citySlug} />;
     }
 
-    if (user && !host) {
-      return <HostProfileError onRetry={() => window.location.reload()} onSignOut={signOut} />;
-    }
-
-    if (user && host) {
-      if (currentPath.startsWith('/host/')) {
+    if (currentPath.startsWith('/host/')) {
+      if (!sessionReady || hostLoading) {
+        return <RouteFallback />;
+      }
+      if (user && host) {
         const match = currentPath.match(/\/host\/[^/]+\/dashboard\/(.+)/);
         const page = match ? match[1] : 'overview';
 
@@ -169,6 +159,10 @@ export default function AppRouter() {
       }
     }
 
+    if (sessionReady && user && !host && !hostLoading) {
+      return <HostProfileError onRetry={() => window.location.reload()} onSignOut={signOut} />;
+    }
+
     const homeOverlay = getHomeOverlayPage();
     if (homeOverlay === 'about') {
       return <AboutPage onClose={closeHomeOverlay} />;
@@ -186,8 +180,13 @@ export default function AppRouter() {
     return <NewHomepage />;
   };
 
+  const isGuestMarketplace =
+    !currentPath.startsWith('/host/') &&
+    !currentPath.startsWith('/ops') &&
+    !currentPath.startsWith('/auth');
+
   return (
-    <>
+    <NearbyLocationShell autoPrompt={isGuestMarketplace}>
       <Suspense fallback={<RouteFallback />}>{renderContent()}</Suspense>
       <CookieConsentBanner />
       <Suspense fallback={null}>
@@ -196,7 +195,7 @@ export default function AppRouter() {
       </Suspense>
       <InstallAppPrompt hidden={currentPath.startsWith('/booking/')} />
       <MobileBottomNav currentPath={currentPath} onNavigate={handleNavigate} />
-    </>
+    </NearbyLocationShell>
   );
 }
 

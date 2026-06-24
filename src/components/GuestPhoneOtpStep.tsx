@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Loader2, Phone, ShieldCheck } from 'lucide-react';
 import {
   BOOKING_OTP_CODE_LENGTH,
@@ -22,6 +22,8 @@ export type GuestPhoneOtpStepProps = {
 
 type Phase = 'phone' | 'otp' | 'verified';
 
+const AUTO_SEND_DEBOUNCE_MS = 500;
+
 export default function GuestPhoneOtpStep({
   phone,
   onPhoneChange,
@@ -37,6 +39,17 @@ export default function GuestPhoneOtpStep({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const otpInputRef = useRef<HTMLInputElement>(null);
+  const autoSubmitOtpRef = useRef<string | null>(null);
+  const autoSendDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const otpSentForDigitsRef = useRef<string | null>(null);
+  const sendInFlightRef = useRef(false);
+
+  useEffect(() => {
+    if (phase === 'otp' && otpInputRef.current) {
+      otpInputRef.current.focus();
+    }
+  }, [phase]);
 
   useEffect(() => {
     if (verified) setPhase('verified');
@@ -50,45 +63,63 @@ export default function GuestPhoneOtpStep({
 
   const digits = normalizePhoneDigits(phone);
 
-  const handleSendOtp = async () => {
-    setError(null);
-    if (digits.length !== 10) {
-      setError('Enter a valid 10-digit mobile number');
-      return;
-    }
-    setLoading(true);
-    trackXpressEvent('otp_send_requested', {
-      ...analyticsScope,
-      booking_step: 'verify',
-    });
-    const res = await sendBookingInquiryOtp(digits);
-    setLoading(false);
-    if (!res.ok) {
-      setError(res.error ?? 'Could not send OTP');
-      trackXpressEvent('otp_verify_failed', {
+  const handleSendOtp = useCallback(
+    async (options?: { isResend?: boolean }) => {
+      setError(null);
+      if (digits.length !== 10) {
+        setError('Enter a valid 10-digit mobile number');
+        return;
+      }
+      if (
+        !options?.isResend &&
+        otpSentForDigitsRef.current === digits &&
+        phase === 'otp'
+      ) {
+        return;
+      }
+      if (sendInFlightRef.current) return;
+
+      sendInFlightRef.current = true;
+      setLoading(true);
+      trackXpressEvent('otp_send_requested', {
         ...analyticsScope,
         booking_step: 'verify',
-        error_category: 'otp_send',
       });
-      return;
-    }
-    trackXpressEvent('otp_send_success', {
-      ...analyticsScope,
-      booking_step: 'verify',
-    });
-    setMaskedPhone(res.maskedPhone ?? `+91 ••••• ••${digits.slice(8)}`);
-    setPhase('otp');
-    setOtp('');
-    setResendCooldown(30);
-    onClearVerification();
-  };
+      const res = await sendBookingInquiryOtp(digits);
+      sendInFlightRef.current = false;
+      setLoading(false);
+      if (!res.ok) {
+        otpSentForDigitsRef.current = null;
+        setError(res.error ?? 'Could not send OTP');
+        trackXpressEvent('otp_verify_failed', {
+          ...analyticsScope,
+          booking_step: 'verify',
+          error_category: 'otp_send',
+        });
+        return;
+      }
+      trackXpressEvent('otp_send_success', {
+        ...analyticsScope,
+        booking_step: 'verify',
+      });
+      otpSentForDigitsRef.current = digits;
+      setMaskedPhone(res.maskedPhone ?? `+91 ••••• ••${digits.slice(8)}`);
+      setPhase('otp');
+      setOtp('');
+      autoSubmitOtpRef.current = null;
+      setResendCooldown(30);
+      onClearVerification();
+    },
+    [analyticsScope, digits, onClearVerification, phase],
+  );
 
-  const handleVerifyOtp = async () => {
+  const handleVerifyOtp = useCallback(async () => {
     setError(null);
     setLoading(true);
     const res = await verifyBookingInquiryOtp(digits, otp);
     setLoading(false);
     if (!res.ok) {
+      autoSubmitOtpRef.current = null;
       setError(res.error);
       trackXpressEvent('otp_verify_failed', {
         ...analyticsScope,
@@ -103,12 +134,60 @@ export default function GuestPhoneOtpStep({
       ...analyticsScope,
       booking_step: 'verify',
     });
-  };
+  }, [analyticsScope, digits, onVerified, otp]);
+
+  useEffect(() => {
+    if (phase !== 'otp' || otp.length !== BOOKING_OTP_CODE_LENGTH || loading || disabled) {
+      return;
+    }
+    if (autoSubmitOtpRef.current === otp) return;
+    autoSubmitOtpRef.current = otp;
+    void handleVerifyOtp();
+  }, [otp, phase, loading, disabled, handleVerifyOtp]);
+
+  useEffect(() => {
+    if (phase !== 'phone' || disabled || verified) return;
+    if (digits.length !== 10) {
+      if (digits.length < 10) {
+        otpSentForDigitsRef.current = null;
+      }
+      return;
+    }
+    if (otpSentForDigitsRef.current === digits) return;
+
+    if (autoSendDebounceRef.current) {
+      clearTimeout(autoSendDebounceRef.current);
+    }
+    autoSendDebounceRef.current = setTimeout(() => {
+      if (otpSentForDigitsRef.current === digits) return;
+      if (sendInFlightRef.current) return;
+      void handleSendOtp();
+    }, AUTO_SEND_DEBOUNCE_MS);
+
+    return () => {
+      if (autoSendDebounceRef.current) {
+        clearTimeout(autoSendDebounceRef.current);
+      }
+    };
+  }, [digits, phase, disabled, verified, handleSendOtp]);
 
   const handleChangeNumber = () => {
+    autoSubmitOtpRef.current = null;
+    otpSentForDigitsRef.current = null;
     setPhase('phone');
     setOtp('');
     setError(null);
+    onClearVerification();
+  };
+
+  const handlePhoneInputChange = (value: string) => {
+    onPhoneChange(value);
+    autoSubmitOtpRef.current = null;
+    otpSentForDigitsRef.current = null;
+    if (phase === 'otp') {
+      setPhase('phone');
+      setOtp('');
+    }
     onClearVerification();
   };
 
@@ -130,7 +209,7 @@ export default function GuestPhoneOtpStep({
               type="button"
               onClick={handleChangeNumber}
               disabled={disabled}
-              className="mt-2 text-xs font-semibold text-emerald-700 underline hover:text-emerald-900 disabled:opacity-50"
+              className="mt-2 text-xs font-semibold text-emerald-700 underline hover:text-emerald-900 disabled:opacity-50 min-h-[44px]"
             >
               Change number
             </button>
@@ -172,14 +251,7 @@ export default function GuestPhoneOtpStep({
             autoComplete="tel-national"
             maxLength={14}
             value={phone}
-            onChange={(e) => {
-              onPhoneChange(e.target.value);
-              if (phase === 'otp') {
-                setPhase('phone');
-                setOtp('');
-              }
-              onClearVerification();
-            }}
+            onChange={(e) => handlePhoneInputChange(e.target.value)}
             disabled={disabled || phase === 'otp'}
             className="min-w-0 flex-1 rounded-xl border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100"
             placeholder="98765 43210"
@@ -199,12 +271,17 @@ export default function GuestPhoneOtpStep({
             Sent to {maskedPhone ?? 'your phone'}.
           </p>
           <input
+            ref={otpInputRef}
             type="text"
             inputMode="numeric"
+            pattern="[0-9]*"
             autoComplete="one-time-code"
             maxLength={BOOKING_OTP_CODE_LENGTH}
             value={otp}
-            onChange={(e) => setOtp(sanitizeBookingOtpInput(e.target.value))}
+            onChange={(e) => {
+              autoSubmitOtpRef.current = null;
+              setOtp(sanitizeBookingOtpInput(e.target.value));
+            }}
             disabled={disabled || loading}
             className="w-full rounded-xl border border-gray-300 px-4 py-3 text-center font-mono text-lg tracking-[0.35em] focus:border-transparent focus:ring-2 focus:ring-emerald-500"
             placeholder={'•'.repeat(BOOKING_OTP_CODE_LENGTH)}
@@ -213,7 +290,7 @@ export default function GuestPhoneOtpStep({
       )}
 
       {error && (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
           {error}
         </p>
       )}
@@ -222,29 +299,29 @@ export default function GuestPhoneOtpStep({
         {phase === 'phone' ? (
           <button
             type="button"
-            onClick={handleSendOtp}
+            onClick={() => void handleSendOtp()}
             disabled={disabled || loading || digits.length !== 10}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px]"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Send OTP
+            {loading ? 'Sending…' : 'Send OTP'}
           </button>
         ) : (
           <>
             <button
               type="button"
-              onClick={handleVerifyOtp}
+              onClick={() => void handleVerifyOtp()}
               disabled={disabled || loading || otp.length !== BOOKING_OTP_CODE_LENGTH}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px]"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Verify code
             </button>
             <button
               type="button"
-              onClick={handleSendOtp}
+              onClick={() => void handleSendOtp({ isResend: true })}
               disabled={disabled || loading || resendCooldown > 0}
-              className="rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 disabled:opacity-50"
+              className="rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 disabled:opacity-50 min-h-[44px]"
             >
               {resendCooldown > 0 ? `Resend (${resendCooldown}s)` : 'Resend OTP'}
             </button>
@@ -256,7 +333,7 @@ export default function GuestPhoneOtpStep({
         <button
           type="button"
           onClick={handleChangeNumber}
-          className="w-full text-center text-xs font-medium text-gray-500 hover:text-gray-800"
+          className="w-full text-center text-xs font-medium text-gray-500 hover:text-gray-800 min-h-[44px]"
         >
           Use a different number
         </button>

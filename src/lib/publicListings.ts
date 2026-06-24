@@ -1,6 +1,6 @@
 /**
  * Public guest listing contract — single source of truth for marketplace inventory.
- * Core fields are required for card render; optional feature fields never break the query.
+ * Grid/card fetches use CARD_LISTING_SELECT; property detail uses DETAIL_LISTING_SELECT.
  */
 
 import type { Json, Property } from './database.types';
@@ -8,6 +8,53 @@ import { cityDbInList } from './cityBuckets';
 import { trackXpressEvent } from './analytics';
 import { logSupabaseError, supabase } from './supabase';
 import { invalidatePublicHostCache } from './hostPublicCache';
+
+/**
+ * Card/grid projection — homepage, city listings, featured carousel.
+ * Changing this list requires updating publicListings.test.ts.
+ */
+export const CARD_LISTING_FIELDS = [
+  'id',
+  'title',
+  'slug',
+  'city',
+  'state',
+  'images',
+  'price_per_day',
+  'price_full_day',
+  'bedrooms',
+  'bathrooms',
+  'max_guests',
+  'host_id',
+  'is_verified',
+  'amenities',
+  'latitude',
+  'longitude',
+  'is_premium',
+  'premium_plan',
+  'premium_expiry',
+  'is_couple_friendly',
+  'hourly_stay_available',
+  'instant_booking',
+  'is_private_space',
+] as const;
+
+/**
+ * Extra fields required by RishikeshStaysPage mapPublicListingToStay on city grid fetch.
+ * Omitted from homepage-only paths but included in shared city/card inventory queries.
+ */
+export const CARD_LISTING_CITY_EXTRA_FIELDS = [
+  'description',
+  'address',
+  'property_type',
+  'external_listings',
+  'created_at',
+] as const;
+
+export const CARD_LISTING_SELECT = [
+  ...CARD_LISTING_FIELDS,
+  ...CARD_LISTING_CITY_EXTRA_FIELDS,
+].join(',');
 
 /** Stable core fields — changing this list requires updating publicListings.test.ts */
 export const PUBLIC_LISTING_CORE_FIELDS = [
@@ -54,13 +101,17 @@ export const PUBLIC_LISTING_OPTIONAL_FIELDS = [
   'accepts_local_ids',
 ] as const;
 
-export const PUBLIC_LISTING_SELECT = [
+/** Full property detail projection — PropertyPage, slug routes, prefetch warm. */
+export const DETAIL_LISTING_SELECT = [
   ...PUBLIC_LISTING_CORE_FIELDS,
   ...PUBLIC_LISTING_OPTIONAL_FIELDS,
 ].join(',');
 
-/** Detail pages use the same allowlisted projection — no experimental columns. */
-export const PUBLIC_PROPERTY_DETAIL_SELECT = PUBLIC_LISTING_SELECT;
+/** @deprecated Use DETAIL_LISTING_SELECT for detail; CARD_LISTING_SELECT for grids. */
+export const PUBLIC_LISTING_SELECT = DETAIL_LISTING_SELECT;
+
+/** Detail pages — full allowlisted projection. */
+export const PUBLIC_PROPERTY_DETAIL_SELECT = DETAIL_LISTING_SELECT;
 
 export type PublicPropertyListing = Property;
 
@@ -77,29 +128,25 @@ const RETRY_DELAY_MS = 700;
 const CACHE_TTL_MS = 60_000;
 const LOCATION_FALLBACK = 'Location coming soon';
 
-let memoryCache: PublicPropertyListing[] | null = null;
-let cacheAt = 0;
+/** Card-light grid inventory — must not satisfy property detail cache lookups. */
+let memoryCardCache: PublicPropertyListing[] | null = null;
+let cardCacheAt = 0;
 let inflightAll: Promise<PublicListingsFetchResult> | null = null;
 
-const propertyByIdCache = new Map<string, { at: number; property: PublicPropertyListing }>();
+/** Full detail rows only — PropertyPage cache-hit path. */
+const propertyDetailCache = new Map<string, { at: number; property: PublicPropertyListing }>();
 const inflightByPropertyId = new Map<string, Promise<PublicPropertyFetchResult>>();
 
-function findCachedListingById(id: string): PublicPropertyListing | null {
-  if (memoryCache && Date.now() - cacheAt < CACHE_TTL_MS) {
-    const fromList = memoryCache.find((listing) => listing.id === id);
-    if (fromList) return fromList;
-  }
-
-  const entry = propertyByIdCache.get(id);
+function findCachedDetailById(id: string): PublicPropertyListing | null {
+  const entry = propertyDetailCache.get(id);
   if (entry && Date.now() - entry.at < CACHE_TTL_MS) {
     return entry.property;
   }
-
   return null;
 }
 
-function cachePropertyById(property: PublicPropertyListing): void {
-  propertyByIdCache.set(property.id, { at: Date.now(), property });
+function cachePropertyDetail(property: PublicPropertyListing): void {
+  propertyDetailCache.set(property.id, { at: Date.now(), property });
 }
 
 function safeString(value: unknown, fallback = ''): string {
@@ -253,8 +300,8 @@ async function queryActiveProperties(select: string): Promise<PublicListingsFetc
 }
 
 async function loadAllActiveProperties(forceRefresh = false): Promise<PublicListingsFetchResult> {
-  if (!forceRefresh && memoryCache && Date.now() - cacheAt < CACHE_TTL_MS) {
-    return { status: 'success', listings: memoryCache };
+  if (!forceRefresh && memoryCardCache && Date.now() - cardCacheAt < CACHE_TTL_MS) {
+    return { status: 'success', listings: memoryCardCache };
   }
 
   if (!forceRefresh && inflightAll) {
@@ -263,7 +310,7 @@ async function loadAllActiveProperties(forceRefresh = false): Promise<PublicList
 
   const run = async (): Promise<PublicListingsFetchResult> => {
     for (let attempt = 1; attempt <= 2; attempt++) {
-      const result = await queryActiveProperties(PUBLIC_LISTING_SELECT);
+      const result = await queryActiveProperties(CARD_LISTING_SELECT);
       if (result.status === 'success') {
         return result;
       }
@@ -281,8 +328,8 @@ async function loadAllActiveProperties(forceRefresh = false): Promise<PublicList
   inflightAll = run()
     .then((result) => {
       if (result.status === 'success') {
-        memoryCache = result.listings;
-        cacheAt = Date.now();
+        memoryCardCache = result.listings;
+        cardCacheAt = Date.now();
       }
       return result;
     })
@@ -293,7 +340,7 @@ async function loadAllActiveProperties(forceRefresh = false): Promise<PublicList
   return inflightAll;
 }
 
-/** Fetch all active public listings with retry + short TTL cache. */
+/** Fetch all active public listings with retry + short TTL card cache. */
 export async function getPublicListings(options?: {
   forceRefresh?: boolean;
 }): Promise<PublicListingsFetchResult> {
@@ -322,7 +369,7 @@ export async function getPublicListingsByCity(
   for (let attempt = 1; attempt <= 2; attempt++) {
     const { data, error } = await supabase
       .from('properties')
-      .select(PUBLIC_LISTING_SELECT)
+      .select(CARD_LISTING_SELECT)
       .eq('is_active', true)
       .in('city', cityIn)
       .order('is_verified', { ascending: false })
@@ -357,7 +404,7 @@ export async function getPublicPropertyBySlug(slug: string): Promise<PublicPrope
   for (let attempt = 1; attempt <= 2; attempt++) {
     const { data, error } = await supabase
       .from('properties')
-      .select(PUBLIC_PROPERTY_DETAIL_SELECT)
+      .select(DETAIL_LISTING_SELECT)
       .eq('slug', trimmed)
       .eq('is_active', true)
       .maybeSingle();
@@ -381,6 +428,7 @@ export async function getPublicPropertyBySlug(slug: string): Promise<PublicPrope
       return { status: 'not_found' };
     }
 
+    cachePropertyDetail(property);
     return { status: 'success', property };
   }
 
@@ -388,8 +436,8 @@ export async function getPublicPropertyBySlug(slug: string): Promise<PublicPrope
 }
 
 /**
- * Warm property data for navigation — seeds from grid row, hits cache, or deduped fetch.
- * Safe to call from card hover/touch; no-op when already cached.
+ * Warm full property detail for navigation — never seeds detail cache from card rows.
+ * Safe to call from card hover/touch; no-op when detail is already cached.
  */
 export function prefetchPublicPropertyById(
   id: string,
@@ -397,11 +445,8 @@ export function prefetchPublicPropertyById(
 ): void {
   const trimmed = id.trim();
   if (!trimmed) return;
-  if (findCachedListingById(trimmed)) return;
-  if (knownListing?.id === trimmed) {
-    cachePropertyById(knownListing);
-    return;
-  }
+  void knownListing;
+  if (findCachedDetailById(trimmed)) return;
   void getPublicPropertyById(trimmed);
 }
 
@@ -412,7 +457,7 @@ export async function getPublicPropertyById(id: string): Promise<PublicPropertyF
     return { status: 'not_found' };
   }
 
-  const cached = findCachedListingById(trimmed);
+  const cached = findCachedDetailById(trimmed);
   if (cached) {
     return { status: 'success', property: cached };
   }
@@ -426,7 +471,7 @@ export async function getPublicPropertyById(id: string): Promise<PublicPropertyF
     for (let attempt = 1; attempt <= 2; attempt++) {
       const { data, error } = await supabase
         .from('properties')
-        .select(PUBLIC_PROPERTY_DETAIL_SELECT)
+        .select(DETAIL_LISTING_SELECT)
         .eq('id', trimmed)
         .eq('is_active', true)
         .maybeSingle();
@@ -453,7 +498,7 @@ export async function getPublicPropertyById(id: string): Promise<PublicPropertyF
         return { status: 'not_found' };
       }
 
-      cachePropertyById(property);
+      cachePropertyDetail(property);
       return { status: 'success', property };
     }
 
@@ -469,9 +514,9 @@ export async function getPublicPropertyById(id: string): Promise<PublicPropertyF
 
 /** Clear cached public inventory (e.g. manual retry after error). */
 export function invalidatePublicListingsCache(): void {
-  memoryCache = null;
-  cacheAt = 0;
-  propertyByIdCache.clear();
+  memoryCardCache = null;
+  cardCacheAt = 0;
+  propertyDetailCache.clear();
   inflightByPropertyId.clear();
   invalidatePublicHostCache();
 }

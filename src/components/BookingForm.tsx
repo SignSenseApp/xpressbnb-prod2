@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import {
   Calendar,
-  Users,
   Mail,
   User,
   MessageSquare,
@@ -17,6 +16,7 @@ import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStora
 import { parseInquirySubmitResult, type FrequentAmigoStatus } from '../lib/inquiryHostContact';
 import GuestPhoneOtpStep from './GuestPhoneOtpStep';
 import InquirySuccessModal from './InquirySuccessModal';
+import BookingProgressBar from './booking/BookingProgressBar';
 import type { BookingOtpVerifyResult } from '../lib/bookingOtp';
 import { normalizePhoneDigits } from '../lib/bookingOtp';
 import {
@@ -25,6 +25,7 @@ import {
   trackXpressEvent,
   type AnalyticsScope,
 } from '../lib/analytics';
+import { orchestratedScrollTo } from '../lib/scrollOrchestrator';
 
 export type BookingFormSuccessDetail = { bookingId: string };
 
@@ -34,7 +35,8 @@ interface BookingFormProps {
   checkInDate: Date | null;
   checkOutDate: Date | null;
   calculatedPrice: number;
-  initialNumGuests?: number;
+  numGuests: number;
+  onEditDates: () => void;
 }
 
 function formatDate(date: Date): string {
@@ -104,19 +106,15 @@ export default function BookingForm({
   checkInDate,
   checkOutDate,
   calculatedPrice,
-  initialNumGuests,
+  numGuests,
+  onEditDates,
 }: BookingFormProps) {
   const [includeDecoration, setIncludeDecoration] = useState(false);
-  const [formData, setFormData] = useState(() => {
-    const cap = Math.max(1, property.max_guests || 1);
-    const n = initialNumGuests != null ? initialNumGuests : 1;
-    return {
-      guest_name: '',
-      guest_email: '',
-      guest_phone: '',
-      num_guests: Math.min(Math.max(1, n), cap),
-      special_requests: '',
-    };
+  const [formData, setFormData] = useState({
+    guest_name: '',
+    guest_email: '',
+    guest_phone: '',
+    special_requests: '',
   });
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -242,7 +240,7 @@ export default function BookingForm({
       propertySlug: property.slug ?? null,
       checkIn,
       checkOut,
-      numGuests: formData.num_guests,
+      numGuests: numGuests,
       estimatedTotal: totalPrice,
       guestEmail: formData.guest_email,
       hostContactName: hostName,
@@ -311,7 +309,7 @@ export default function BookingForm({
         p_guest_phone: normalizePhoneDigits(formData.guest_phone),
         p_check_in: checkIn,
         p_check_out: checkOut,
-        p_num_guests: formData.num_guests,
+        p_num_guests: numGuests,
         p_amount_total: totalPrice,
         p_total_price: totalPrice,
         p_nights: numberOfDays,
@@ -363,6 +361,12 @@ export default function BookingForm({
         booking_step: 'send',
         response_time_bucket: bucketResponseMs(performance.now() - submitStarted),
       });
+      if (new URLSearchParams(window.location.search).get('nearby')) {
+        trackXpressEvent('nearby_booking_completed', {
+          ...analyticsScope,
+          booking_step: 'send',
+        });
+      }
 
       completeInquiry(
         inquiry.bookingId,
@@ -411,16 +415,66 @@ export default function BookingForm({
   }
 
   const guestCap = Math.max(1, property.max_guests || 1);
+  const safeGuestCount = Math.min(Math.max(1, numGuests), guestCap);
   const hasDates = Boolean(checkInDate && checkOutDate);
   const hasDetails = Boolean(
     formData.guest_name.trim() && formData.guest_email.trim() && formData.guest_phone.trim(),
   );
+
+  const prevGuestsStepRef = useRef(false);
+  useEffect(() => {
+    if (hasDetails && !phoneVerification && !prevGuestsStepRef.current) {
+      orchestratedScrollTo('booking_otp', { skipIfVisible: true, highlight: true });
+    }
+    prevGuestsStepRef.current = hasDetails;
+  }, [hasDetails, phoneVerification]);
+
+  const prevVerifiedRef = useRef(false);
+  useEffect(() => {
+    if (phoneVerification && !prevVerifiedRef.current) {
+      trackXpressEvent('booking_step_completed', {
+        ...analyticsScope,
+        booking_step: 'verify',
+      });
+      orchestratedScrollTo('booking_submit', { highlight: true });
+    }
+    prevVerifiedRef.current = Boolean(phoneVerification);
+  }, [phoneVerification, analyticsScope]);
+
+  useEffect(() => {
+    const onAbandon = () => {
+      if (bookingSuccess || loading) return;
+      if (!hasDates && !hasDetails && !phoneVerification) return;
+      const step = !hasDates
+        ? 'dates'
+        : !hasDetails
+          ? 'contact'
+          : !phoneVerification
+            ? 'otp'
+            : 'send';
+      trackXpressEvent('booking_abandonment', {
+        ...analyticsScope,
+        abandonment_step: step,
+      });
+    };
+    window.addEventListener('pagehide', onAbandon);
+    return () => window.removeEventListener('pagehide', onAbandon);
+  }, [analyticsScope, bookingSuccess, hasDates, hasDetails, loading, phoneVerification]);
+
+  const bookingStep = phoneVerification
+    ? 4
+    : hasDetails
+      ? 4
+      : formData.guest_name.trim() || formData.guest_email.trim()
+        ? 3
+        : 2;
 
   return (
     <form
       onSubmit={handleSubmit}
       className="space-y-5 max-w-full overflow-x-hidden pb-[max(1rem,env(safe-area-inset-bottom))]"
     >
+      <BookingProgressBar currentStep={bookingStep} />
       <BookingStepLabels
         hasDates={hasDates}
         hasDetails={hasDetails}
@@ -429,78 +483,40 @@ export default function BookingForm({
 
       {checkInDate && checkOutDate && (
         <div
-          className="rounded-2xl p-4 sm:p-5"
+          className="rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3"
           style={{
             background: 'var(--xpx-surface-light)',
             border: '1px solid var(--xpx-border)',
           }}
         >
-          <h4 className="text-xs font-bold uppercase tracking-[0.14em] text-xpx-subtle mb-3 flex items-center gap-2">
-            <Calendar className="w-4 h-4" aria-hidden />
-            Selected dates
-          </h4>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div
-              className="rounded-xl p-3"
-              style={{ background: 'var(--xpx-surface)', border: '1px solid var(--xpx-border)' }}
-            >
-              <p className="text-[11px] text-xpx-muted mb-0.5">Check-in</p>
-              <p className="font-bold text-xpx-text text-sm">
-                {checkInDate.toLocaleDateString('en-IN', {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </p>
-            </div>
-            <div
-              className="rounded-xl p-3"
-              style={{ background: 'var(--xpx-surface)', border: '1px solid var(--xpx-border)' }}
-            >
-              <p className="text-[11px] text-xpx-muted mb-0.5">Check-out</p>
-              <p className="font-bold text-xpx-text text-sm">
-                {checkOutDate.toLocaleDateString('en-IN', {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </p>
-            </div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-xpx-text leading-snug">
+              {checkInDate.toLocaleDateString('en-IN', {
+                month: 'short',
+                day: 'numeric',
+              })}
+              {' → '}
+              {checkOutDate.toLocaleDateString('en-IN', {
+                month: 'short',
+                day: 'numeric',
+              })}
+            </p>
+            <p className="text-xs text-xpx-muted mt-0.5">
+              {numberOfDays} {numberOfDays === 1 ? 'night' : 'nights'} · {safeGuestCount}{' '}
+              {safeGuestCount === 1 ? 'guest' : 'guests'}
+            </p>
           </div>
-          <div
-            className="flex items-center justify-between rounded-xl p-3 text-sm"
-            style={{ background: 'var(--xpx-surface)', border: '1px solid var(--xpx-border)' }}
+          <button
+            type="button"
+            onClick={onEditDates}
+            className="shrink-0 text-xs font-semibold text-xpx-text underline underline-offset-2 hover:text-xpx-warm-dark px-3 py-2 min-h-[44px] min-w-[44px]"
           >
-            <span className="text-xpx-muted">Duration</span>
-            <span className="font-bold text-xpx-text">
-              {numberOfDays} {numberOfDays === 1 ? 'night' : 'nights'}
-            </span>
-          </div>
+            Edit dates
+          </button>
         </div>
       )}
 
-      {!checkInDate || !checkOutDate ? (
-        <div
-          className="rounded-xl p-4 flex items-start gap-3"
-          style={{
-            background: 'var(--xpx-surface-light)',
-            border: '1px solid var(--xpx-border)',
-          }}
-        >
-          <div className="w-5 h-5 rounded-full bg-xpx-text text-white flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold">
-            !
-          </div>
-          <div>
-            <p className="font-semibold text-xpx-text text-sm">Select dates first</p>
-            <p className="text-xs text-xpx-muted mt-1 leading-relaxed">
-              Use the calendar above to pick check-in and check-out before completing your
-              details.
-            </p>
-          </div>
-        </div>
-      ) : null}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" id="booking-step-contact">
         <div>
           <label className="block text-[11px] font-bold uppercase tracking-[0.14em] text-xpx-subtle mb-2">
             <User className="w-3.5 h-3.5 inline mr-1" aria-hidden />
@@ -533,7 +549,7 @@ export default function BookingForm({
           />
         </div>
 
-        <div className="md:col-span-2">
+        <div className="md:col-span-2" id="booking-step-otp">
           <GuestPhoneOtpStep
             phone={formData.guest_phone}
             onPhoneChange={(guest_phone) => setFormData({ ...formData, guest_phone })}
@@ -543,26 +559,6 @@ export default function BookingForm({
             disabled={loading}
             analyticsScope={analyticsScope}
           />
-        </div>
-
-        <div>
-          <label className="block text-[11px] font-bold uppercase tracking-[0.14em] text-xpx-subtle mb-2">
-            <Users className="w-3.5 h-3.5 inline mr-1" aria-hidden />
-            Guests
-          </label>
-          <select
-            value={formData.num_guests}
-            onChange={(e) =>
-              setFormData({ ...formData, num_guests: parseInt(e.target.value, 10) })
-            }
-            className="xpx-input cursor-pointer"
-          >
-            {Array.from({ length: guestCap }, (_, i) => i + 1).map((num) => (
-              <option key={num} value={num}>
-                {num} {num === 1 ? 'Guest' : 'Guests'}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
 
@@ -732,7 +728,7 @@ export default function BookingForm({
 
       {errorMessage && <ErrorBanner message={errorMessage} />}
 
-      <div className="sticky bottom-0 z-10 -mx-1 px-1 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-[var(--xpx-surface)] via-[var(--xpx-surface)] to-transparent">
+      <div className="sticky bottom-0 z-10 -mx-1 px-1 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-[var(--xpx-surface)] via-[var(--xpx-surface)] to-transparent" id="booking-step-submit">
         <button
           type="submit"
           disabled={loading}

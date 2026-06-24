@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Tag, Users, Sparkles } from 'lucide-react';
 import type { Property } from '../../lib/database.types';
 import BookingCalendar from '../BookingCalendar';
@@ -13,8 +13,17 @@ interface PropertySidebarProps {
   checkOut: Date | null;
   nightlyTotal: number;
   onDateRangeSelect: (checkIn: Date | null, checkOut: Date | null, total: number) => void;
-  /** Primary CTA — restyled wrapper around the existing booking flow. */
-  onBookNow: () => void;
+  /** Guest count — controlled by the property page (single source of truth). */
+  numGuests: number;
+  onGuestsChange: (guests: number) => void;
+  /** True when check-in and check-out are selected and valid. */
+  hasValidDates: boolean;
+  /** Primary CTA when dates are missing — scrolls to the calendar. */
+  onCheckAvailability: () => void;
+  /** Primary CTA when dates are set — opens the booking form. */
+  onRequestToBook: () => void;
+  /** Hide primary booking CTA while the inquiry form is open. */
+  hideBookingCtas?: boolean;
   /** Opens the existing OfferModal with a "make an offer" prefill. */
   onMakeOffer: () => void;
   /** WELCOME10-style promo pill copy (passed in so the page controls the
@@ -47,21 +56,20 @@ export default function PropertySidebar({
   checkOut,
   nightlyTotal,
   onDateRangeSelect,
-  onBookNow,
+  numGuests,
+  onGuestsChange,
+  hasValidDates,
+  onCheckAvailability,
+  onRequestToBook,
+  hideBookingCtas = false,
   onMakeOffer,
   promoCode,
   promoLabel,
   initialCalendarCheckIn,
   initialCalendarCheckOut,
-  initialTripGuests,
 }: PropertySidebarProps) {
   const basePrice = property.price_per_day || property.price_full_day || 0;
   const offer = computeOffer(property, basePrice);
-
-  const maxG = Math.max(1, property.max_guests || 1);
-  const [guests, setGuests] = useState<number>(() =>
-    Math.min(initialTripGuests != null ? initialTripGuests : 2, maxG)
-  );
 
   const nights = useMemo(() => {
     if (!checkIn || !checkOut) return 0;
@@ -130,7 +138,7 @@ export default function PropertySidebar({
       )}
 
       {/* Calendar */}
-      <div className="mt-4">
+      <div className="mt-4" id="booking-step-calendar">
         <p className="text-[11px] uppercase tracking-[0.18em] font-bold text-xpx-subtle mb-2">
           Check availability
         </p>
@@ -144,7 +152,7 @@ export default function PropertySidebar({
       </div>
 
       {/* Guests dropdown — limited to property.max_guests. */}
-      <div className="mt-4">
+      <div className="mt-4" id="booking-step-guests">
         <label className="block text-[11px] uppercase tracking-[0.18em] font-bold text-xpx-subtle mb-2">
           Guests
         </label>
@@ -153,8 +161,8 @@ export default function PropertySidebar({
             className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-xpx-subtle pointer-events-none"
           />
           <select
-            value={guests}
-            onChange={(e) => setGuests(Number(e.target.value))}
+            value={numGuests}
+            onChange={(e) => onGuestsChange(Number(e.target.value))}
             className="xpx-input pl-9 cursor-pointer"
             aria-label="Number of guests"
           >
@@ -215,36 +223,38 @@ export default function PropertySidebar({
         </dl>
       )}
 
-      {/* Primary CTA → wraps the existing booking flow. */}
-      <button
-        type="button"
-        onClick={onBookNow}
-        className="mt-5 w-full py-3.5 rounded-2xl font-bold text-[15px] text-white transition-transform motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.98]"
-        style={{
-          background: 'var(--xpx-cta)',
-          boxShadow: '0 10px 32px rgba(255,56,92,0.32)',
-          minHeight: 52,
-        }}
-      >
-        <span className="inline-flex items-center justify-center gap-2">
-          <Sparkles className="w-4 h-4" />
-          Request to book
-        </span>
-      </button>
+      {!hideBookingCtas && (
+        <>
+          <button
+            type="button"
+            onClick={hasValidDates ? onRequestToBook : onCheckAvailability}
+            className="mt-5 w-full py-3.5 rounded-2xl font-bold text-[15px] text-white transition-transform motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.98]"
+            style={{
+              background: 'var(--xpx-cta)',
+              boxShadow: '0 10px 32px rgba(255,56,92,0.32)',
+              minHeight: 52,
+            }}
+          >
+            <span className="inline-flex items-center justify-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              {hasValidDates ? 'Request to book' : 'Check availability'}
+            </span>
+          </button>
 
-      {/* Secondary CTA — opens the existing OfferModal. */}
-      <button
-        type="button"
-        onClick={onMakeOffer}
-        className="mt-2.5 w-full py-3 rounded-2xl font-semibold text-sm text-xpx-text transition-colors motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.98]"
-        style={{
-          background: 'var(--xpx-surface)',
-          border: '1px solid var(--xpx-border-strong)',
-          minHeight: 48,
-        }}
-      >
-        Make an Offer
-      </button>
+          <button
+            type="button"
+            onClick={onMakeOffer}
+            className="mt-2.5 w-full py-3 rounded-2xl font-semibold text-sm text-xpx-text transition-colors motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.98]"
+            style={{
+              background: 'var(--xpx-surface)',
+              border: '1px solid var(--xpx-border-strong)',
+              minHeight: 48,
+            }}
+          >
+            Make an Offer
+          </button>
+        </>
+      )}
 
       <p
         className="mt-3 text-[11px] text-xpx-subtle text-center leading-snug px-1"

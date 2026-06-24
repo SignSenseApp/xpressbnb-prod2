@@ -1,5 +1,7 @@
 /** Cookie consent — essential vs analytics/marketing tracking for XpressBnB */
 
+import { applyGtagConsent, initDeferredAnalytics } from './analytics';
+
 export type CookieConsentChoice = 'accepted' | 'essential';
 
 export type CookieConsentState = {
@@ -13,9 +15,6 @@ export type CookieConsentState = {
 
 const STORAGE_KEY = 'xpx_cookie_consent_v1';
 const CONSENT_EVENT = 'xpx-consent-updated';
-const GOOGLE_ADS_ID = 'AW-17923088071';
-
-let gtagLoaded = false;
 
 function readStored(): CookieConsentState | null {
   if (typeof window === 'undefined') return null;
@@ -109,40 +108,11 @@ export function resetCookieConsentForSettings(): void {
   window.dispatchEvent(new CustomEvent(CONSENT_EVENT, { detail: null }));
 }
 
-function loadGoogleAdsTag(): void {
-  if (gtagLoaded || typeof document === 'undefined') return;
-  gtagLoaded = true;
-
-  window.dataLayer = window.dataLayer || [];
-  window.gtag =
-    window.gtag ||
-    function gtag(...args: unknown[]) {
-      window.dataLayer?.push(args);
-    };
-
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`;
-  document.head.appendChild(script);
-
-  window.gtag('js', new Date());
-  window.gtag('config', GOOGLE_ADS_ID, { anonymize_ip: true });
-}
-
 export function applyConsent(state: CookieConsentState | null): void {
-  if (!state?.marketing) return;
-  loadGoogleAdsTag();
+  applyGtagConsent(state?.analytics === true, state?.marketing === true);
 }
 
-/** Call once on app boot — loads trackers only if user already consented. */
+/** Call once on app boot — stub gtag, defer script load, apply stored consent. */
 export function initCookieConsent(): void {
-  const stored = readStored();
-  applyConsent(stored);
-}
-
-declare global {
-  interface Window {
-    dataLayer?: unknown[];
-    gtag?: (...args: unknown[]) => void;
-  }
+  initDeferredAnalytics(readStored());
 }

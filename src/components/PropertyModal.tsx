@@ -309,6 +309,8 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                       checkInDate={defaultCheckIn}
                       checkOutDate={defaultCheckOut}
                       calculatedPrice={modalTripPrice}
+                      numGuests={Math.min(2, Math.max(1, property.max_guests || 1))}
+                      onEditDates={() => setShowBooking(false)}
                     />
                   </div>
                 )}

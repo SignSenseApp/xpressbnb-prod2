@@ -5,7 +5,7 @@ import HostDashboardLayout from './pages/host/HostDashboardLayout';
 import OverviewPage from './pages/host/OverviewPage';
 
 export default function Router() {
-  const { user, host, loading } = useAuth();
+  const { user, host, sessionReady, hostLoading } = useAuth();
   const [currentRoute, setCurrentRoute] = useState('');
   const [hostPage, setHostPage] = useState('overview');
 
@@ -26,7 +26,7 @@ export default function Router() {
     setCurrentRoute(path);
   };
 
-  if (loading) {
+  if (currentRoute.startsWith('/host/') && (!sessionReady || hostLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-[#50C878] border-t-transparent rounded-full animate-spin" />

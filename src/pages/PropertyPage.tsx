@@ -41,11 +41,16 @@ import {
   TRUST_PILLS,
   getMapEmbedUrl,
   getMapLinkUrl,
+  computeFeeBreakdown,
 } from '../config/propertyDefaults';
 import { safeHostDisplayName } from '../lib/host';
 import { parseTripFromSearch } from '../lib/tripSearch';
+import { orchestratedScrollTo, orchestratedScrollToId } from '../lib/scrollOrchestrator';
 import { scrollToElement } from '../lib/smoothScroll';
+import { recordRecentlyViewed } from '../lib/recentlyViewed';
 import { trackXpressEvent } from '../lib/analytics';
+import PropertySocialProofBand from '../components/property/PropertySocialProofBand';
+import PropertyGuestsAlsoViewed from '../components/property/PropertyGuestsAlsoViewed';
 import SaveListingButton from '../components/SaveListingButton';
 import PropertyTrustLine from '../components/PropertyTrustLine';
 import { snapshotFromProperty } from '../lib/savedListingsStorage';
@@ -58,6 +63,9 @@ const BookingForm = lazy(() => import('../components/BookingForm'));
 const OfferModal = lazy(() => import('../components/OfferModal'));
 const HostCard = lazy(() => import('../components/HostCard'));
 const PropertyReviews = lazy(() => import('../components/property/PropertyReviews'));
+const NearbyPropertiesSection = lazy(
+  () => import('../components/property/NearbyPropertiesSection'),
+);
 const PropertySidebar = lazy(() => import('../components/property/PropertySidebar'));
 
 function SidebarFallback() {
@@ -95,12 +103,61 @@ export default function PropertyPage() {
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [hostName, setHostName] = useState<string | null>(null);
   const [sidebarForced, setSidebarForced] = useState(false);
+  const [numGuests, setNumGuests] = useState(2);
+  const [isMobileLayout, setIsMobileLayout] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < 1024,
+  );
 
   const sidebarRef = useRef<HTMLElement>(null);
   const sidebarNearView = useInViewport(sidebarRef, 0, SIDEBAR_MOUNT_ROOT_MARGIN);
-  const mountSidebar = sidebarForced || sidebarNearView || showBooking;
+  const mountSidebar = sidebarForced || sidebarNearView || showBooking || isMobileLayout;
 
   const tripFromSearch = useMemo(() => parseTripFromSearch(window.location.search), []);
+
+  const hasValidDates = useMemo(() => {
+    if (!selectedCheckIn || !selectedCheckOut) return false;
+    return selectedCheckOut > selectedCheckIn;
+  }, [selectedCheckIn, selectedCheckOut]);
+
+  const bookingNights = useMemo(() => {
+    if (!hasValidDates || !selectedCheckIn || !selectedCheckOut) return 0;
+    return Math.max(
+      1,
+      Math.round(
+        (selectedCheckOut.getTime() - selectedCheckIn.getTime()) / (1000 * 60 * 60 * 24),
+      ),
+    );
+  }, [hasValidDates, selectedCheckIn, selectedCheckOut]);
+
+  const tripBreakdown = useMemo(
+    () => computeFeeBreakdown(totalPrice, bookingNights),
+    [totalPrice, bookingNights],
+  );
+
+  useEffect(() => {
+    if (!hasValidDates && showBooking) {
+      setShowBooking(false);
+    }
+  }, [hasValidDates, showBooking]);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1023px)');
+    const update = () => setIsMobileLayout(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
+  useEffect(() => {
+    if (!property) return;
+    const cap = Math.max(1, property.max_guests || 1);
+    const fromTrip = tripFromSearch.guests;
+    if (fromTrip != null) {
+      setNumGuests(Math.min(Math.max(1, fromTrip), cap));
+    } else {
+      setNumGuests((current) => Math.min(Math.max(1, current), cap));
+    }
+  }, [property, tripFromSearch.guests]);
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -172,6 +229,7 @@ export default function PropertyPage() {
       if (result.status === 'success') {
         const data = result.property;
         setProperty(data);
+        recordRecentlyViewed(data);
         trackPropertyView(propertyId, data.listing_type ?? '');
         trackXpressEvent('property_view', {
           property_id: data.id,
@@ -253,8 +311,14 @@ export default function PropertyPage() {
       setSelectedCheckIn(checkIn);
       setSelectedCheckOut(checkOut);
       setTotalPrice(price);
+      if (checkIn && checkOut) {
+        trackXpressEvent('booking_step_completed', { booking_step: 'dates' });
+        requestAnimationFrame(() => {
+          orchestratedScrollTo('booking_guests', { skipIfVisible: true, highlight: true });
+        });
+      }
     },
-    []
+    [],
   );
 
   // Smooth-scroll the user from the mobile bottom action bar down to the
@@ -267,21 +331,32 @@ export default function PropertyPage() {
     });
   }, []);
 
-  const handleBookNow = useCallback(() => {
+  const scrollToBookingCalendar = useCallback(() => {
     setSidebarForced(true);
-    setShowBooking(true);
-    // On mobile the sidebar lives at the bottom of the flow; bring it into
-    // view so the user doesn't have to scroll manually after tapping Book.
-    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+    requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
+        if (typeof window !== 'undefined' && window.innerWidth < 1024) {
           scrollToSidebar();
-        });
+        }
+        orchestratedScrollToId('booking-step-calendar', { highlight: true });
       });
-    }
+    });
   }, [scrollToSidebar]);
 
-  const handleRequestToBookClick = useCallback(() => {
+  const handleCheckAvailability = useCallback(() => {
+    setSidebarForced(true);
+    if (property) {
+      trackXpressEvent('check_availability_click', {
+        property_id: property.id,
+        property_slug: property.slug ?? undefined,
+        city: property.city,
+      });
+    }
+    scrollToBookingCalendar();
+  }, [property, scrollToBookingCalendar]);
+
+  const handleOpenBookingForm = useCallback(() => {
+    if (!hasValidDates) return;
     setSidebarForced(true);
     if (property) {
       trackXpressEvent('request_to_book_click', {
@@ -295,11 +370,43 @@ export default function PropertyPage() {
         property_slug: property.slug ?? undefined,
         city: property.city,
         inquiry_type: 'book_pay_later',
-        booking_step: 'dates',
+        booking_step: 'contact',
       });
+      const nearbySource = new URLSearchParams(window.location.search).get('nearby');
+      if (nearbySource) {
+        trackXpressEvent('nearby_booking_started', {
+          property_id: property.id,
+          nearby_source: nearbySource,
+        });
+      }
     }
-    handleBookNow();
-  }, [handleBookNow, property]);
+    setShowBooking(true);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+          scrollToSidebar();
+        }
+        orchestratedScrollTo('booking_contact', { highlight: true, skipIfVisible: true });
+      });
+    });
+  }, [hasValidDates, property, scrollToSidebar]);
+
+  const handlePrimaryBookingCta = useCallback(() => {
+    if (hasValidDates) {
+      handleOpenBookingForm();
+    } else {
+      handleCheckAvailability();
+    }
+  }, [hasValidDates, handleOpenBookingForm, handleCheckAvailability]);
+
+  const handleEditDates = useCallback(() => {
+    scrollToBookingCalendar();
+  }, [scrollToBookingCalendar]);
+
+  const handleGuestsChange = useCallback((guests: number) => {
+    setNumGuests(guests);
+    trackXpressEvent('booking_step_completed', { booking_step: 'guests' });
+  }, []);
 
   if (loading) {
     return (
@@ -615,6 +722,7 @@ export default function PropertyPage() {
                   </span>
                 </li>
               </ul>
+              <PropertySocialProofBand propertyId={property.id} city={property.city} />
             </header>
 
             <DeferredMount rootMargin="400px 0px">
@@ -779,6 +887,8 @@ export default function PropertyPage() {
               </section>
             )}
 
+            <PropertyGuestsAlsoViewed property={property} placement="amenities" />
+
             {/* 5. MEET YOUR HOST */}
             <section>
               <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-xpx-text mb-5">
@@ -789,7 +899,7 @@ export default function PropertyPage() {
                   hostId={property.host_id}
                   fallbackCity={property.city}
                   propertyTitle={property.title}
-                  onRequestToBook={handleBookNow}
+                  onRequestToBook={handlePrimaryBookingCta}
                 />
               </Suspense>
             </section>
@@ -903,6 +1013,11 @@ export default function PropertyPage() {
               <PropertyReviews property={property} />
             </Suspense>
 
+            {/* 8b. SIMILAR STAYS NEARBY */}
+            <Suspense fallback={null}>
+              <NearbyPropertiesSection originProperty={property} />
+            </Suspense>
+
             {/* 9. HOUSE RULES */}
             <section>
               <div className="flex items-end justify-between gap-3 flex-wrap">
@@ -954,18 +1069,16 @@ export default function PropertyPage() {
             </DeferredMount>
           </div>
 
-          {/* Sticky booking sidebar (desktop) / inline (mobile). */}
+          {/* Sticky booking sidebar (desktop) / first on mobile for instant access. */}
           <aside
             ref={sidebarRef}
             id="booking-sidebar"
-            className={
-              !showBooking
-                ? 'xpx-booking-sidebar-sticky scroll-mt-24 lg:self-start'
-                : 'scroll-mt-24 pb-28 lg:pb-0'
-            }
+            className={`order-first lg:order-none xpx-booking-sidebar-sticky scroll-mt-24 lg:self-start${
+              showBooking ? ' pb-28 lg:pb-0' : ''
+            }`}
           >
-            {!showBooking ? (
-              mountSidebar ? (
+            {mountSidebar ? (
+              <>
                 <Suspense fallback={<SidebarFallback />}>
                   <PropertySidebar
                     property={property}
@@ -973,56 +1086,54 @@ export default function PropertyPage() {
                     checkOut={selectedCheckOut}
                     nightlyTotal={totalPrice}
                     onDateRangeSelect={handleDateRangeSelect}
-                    onBookNow={handleRequestToBookClick}
+                    numGuests={numGuests}
+                    onGuestsChange={handleGuestsChange}
+                    hasValidDates={hasValidDates}
+                    onCheckAvailability={handleCheckAvailability}
+                    onRequestToBook={handleOpenBookingForm}
+                    hideBookingCtas={showBooking}
                     onMakeOffer={() => setShowOfferModal(true)}
                     promoCode={featuredPromo?.code ?? null}
                     promoLabel={featuredPromo?.label ?? null}
                     initialCalendarCheckIn={tripFromSearch.checkin ?? null}
                     initialCalendarCheckOut={tripFromSearch.checkout ?? null}
-                    initialTripGuests={tripFromSearch.guests}
                   />
                 </Suspense>
-              ) : (
-                <SidebarFallback />
-              )
-            ) : (
-              <div
-                className="rounded-3xl p-5 sm:p-6"
-                style={{
-                  background: 'var(--xpx-surface)',
-                  border: '1px solid var(--xpx-border-strong)',
-                  boxShadow: '0 18px 56px rgba(15,23,42,0.10)',
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => setShowBooking(false)}
-                  className="inline-flex items-center gap-1.5 mb-4 text-xs font-semibold text-xpx-muted hover:text-xpx-text transition-colors"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  Back to availability
-                </button>
-                <p className="xpx-eyebrow mb-3">Request to book</p>
-                <Suspense
-                  fallback={
-                    <div className="flex justify-center py-12" aria-hidden>
-                      <div className="w-10 h-10 border-4 border-xpx-warm border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  }
-                >
-                  <BookingForm
-                    property={property}
-                    onSuccess={({ bookingId }) => {
-                      window.history.pushState({}, '', `/booking/${bookingId}`);
-                      window.dispatchEvent(new PopStateEvent('popstate'));
+                {showBooking && hasValidDates && (
+                  <div
+                    className="mt-5 rounded-3xl p-5 sm:p-6"
+                    style={{
+                      background: 'var(--xpx-surface)',
+                      border: '1px solid var(--xpx-border-strong)',
+                      boxShadow: '0 18px 56px rgba(15,23,42,0.10)',
                     }}
-                    checkInDate={selectedCheckIn}
-                    checkOutDate={selectedCheckOut}
-                    calculatedPrice={totalPrice}
-                    initialNumGuests={tripFromSearch.guests}
-                  />
-                </Suspense>
-              </div>
+                  >
+                    <p className="xpx-eyebrow mb-3">Request to book</p>
+                    <Suspense
+                      fallback={
+                        <div className="flex justify-center py-12" aria-hidden>
+                          <div className="w-10 h-10 border-4 border-xpx-warm border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      }
+                    >
+                      <BookingForm
+                        property={property}
+                        onSuccess={({ bookingId }) => {
+                          window.history.pushState({}, '', `/booking/${bookingId}`);
+                          window.dispatchEvent(new PopStateEvent('popstate'));
+                        }}
+                        checkInDate={selectedCheckIn}
+                        checkOutDate={selectedCheckOut}
+                        calculatedPrice={totalPrice}
+                        numGuests={numGuests}
+                        onEditDates={handleEditDates}
+                      />
+                    </Suspense>
+                  </div>
+                )}
+              </>
+            ) : (
+              <SidebarFallback />
             )}
           </aside>
         </div>
@@ -1042,26 +1153,43 @@ export default function PropertyPage() {
         >
           <div className="px-4 py-3 flex items-center justify-between gap-3 max-w-7xl mx-auto">
             <div className="min-w-0">
-              <div className="flex items-baseline gap-1">
-                <span className="text-lg font-extrabold text-xpx-text tabular-nums">
-                  ₹{basePrice.toLocaleString('en-IN')}
-                </span>
-                <span className="text-xs text-xpx-muted">/ night</span>
-              </div>
-              <p className="text-[10.5px] text-xpx-subtle leading-tight">
-                Starting price • taxes &amp; fees apply
-              </p>
+              {hasValidDates ? (
+                <>
+                  <div className="flex items-baseline gap-1 flex-wrap">
+                    <span className="text-lg font-extrabold text-xpx-text tabular-nums">
+                      ₹{tripBreakdown.total.toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-xs text-xpx-muted">total</span>
+                  </div>
+                  <p className="text-[10.5px] text-xpx-subtle leading-tight">
+                    {bookingNights} {bookingNights === 1 ? 'night' : 'nights'} · incl. fees &amp;
+                    taxes
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-lg font-extrabold text-xpx-text tabular-nums">
+                      ₹{basePrice.toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-xs text-xpx-muted">/ night</span>
+                  </div>
+                  <p className="text-[10.5px] text-xpx-subtle leading-tight">
+                    Starting price · taxes &amp; fees apply
+                  </p>
+                </>
+              )}
             </div>
             <button
               type="button"
-              onClick={handleRequestToBookClick}
+              onClick={handlePrimaryBookingCta}
               className="shrink-0 px-5 py-3 rounded-full font-bold text-sm text-white transition-transform motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.97] min-h-[48px] min-w-[44px]"
               style={{
                 background: 'var(--xpx-cta)',
                 boxShadow: '0 4px 16px rgba(255,56,92,0.28)',
               }}
             >
-              Request to book
+              {hasValidDates ? 'Request to book' : 'Check availability'}
             </button>
           </div>
         </div>

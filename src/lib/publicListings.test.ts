@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CARD_LISTING_CITY_EXTRA_FIELDS,
+  CARD_LISTING_FIELDS,
+  CARD_LISTING_SELECT,
+  DETAIL_LISTING_SELECT,
   PUBLIC_LISTING_CORE_FIELDS,
   PUBLIC_LISTING_OPTIONAL_FIELDS,
   PUBLIC_LISTING_SELECT,
@@ -46,13 +50,46 @@ const COMPLETE_ROW = {
   property_type: 'apartment',
 };
 
-describe('PUBLIC_LISTING_SELECT contract', () => {
+describe('CARD_LISTING_SELECT contract', () => {
+  it('includes approved card and city-extra fields only', () => {
+    const allowed = new Set([...CARD_LISTING_FIELDS, ...CARD_LISTING_CITY_EXTRA_FIELDS]);
+    const selected = CARD_LISTING_SELECT.split(',').map((f) => f.trim());
+    expect(selected.length).toBe(allowed.size);
+    for (const field of selected) {
+      expect(allowed.has(field as (typeof CARD_LISTING_FIELDS)[number])).toBe(true);
+    }
+  });
+
+  it('is a proper subset of the detail projection', () => {
+    const card = new Set(CARD_LISTING_SELECT.split(',').map((f) => f.trim()));
+    const detail = new Set(DETAIL_LISTING_SELECT.split(',').map((f) => f.trim()));
+    for (const field of card) {
+      expect(detail.has(field)).toBe(true);
+    }
+    expect(card.size).toBeLessThan(detail.size);
+  });
+
+  it('omits property-page-only scalar fields', () => {
+    expect(CARD_LISTING_SELECT).not.toContain('country');
+    expect(CARD_LISTING_SELECT).not.toContain('listing_type');
+    expect(CARD_LISTING_SELECT).not.toContain('no_brokerage');
+    expect(CARD_LISTING_SELECT).not.toContain('pay_at_property');
+    expect(CARD_LISTING_SELECT).not.toContain('accepts_local_ids');
+    expect(CARD_LISTING_SELECT).not.toContain('is_active');
+  });
+});
+
+describe('DETAIL_LISTING_SELECT contract', () => {
+  it('matches legacy PUBLIC_LISTING_SELECT', () => {
+    expect(DETAIL_LISTING_SELECT).toBe(PUBLIC_LISTING_SELECT);
+  });
+
   it('includes only approved core and optional fields', () => {
     const allowed = new Set([
       ...PUBLIC_LISTING_CORE_FIELDS,
       ...PUBLIC_LISTING_OPTIONAL_FIELDS,
     ]);
-    const selected = PUBLIC_LISTING_SELECT.split(',').map((f) => f.trim());
+    const selected = DETAIL_LISTING_SELECT.split(',').map((f) => f.trim());
     expect(selected.length).toBe(allowed.size);
     for (const field of selected) {
       expect(allowed.has(field as (typeof PUBLIC_LISTING_CORE_FIELDS)[number])).toBe(true);
@@ -60,14 +97,47 @@ describe('PUBLIC_LISTING_SELECT contract', () => {
   });
 
   it('does not include experimental or guest-review fields', () => {
-    expect(PUBLIC_LISTING_SELECT).not.toContain('rating');
-    expect(PUBLIC_LISTING_SELECT).not.toContain('total_reviews');
-    expect(PUBLIC_LISTING_SELECT).not.toContain('stats');
-    expect(PUBLIC_LISTING_SELECT).not.toContain('discount_percent');
+    expect(DETAIL_LISTING_SELECT).not.toContain('rating');
+    expect(DETAIL_LISTING_SELECT).not.toContain('total_reviews');
+    expect(DETAIL_LISTING_SELECT).not.toContain('stats');
+    expect(DETAIL_LISTING_SELECT).not.toContain('discount_percent');
   });
 });
 
 describe('normalizePublicPropertyListing', () => {
+  it('normalizes a card-light row with safe defaults for omitted detail fields', () => {
+    const cardRow = {
+      id: COMPLETE_ROW.id,
+      title: COMPLETE_ROW.title,
+      slug: COMPLETE_ROW.slug,
+      city: COMPLETE_ROW.city,
+      state: COMPLETE_ROW.state,
+      images: COMPLETE_ROW.images,
+      price_per_day: COMPLETE_ROW.price_per_day,
+      price_full_day: COMPLETE_ROW.price_full_day,
+      bedrooms: COMPLETE_ROW.bedrooms,
+      bathrooms: COMPLETE_ROW.bathrooms,
+      max_guests: COMPLETE_ROW.max_guests,
+      host_id: COMPLETE_ROW.host_id,
+      is_verified: COMPLETE_ROW.is_verified,
+      amenities: COMPLETE_ROW.amenities,
+      latitude: COMPLETE_ROW.latitude,
+      longitude: COMPLETE_ROW.longitude,
+      is_premium: COMPLETE_ROW.is_premium,
+      premium_plan: COMPLETE_ROW.premium_plan,
+      premium_expiry: COMPLETE_ROW.premium_expiry,
+      is_couple_friendly: true,
+      hourly_stay_available: false,
+      instant_booking: true,
+      is_private_space: false,
+    };
+    const listing = normalizePublicPropertyListing(cardRow);
+    expect(listing?.description).toBe('');
+    expect(listing?.external_listings).toBeNull();
+    expect(listing?.listing_type).toBeNull();
+    expect(listing?.country).toBe('India');
+  });
+
   it('normalizes a complete property', () => {
     const listing = normalizePublicPropertyListing(COMPLETE_ROW);
     expect(listing).not.toBeNull();

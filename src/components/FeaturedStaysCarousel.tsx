@@ -34,27 +34,44 @@ const CarouselSlide = memo(function CarouselSlide({
   property,
   width,
   hidden,
+  nearbyDistanceKm,
+  userCity,
 }: {
   property: Property;
   width: number;
   hidden: boolean;
+  nearbyDistanceKm?: number;
+  userCity?: string | null;
 }) {
   return (
     <div className="shrink-0" style={{ width }} aria-hidden={hidden}>
-      <ConversionPropertyCard property={property} className="mx-0 w-full max-w-none md:mx-0" />
+      <ConversionPropertyCard
+        property={property}
+        className="mx-0 w-full max-w-none md:mx-0"
+        nearbyDistanceKm={nearbyDistanceKm}
+        nearbySource="nearby_carousel"
+        userCity={userCity}
+      />
     </div>
   );
 });
 
 type FeaturedStaysCarouselProps = {
   properties: Property[];
+  /** Optional distance map for nearby personalization badges */
+  distanceByPropertyId?: Record<string, number>;
+  userCity?: string | null;
 };
 
 /**
  * GPU-accelerated Featured Stays carousel — VRBO-level mobile UX.
  * Mobile: peek layout, velocity swipe, idle autoplay. Desktop: manual arrows.
  */
-export default function FeaturedStaysCarousel({ properties }: FeaturedStaysCarouselProps) {
+export default function FeaturedStaysCarousel({
+  properties,
+  distanceByPropertyId,
+  userCity,
+}: FeaturedStaysCarouselProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const resumeTimerRef = useRef<number | null>(null);
@@ -383,6 +400,8 @@ export default function FeaturedStaysCarousel({ properties }: FeaturedStaysCarou
               property={property}
               width={slideWidth}
               hidden={loopEnabled ? index !== trackIndex : index !== logicalIndex}
+              nearbyDistanceKm={distanceByPropertyId?.[property.id]}
+              userCity={userCity}
             />
           ))}
         </div>

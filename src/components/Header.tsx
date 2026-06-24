@@ -2,6 +2,7 @@ import { Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { XPRESSBNB_LOGO_NAV_IMG_CLASS, XPRESSBNB_LOGO_PATH } from '../lib/branding';
 import { theme } from '../lib/theme';
+import LocationIdentityChip from './nearby/LocationIdentityChip';
 import XpModeSwitch from './XpModeSwitch';
 
 interface HeaderProps {
@@ -99,6 +100,7 @@ export default function Header({
         </div>
 
         <nav className="hidden md:flex items-center gap-1">
+          <LocationIdentityChip variant={scrolled ? 'dark' : 'light'} className="mr-2" />
           <button
             onClick={goHome}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${navTextClass} ${navTextHover}`}
