@@ -3,6 +3,8 @@ import { theme } from '../lib/theme';
 
 interface PreloaderProps {
   isLoading: boolean;
+  /** When true, unmount immediately on dismiss — no curtain exit animation. */
+  instantExit?: boolean;
 }
 
 /**
@@ -23,19 +25,23 @@ interface PreloaderProps {
  *  - `shouldRender` keeps the DOM mounted through the exit animation so
  *    the curtain swipe finishes cleanly before unmount.
  */
-export default function Preloader({ isLoading }: PreloaderProps) {
+export default function Preloader({ isLoading, instantExit = false }: PreloaderProps) {
   const [shouldRender, setShouldRender] = useState(true);
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     if (!isLoading) {
+      if (instantExit) {
+        setShouldRender(false);
+        return;
+      }
       setIsVisible(false);
       const timer = setTimeout(() => setShouldRender(false), 700);
       return () => clearTimeout(timer);
     }
     setShouldRender(true);
     setIsVisible(true);
-  }, [isLoading]);
+  }, [instantExit, isLoading]);
 
   if (!shouldRender) return null;
 

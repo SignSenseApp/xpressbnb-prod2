@@ -7,6 +7,7 @@ import InstallAppPrompt from './components/InstallAppPrompt';
 import { CookieConsentBanner } from './components/CookieConsent';
 import RouteFallback from './components/RouteFallback';
 import { closeHomeOverlay, getHomeOverlayPage } from './lib/navigation';
+import { markIntroPreloaderSeen, shouldShowIntroPreloader } from './lib/pwa';
 
 const PropertyPage = lazy(() => import('./pages/PropertyPage'));
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'));
@@ -47,16 +48,12 @@ export default function AppRouter() {
   const { user, host, loading, signOut } = useAuth();
   const [currentPath, setCurrentPath] = useState(() => syncLocation().path);
   const [locationKey, setLocationKey] = useState(() => syncLocation().key);
-  const [isRouteLoading, setIsRouteLoading] = useState(true);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     const handlePopState = () => {
-      setIsRouteLoading(true);
       const loc = syncLocation();
       setCurrentPath(loc.path);
       setLocationKey(loc.key);
-      setTimeout(() => setIsRouteLoading(false), 300);
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -64,21 +61,9 @@ export default function AppRouter() {
 
   useEffect(() => {
     if (!loading) {
-      const timer = setTimeout(() => {
-        setIsRouteLoading(false);
-        setIsInitialLoad(false);
-      }, 300);
-      return () => clearTimeout(timer);
+      markIntroPreloaderSeen();
     }
   }, [loading]);
-
-  useEffect(() => {
-    if (!isInitialLoad) {
-      setIsRouteLoading(true);
-      const timer = setTimeout(() => setIsRouteLoading(false), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [currentPath, locationKey, isInitialLoad]);
 
   useEffect(() => {
     if (!loading && user && host) {
@@ -100,19 +85,18 @@ export default function AppRouter() {
     }
   }, [user, host, loading, currentPath, locationKey]);
 
-  const showPreloader = loading || isRouteLoading;
-
   if (loading) {
-    return <Preloader isLoading={true} />;
+    if (shouldShowIntroPreloader()) {
+      return <Preloader isLoading />;
+    }
+    return <RouteFallback />;
   }
 
   const handleNavigate = (path: string) => {
-    setIsRouteLoading(true);
     window.history.pushState({}, '', path);
     const loc = syncLocation();
     setCurrentPath(loc.path);
     setLocationKey(loc.key);
-    setTimeout(() => setIsRouteLoading(false), 300);
   };
 
   const renderContent = () => {
@@ -160,11 +144,9 @@ export default function AppRouter() {
         const page = match ? match[1] : 'overview';
 
         const handleHostNavigate = (newPage: string) => {
-          setIsRouteLoading(true);
           const newPath = `/host/${host.id}/dashboard/${newPage}`;
           window.history.pushState({}, '', newPath);
           setCurrentPath(newPath);
-          setTimeout(() => setIsRouteLoading(false), 300);
         };
 
         return (
@@ -205,7 +187,6 @@ export default function AppRouter() {
 
   return (
     <>
-      <Preloader isLoading={showPreloader} />
       <Suspense fallback={<RouteFallback />}>{renderContent()}</Suspense>
       <CookieConsentBanner />
       <Suspense fallback={null}>

@@ -93,6 +93,27 @@ export function isStandaloneApp(): boolean {
   );
 }
 
+const INTRO_PRELOADER_KEY = 'xpx_intro_preloader_seen_v1';
+
+/** First browser visit only — PWA and repeat visits skip the intro preloader. */
+export function shouldShowIntroPreloader(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (isStandaloneApp()) return false;
+  try {
+    return localStorage.getItem(INTRO_PRELOADER_KEY) !== '1';
+  } catch {
+    return false;
+  }
+}
+
+export function markIntroPreloaderSeen(): void {
+  try {
+    localStorage.setItem(INTRO_PRELOADER_KEY, '1');
+  } catch {
+    /* non-fatal */
+  }
+}
+
 /** iOS/Android PWA + touch phones: native momentum scroll beats Lenis/CSS smooth. */
 export function prefersNativeScroll(): boolean {
   if (typeof window === 'undefined') return true;
