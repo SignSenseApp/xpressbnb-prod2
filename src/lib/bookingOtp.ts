@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-/** Twilio Verify for this project sends 4-digit SMS codes; fallback SMS matches. */
+/** Booking inquiry OTP is always 4 digits (MSG91 / Twilio). */
 export const BOOKING_OTP_CODE_LENGTH = 4;
 
 const BOOKING_OTP_PATTERN = /^\d{4}$/;
@@ -24,6 +24,22 @@ function normalizePhoneDigits(phone: string): string {
 }
 
 type EdgeErrorBody = { error?: string };
+
+type OtpEdgeMeta = {
+  provider?: string;
+  latency_ms?: number;
+};
+
+function logOtpTiming(
+  phase: 'send' | 'verify',
+  meta: OtpEdgeMeta | undefined,
+  ok: boolean,
+): void {
+  if (!meta?.latency_ms && !meta?.provider) return;
+  if (import.meta.env.DEV) {
+    console.info(`[otp_${phase}]`, { ok, provider: meta.provider, latency_ms: meta.latency_ms });
+  }
+}
 
 /** Supabase client often hides the JSON body behind a generic non-2xx error. */
 async function messageFromEdgeInvoke(
@@ -51,7 +67,7 @@ async function messageFromEdgeInvoke(
       return 'Could not reach the OTP service. Check your internet connection and try again.';
     }
     if (error.message.includes('non-2xx')) {
-      return 'Failed to send verification SMS. Twilio Verify may be misconfigured — confirm TWILIO_VERIFY_SERVICE_SID matches your XpressBNB Verify service in Supabase Edge secrets.';
+      return 'Failed to send verification SMS. Please try again in a moment.';
     }
     return error.message;
   }
@@ -81,11 +97,18 @@ export async function sendBookingInquiryOtp(phone: string): Promise<{
     };
   }
 
-  const payload = data as { ok?: boolean; masked_phone?: string; error?: string } | null;
+  const payload = data as {
+    ok?: boolean;
+    masked_phone?: string;
+    error?: string;
+    provider?: string;
+    latency_ms?: number;
+  } | null;
   if (!payload?.ok) {
     return { ok: false, error: payload?.error || 'Could not send OTP' };
   }
 
+  logOtpTiming('send', payload, true);
   return { ok: true, maskedPhone: payload.masked_phone };
 }
 
@@ -118,12 +141,15 @@ export async function verifyBookingInquiryOtp(
     verification_token?: string;
     expires_at?: string;
     error?: string;
+    provider?: string;
+    latency_ms?: number;
   } | null;
 
   if (!payload?.ok || !payload.verification_token) {
     return { ok: false, error: payload?.error || 'Invalid or expired code' };
   }
 
+  logOtpTiming('verify', payload, true);
   return {
     ok: true,
     result: {

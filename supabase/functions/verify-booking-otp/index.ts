@@ -1,37 +1,24 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { corsHeadersFor } from '../_shared/cors.ts';
-
-const PURPOSE_BOOKING = 'booking_inquiry';
-/** Matches Twilio Verify SMS length for this project; fallback path validates the same. */
-const BOOKING_OTP_CODE_LENGTH = 4;
-const BOOKING_OTP_PATTERN = /^\d{4}$/;
-const VERIFY_TOKEN_TTL_MIN = 15;
-const MAX_OTP_ATTEMPTS = 8;
+import {
+  BOOKING_OTP_CODE_LENGTH,
+  BOOKING_OTP_PATTERN,
+  isExternalOtpMarker,
+  MAX_OTP_ATTEMPTS,
+  VERIFY_TOKEN_TTL_MIN,
+} from '../_shared/otp-constants.ts';
+import {
+  fetchLatestOtpRequest,
+  incrementOtpAttempts,
+} from '../_shared/otp-db.ts';
+import { normalizeIndia10 } from '../_shared/otp-phone.ts';
+import { sha256Hex, verifyOtp } from '../_shared/otp-provider.ts';
 
 type VerifyBody = {
   phone?: string;
   otp?: string;
   booking_draft_id?: string | null;
 };
-
-function normalizeIndia10(phone: string): string | null {
-  const d = phone.replace(/\D/g, '').slice(-10);
-  return d.length === 10 ? d : null;
-}
-
-function e164India(d10: string): string {
-  return `+91${d10}`;
-}
-
-async function sha256Hex(text: string): Promise<string> {
-  const buf = await crypto.subtle.digest(
-    'SHA-256',
-    new TextEncoder().encode(text),
-  );
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
 
 function isUuid(v: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -52,6 +39,8 @@ Deno.serve(async (req: Request) => {
       headers: { ...cors, 'Content-Type': 'application/json' },
     });
   }
+
+  const started = performance.now();
 
   try {
     const body = (await req.json()) as VerifyBody;
@@ -89,66 +78,29 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
-    const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-    const verifySid = Deno.env.get('TWILIO_VERIFY_SERVICE_SID');
+    const providerResult = await verifyOtp(d10, otp);
+    let approved = false;
 
-    if (!accountSid || !authToken) {
-      return new Response(JSON.stringify({ error: 'SMS provider not configured' }), {
-        status: 500,
+    if (!providerResult.ok) {
+      console.log(
+        JSON.stringify({
+          event: 'otp_verify',
+          ok: false,
+          provider: providerResult.provider,
+          latency_ms: providerResult.latencyMs,
+        }),
+      );
+      return new Response(JSON.stringify({ error: providerResult.error }), {
+        status: providerResult.statusCode,
         headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
 
-    const auth = btoa(`${accountSid}:${authToken}`);
-    const to = e164India(d10);
-
-    let approved = false;
-
-    if (verifySid) {
-      const chkUrl =
-        `https://verify.twilio.com/v2/Services/${encodeURIComponent(verifySid)}/VerificationCheck`;
-      const chkBody = new URLSearchParams({ To: to, Code: otp });
-      const chkRes = await fetch(chkUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${auth}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: chkBody.toString(),
-      });
-      const chkJson = (await chkRes.json()) as { status?: string };
-      if (!chkRes.ok) {
-        console.error('Twilio VerifyCheck HTTP error', JSON.stringify(chkJson));
-        return new Response(JSON.stringify({ error: 'Verification failed' }), {
-          status: 400,
-          headers: { ...cors, 'Content-Type': 'application/json' },
-        });
-      }
-      approved = chkJson.status === 'approved';
-    } else {
-      const q =
-        `phone=eq.${encodeURIComponent(d10)}` +
-        `&purpose=eq.${encodeURIComponent(PURPOSE_BOOKING)}` +
-        '&order=created_at.desc&limit=1';
-      const sessRes = await fetch(`${supabaseUrl}/rest/v1/otp_requests?${q}`, {
-        headers: {
-          apikey: serviceKey,
-          Authorization: `Bearer ${serviceKey}`,
-        },
-      });
-      if (!sessRes.ok) {
-        console.error('otp_requests fetch failed', await sessRes.text());
-        return new Response(JSON.stringify({ error: 'Verification failed' }), {
-          status: 500,
-          headers: { ...cors, 'Content-Type': 'application/json' },
-        });
-      }
-      const sessions = await sessRes.json();
-      const session = Array.isArray(sessions) && sessions[0] ? sessions[0] : null;
+    if ('localHash' in providerResult && providerResult.localHash) {
+      const session = await fetchLatestOtpRequest(supabaseUrl, serviceKey, d10);
       if (
         !session ||
-        String(session.code_hash) === 'twilio_verify' ||
+        isExternalOtpMarker(session.code_hash) ||
         new Date(session.expires_at) < new Date()
       ) {
         return new Response(JSON.stringify({ error: 'Invalid or expired OTP session' }), {
@@ -167,21 +119,14 @@ Deno.serve(async (req: Request) => {
 
       const otpHash = await sha256Hex(otp);
       if (otpHash !== session.code_hash) {
-        await fetch(`${supabaseUrl}/rest/v1/otp_requests?id=eq.${session.id}`, {
-          method: 'PATCH',
-          headers: {
-            apikey: serviceKey,
-            Authorization: `Bearer ${serviceKey}`,
-            'Content-Type': 'application/json',
-            Prefer: 'return=minimal',
-          },
-          body: JSON.stringify({ attempts: attempts + 1 }),
-        });
+        await incrementOtpAttempts(supabaseUrl, serviceKey, session.id, attempts);
         return new Response(JSON.stringify({ error: 'Invalid OTP' }), {
           status: 400,
           headers: { ...cors, 'Content-Type': 'application/json' },
         });
       }
+      approved = true;
+    } else {
       approved = true;
     }
 
@@ -229,11 +174,24 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    const latencyMs = Math.round(performance.now() - started);
+    console.log(
+      JSON.stringify({
+        event: 'otp_verify',
+        ok: true,
+        provider: providerResult.provider,
+        latency_ms: latencyMs,
+        provider_latency_ms: providerResult.latencyMs,
+      }),
+    );
+
     return new Response(
       JSON.stringify({
         ok: true,
         verification_token: token,
         expires_at: expiresAt,
+        provider: providerResult.provider,
+        latency_ms: latencyMs,
       }),
       { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } },
     );
