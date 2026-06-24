@@ -24,13 +24,13 @@ const CITY_DISPLAY_NAMES: Record<string, string> = {
   'rishikesh': 'Rishikesh',
 };
 
-const CITY_META: Record<string, { tagline: string; bg: string }> = {
-  'Delhi': { tagline: 'Capital stays at unbeatable prices', bg: 'from-slate-200 to-amber-100' },
-  'Gurgaon': { tagline: 'Modern living in Millennium City', bg: 'from-blue-100 to-slate-100' },
-  'Noida': { tagline: 'Tech city verified stays', bg: 'from-teal-100 to-slate-100' },
-  'Greater Noida': { tagline: 'Spacious homes, serene surroundings', bg: 'from-green-100 to-slate-100' },
-  'Ghaziabad': { tagline: 'Verified stays across Ghaziabad', bg: 'from-amber-100 to-slate-100' },
-  'Rishikesh': { tagline: 'Yoga capital riverside retreats', bg: 'from-orange-100 to-slate-100' },
+const CITY_TAGLINES: Record<string, string> = {
+  Delhi: 'The city that never asks questions.',
+  Gurgaon: 'All glass. No noise. No one knows.',
+  Noida: 'Far enough from everyone who knows you.',
+  'Greater Noida': 'The escape nobody talks about. Yet.',
+  Rishikesh: "The mountains won't tell anyone.",
+  Ghaziabad: "Closer than you think. Quieter than you'd expect.",
 };
 
 const QUICK_FILTERS = [
@@ -83,7 +83,6 @@ export default function CityListingPage({ city }: CityListingPageProps) {
   );
 
   const cityName = CITY_DISPLAY_NAMES[city] || city;
-  const cityMeta = CITY_META[cityName];
   const rishikeshExperienceWhatsappUrl = buildTeamWhatsAppLink(
     'Hi — I want to book a Private Solo show in Rishikesh. Please share availability and next steps.'
   );
@@ -209,12 +208,9 @@ export default function CityListingPage({ city }: CityListingPageProps) {
           </button>
           <div className="flex-1 min-w-0">
             <h1 className="text-base font-bold text-xpx-text leading-tight">Stays in {cityName}</h1>
-            <div className="flex items-center gap-1 text-xs text-xpx-muted mt-0.5">
-              <MapPin className="w-3 h-3" />
-              <span>
-                {loading ? 'Loading...' : `${filteredProperties.length} of ${properties.length} properties`}
-              </span>
-            </div>
+            <p className="text-sm font-medium text-xpx-muted italic mt-1 tracking-wide">
+              {CITY_TAGLINES[cityName] || ''}
+            </p>
           </div>
           <button
             onClick={() => setShowFilters(true)}
@@ -299,14 +295,10 @@ export default function CityListingPage({ city }: CityListingPageProps) {
           }}
         >
           <p className="xpx-eyebrow mb-1">{cityName}</p>
-          <p className="text-xpx-text font-extrabold text-xl leading-tight tracking-tight">{cityMeta?.tagline}</p>
+          <p className="text-sm font-medium text-xpx-muted italic mt-2 tracking-wide">
+            {CITY_TAGLINES[cityName] || ''}
+          </p>
           <div className="flex items-center gap-2 mt-3 flex-wrap">
-            <span
-              className="px-2.5 py-1 rounded-full text-xs font-medium"
-              style={{ background: '#FFFFFF', color: 'var(--xpx-muted)', border: '1px solid var(--xpx-border)' }}
-            >
-              {properties.length} properties
-            </span>
             <span
               className="px-2.5 py-1 rounded-full text-xs font-medium"
               style={{ background: '#FFFFFF', color: 'var(--xpx-muted)', border: '1px solid var(--xpx-border)' }}

@@ -45,6 +45,15 @@ function pexelsPhotoUrl(photoId: string, width: number) {
 
 const CITIES = ['Delhi', 'Gurgaon', 'Noida', 'Greater Noida', 'Ghaziabad', 'Rishikesh'];
 
+const CITY_TAGLINES: Record<string, string> = {
+  Delhi: 'The city that never asks questions.',
+  Gurgaon: 'All glass. No noise. No one knows.',
+  Noida: 'Far enough from everyone who knows you.',
+  'Greater Noida': 'The escape nobody talks about. Yet.',
+  Rishikesh: "The mountains won't tell anyone.",
+  Ghaziabad: "Closer than you think. Quieter than you'd expect.",
+};
+
 const CITY_IMAGES: Record<string, string> = {
   Delhi: pexelsPhotoUrl('789750', 600),
   Gurgaon: pexelsPhotoUrl('1571460', 600),
@@ -596,9 +605,7 @@ function TopDestinationCardInner({
 }) {
   const cover =
     firstImageUrl(propertiesByCity[city]?.[0]?.images ?? null) || CITY_IMAGES[city];
-  const count = propertiesByCity[city]?.length ?? 0;
   const citySize = variant === 'hero' ? 30 : variant === 'wide' ? 24 : 19;
-  const countSize = variant === 'hero' ? 'text-sm' : 'text-[13px]';
   const cardHeight = variant === 'hero' ? 'min-h-[470px]' : variant === 'wide' ? 'min-h-[240px]' : 'h-full';
   return (
     <div className={`relative w-full h-full ${cardHeight}`}>
@@ -621,9 +628,15 @@ function TopDestinationCardInner({
         >
           {city}
         </div>
-        <div className={`mt-1 ${countSize} font-medium`} style={{ color: 'rgba(248,250,252,0.88)' }}>
-          {listingsLoading ? 'Loading stays…' : `${count.toLocaleString()} properties`}
-        </div>
+        {listingsLoading ? (
+          <p className="text-sm font-medium mt-1" style={{ color: 'rgba(248,250,252,0.88)' }}>
+            Loading stays…
+          </p>
+        ) : (
+          <p className="text-xs font-medium text-white/75 italic tracking-wide mt-1">
+            {CITY_TAGLINES[city] || city}
+          </p>
+        )}
       </div>
     </div>
   );
