@@ -49,7 +49,10 @@ import { trackXpressEvent } from '../lib/analytics';
 import SaveListingButton from '../components/SaveListingButton';
 import PropertyTrustLine from '../components/PropertyTrustLine';
 import { snapshotFromProperty } from '../lib/savedListingsStorage';
-import { useIsDesktop, useInViewport } from '../hooks/useGalleryMotion';
+import { useInViewport } from '../hooks/useGalleryMotion';
+
+/** Preload sidebar chunk + calendar when the booking column nears the viewport. */
+const SIDEBAR_MOUNT_ROOT_MARGIN = '400px 0px';
 
 const BookingForm = lazy(() => import('../components/BookingForm'));
 const OfferModal = lazy(() => import('../components/OfferModal'));
@@ -73,9 +76,10 @@ function SidebarFallback() {
  *   why-guests-love → location & nearby → reviews → house rules.
  *
  * The right column hosts a sticky booking sidebar with the existing
- * BookingCalendar / BookingForm / OfferModal pipelines wired in. None of
- * the existing handlers were removed; all pricing, calendar and booking
- * inserts continue to flow through the original components.
+ * BookingCalendar / BookingForm / OfferModal pipelines wired in.
+ * PropertySidebar (and its calendar fetch) mount only when the booking
+ * column nears the viewport or the user starts a booking flow — same gate
+ * on desktop and mobile. SidebarFallback preserves layout until then.
  */
 export default function PropertyPage() {
   const [property, setProperty] = useState<Property | null>(null);
@@ -92,10 +96,9 @@ export default function PropertyPage() {
   const [hostName, setHostName] = useState<string | null>(null);
   const [sidebarForced, setSidebarForced] = useState(false);
 
-  const isDesktopLayout = useIsDesktop(1024);
   const sidebarRef = useRef<HTMLElement>(null);
-  const sidebarNearView = useInViewport(sidebarRef, 0);
-  const mountSidebar = isDesktopLayout || sidebarForced || sidebarNearView || showBooking;
+  const sidebarNearView = useInViewport(sidebarRef, 0, SIDEBAR_MOUNT_ROOT_MARGIN);
+  const mountSidebar = sidebarForced || sidebarNearView || showBooking;
 
   const tripFromSearch = useMemo(() => parseTripFromSearch(window.location.search), []);
 

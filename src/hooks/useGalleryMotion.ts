@@ -34,6 +34,7 @@ export function useIsDesktop(breakpointPx = 768): boolean {
 export function useInViewport<T extends Element>(
   ref: React.RefObject<T | null>,
   threshold = 0.35,
+  rootMargin = '0px',
 ): boolean {
   const [visible, setVisible] = useState(false);
 
@@ -43,11 +44,11 @@ export function useInViewport<T extends Element>(
 
     const observer = new IntersectionObserver(
       ([entry]) => setVisible(entry?.isIntersecting ?? false),
-      { threshold },
+      { threshold, rootMargin },
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [ref, threshold]);
+  }, [ref, threshold, rootMargin]);
 
   return visible;
 }
