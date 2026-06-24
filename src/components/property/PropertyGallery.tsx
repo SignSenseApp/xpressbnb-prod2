@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Camera, X, ChevronLeft, ChevronRight, Bed } from 'lucide-react';
-import { listPropertyImages } from '../../lib/propertyImages';
+import {
+  listPropertyImages,
+  PROPERTY_GALLERY_THUMB_SIZES,
+  propertyGalleryThumbSrc,
+  propertyGalleryThumbSrcSet,
+} from '../../lib/propertyImages';
 import PropertyHeroCarousel from './PropertyHeroCarousel';
 
 interface PropertyGalleryProps {
@@ -100,6 +105,8 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
         {thumbs.map((img, i) => {
           const isLastThumb = i === thumbs.length - 1;
           const showOverlay = isLastThumb && remaining > 0;
+          const thumbSrc = propertyGalleryThumbSrc(img);
+          const thumbSrcSet = propertyGalleryThumbSrcSet(img);
           return (
             <button
               key={`thumb-${i}`}
@@ -109,10 +116,13 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
               aria-label={`View photo ${i + 2} of ${total}`}
             >
               <img
-                src={img}
+                src={thumbSrc}
+                srcSet={thumbSrcSet}
+                sizes={thumbSrcSet ? PROPERTY_GALLERY_THUMB_SIZES : undefined}
                 alt={`${title} — photo ${i + 2}`}
                 className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
                 loading="lazy"
+                decoding="async"
               />
               {showOverlay && (
                 <div

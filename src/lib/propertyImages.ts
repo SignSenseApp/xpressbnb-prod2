@@ -11,8 +11,18 @@ export const PROPERTY_HERO_IMAGE_WIDTHS = [480, 768, 1280, 1600] as const;
 
 export const PROPERTY_HERO_IMAGE_SIZES = '100vw';
 
+/**
+ * Desktop PropertyGallery side-column thumbnails — ~⅓ grid width, ~⅓ gallery height.
+ * 640w covers 2× on ~320px cells; avoids hero widths (480–1600).
+ */
+export const PROPERTY_GALLERY_THUMB_WIDTHS = [240, 320, 480, 640] as const;
+
+export const PROPERTY_GALLERY_THUMB_SIZES =
+  '(min-width: 1280px) 320px, (min-width: 640px) 30vw, 0px';
+
 const CARD_IMAGE_QUALITY = 80;
 const HERO_IMAGE_QUALITY = 82;
+const GALLERY_THUMB_QUALITY = 80;
 
 /** Normalized property image URLs for gallery components. */
 export function listPropertyImages(
@@ -108,5 +118,30 @@ export function propertyHeroImageSrcSet(url: string): string | undefined {
 
   return PROPERTY_HERO_IMAGE_WIDTHS.map(
     (w) => `${buildResizedImageUrl(trimmed, w, HERO_IMAGE_QUALITY)} ${w}w`,
+  ).join(', ');
+}
+
+/** Resize-aware URL for a PropertyGallery desktop thumbnail at the given width. */
+export function propertyGalleryThumbUrl(url: string, width: number): string {
+  return buildResizedImageUrl(url, width, GALLERY_THUMB_QUALITY);
+}
+
+/** Fallback `src` for gallery thumbnails — largest thumb width (2× on ~320px cells). */
+export function propertyGalleryThumbSrc(url: string): string {
+  const maxW = PROPERTY_GALLERY_THUMB_WIDTHS[PROPERTY_GALLERY_THUMB_WIDTHS.length - 1];
+  return propertyGalleryThumbUrl(url, maxW);
+}
+
+/** Responsive srcset for PropertyGallery desktop thumbnails. */
+export function propertyGalleryThumbSrcSet(url: string): string | undefined {
+  const trimmed = url.trim();
+  if (!trimmed) return undefined;
+
+  const canResize =
+    trimmed.includes('/storage/v1/object/public/') || trimmed.includes('images.pexels.com');
+  if (!canResize) return undefined;
+
+  return PROPERTY_GALLERY_THUMB_WIDTHS.map(
+    (w) => `${propertyGalleryThumbUrl(trimmed, w)} ${w}w`,
   ).join(', ');
 }
