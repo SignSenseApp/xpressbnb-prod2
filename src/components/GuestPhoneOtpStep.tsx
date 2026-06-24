@@ -22,8 +22,6 @@ export type GuestPhoneOtpStepProps = {
 
 type Phase = 'phone' | 'otp' | 'verified';
 
-const AUTO_SEND_DEBOUNCE_MS = 500;
-
 export default function GuestPhoneOtpStep({
   phone,
   onPhoneChange,
@@ -41,7 +39,6 @@ export default function GuestPhoneOtpStep({
   const [resendCooldown, setResendCooldown] = useState(0);
   const otpInputRef = useRef<HTMLInputElement>(null);
   const autoSubmitOtpRef = useRef<string | null>(null);
-  const autoSendDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const otpSentForDigitsRef = useRef<string | null>(null);
   const sendInFlightRef = useRef(false);
 
@@ -144,32 +141,6 @@ export default function GuestPhoneOtpStep({
     autoSubmitOtpRef.current = otp;
     void handleVerifyOtp();
   }, [otp, phase, loading, disabled, handleVerifyOtp]);
-
-  useEffect(() => {
-    if (phase !== 'phone' || disabled || verified) return;
-    if (digits.length !== 10) {
-      if (digits.length < 10) {
-        otpSentForDigitsRef.current = null;
-      }
-      return;
-    }
-    if (otpSentForDigitsRef.current === digits) return;
-
-    if (autoSendDebounceRef.current) {
-      clearTimeout(autoSendDebounceRef.current);
-    }
-    autoSendDebounceRef.current = setTimeout(() => {
-      if (otpSentForDigitsRef.current === digits) return;
-      if (sendInFlightRef.current) return;
-      void handleSendOtp();
-    }, AUTO_SEND_DEBOUNCE_MS);
-
-    return () => {
-      if (autoSendDebounceRef.current) {
-        clearTimeout(autoSendDebounceRef.current);
-      }
-    };
-  }, [digits, phase, disabled, verified, handleSendOtp]);
 
   const handleChangeNumber = () => {
     autoSubmitOtpRef.current = null;
@@ -304,7 +275,7 @@ export default function GuestPhoneOtpStep({
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px]"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            {loading ? 'Sending…' : 'Send OTP'}
+            {loading ? 'Sending…' : 'Send code →'}
           </button>
         ) : (
           <>

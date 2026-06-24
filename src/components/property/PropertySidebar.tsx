@@ -3,7 +3,7 @@ import { Tag, Users, Sparkles } from 'lucide-react';
 import type { Property } from '../../lib/database.types';
 import BookingCalendar from '../BookingCalendar';
 import { computeOffer } from '../../lib/offers';
-import { computeFeeBreakdown } from '../../config/propertyDefaults';
+import { calculateBookingTotal } from '../../lib/pricingUtils';
 import PropertyTrustNotes from './PropertyTrustNotes';
 
 interface PropertySidebarProps {
@@ -80,8 +80,8 @@ export default function PropertySidebar({
   }, [checkIn, checkOut]);
 
   const breakdown = useMemo(
-    () => computeFeeBreakdown(nightlyTotal, nights),
-    [nightlyTotal, nights]
+    () => calculateBookingTotal(nightlyTotal, nights, numGuests, property),
+    [nightlyTotal, nights, numGuests, property],
   );
 
   return (
@@ -107,7 +107,9 @@ export default function PropertySidebar({
           <span className="text-sm text-xpx-muted">/ night</span>
         </div>
         <p className="text-[11px] text-xpx-subtle mt-1">
-          Starting price (extra charges may apply)
+          {nights > 0
+            ? 'Trip total below includes all fees & taxes'
+            : 'Nightly rate — select dates to see full total'}
         </p>
       </div>
 
@@ -190,7 +192,7 @@ export default function PropertySidebar({
               {nights === 1 ? 'night' : 'nights'}
             </dt>
             <dd className="text-xpx-text font-medium tabular-nums">
-              ₹{breakdown.nightlyTotal.toLocaleString('en-IN')}
+              ₹{breakdown.baseTotal.toLocaleString('en-IN')}
             </dd>
           </div>
           <div className="flex justify-between">
@@ -217,7 +219,7 @@ export default function PropertySidebar({
           >
             <dt className="text-xpx-text font-bold">Total</dt>
             <dd className="text-xpx-text font-extrabold tabular-nums">
-              ₹{breakdown.total.toLocaleString('en-IN')}
+              ₹{breakdown.grandTotal.toLocaleString('en-IN')}
             </dd>
           </div>
         </dl>

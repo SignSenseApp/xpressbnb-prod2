@@ -2,7 +2,10 @@ const SURFACE_LIGHT = '#F8FAFC';
 
 export default function NearbyStaysSkeleton() {
   return (
-    <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5 overflow-hidden">
+    <div
+      className="flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5 overflow-hidden pointer-events-none"
+      aria-hidden="true"
+    >
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}

@@ -12,10 +12,12 @@ import {
 import type { Property } from '../lib/database.types';
 import { supabase } from '../lib/supabase';
 import { applyDiscounts, findPromoCode, type PromoCodeDef } from '../lib/offers';
+import { calculateBookingTotal } from '../lib/pricingUtils';
 import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
 import { parseInquirySubmitResult, type FrequentAmigoStatus } from '../lib/inquiryHostContact';
 import GuestPhoneOtpStep from './GuestPhoneOtpStep';
 import BookingProgressBar from './booking/BookingProgressBar';
+import { BOOKING_STEP_LABELS } from './booking/bookingStepLabels';
 import type { BookingOtpVerifyResult } from '../lib/bookingOtp';
 import { normalizePhoneDigits } from '../lib/bookingOtp';
 import {
@@ -59,20 +61,18 @@ function ErrorBanner({ message }: { message: string }) {
 }
 
 function BookingStepLabels({
-  hasDates,
-  hasDetails,
+  currentStep,
   phoneVerified,
 }: {
-  hasDates: boolean;
-  hasDetails: boolean;
+  currentStep: number;
   phoneVerified: boolean;
 }) {
-  const steps = [
-    { n: 1, label: 'Dates', active: true, done: hasDates },
-    { n: 2, label: 'Details', active: hasDates, done: hasDetails },
-    { n: 3, label: 'Verify', active: hasDetails, done: phoneVerified },
-    { n: 4, label: 'Send', active: phoneVerified, done: false },
-  ];
+  const steps = BOOKING_STEP_LABELS.map((label, index) => {
+    const n = index + 1;
+    const done = n < currentStep || (n === BOOKING_STEP_LABELS.length && phoneVerified);
+    const active = n === currentStep && !done;
+    return { n, label, active, done };
+  });
 
   return (
     <p
@@ -137,7 +137,12 @@ export default function BookingForm({
     () => applyDiscounts(calculatedPrice, property, appliedPromo),
     [calculatedPrice, property, appliedPromo],
   );
-  const totalPrice = discountResult.total + decorationPrice;
+  const feePricing = useMemo(
+    () => calculateBookingTotal(calculatedPrice, numberOfDays, numGuests, property),
+    [calculatedPrice, numberOfDays, numGuests, property],
+  );
+  const totalDiscounts = discountResult.propertyDiscount + discountResult.promoDiscount;
+  const totalPrice = feePricing.grandTotal - totalDiscounts + decorationPrice;
   const totalSaved = discountResult.propertyDiscount + discountResult.promoDiscount;
 
   const analyticsScope: AnalyticsScope = useMemo(
@@ -440,19 +445,18 @@ export default function BookingForm({
     ? 4
     : hasDetails
       ? 4
-      : formData.guest_name.trim() || formData.guest_email.trim()
+      : hasDates
         ? 3
-        : 2;
+        : 1;
 
   return (
     <form
       onSubmit={handleSubmit}
       className="space-y-5 max-w-full overflow-x-hidden pb-[max(1rem,env(safe-area-inset-bottom))]"
     >
-      <BookingProgressBar currentStep={bookingStep} />
+      <BookingProgressBar currentStep={bookingStep} labels={[...BOOKING_STEP_LABELS]} />
       <BookingStepLabels
-        hasDates={hasDates}
-        hasDetails={hasDetails}
+        currentStep={bookingStep}
         phoneVerified={Boolean(phoneVerification)}
       />
 

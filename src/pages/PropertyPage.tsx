@@ -41,8 +41,8 @@ import {
   TRUST_PILLS,
   getMapEmbedUrl,
   getMapLinkUrl,
-  computeFeeBreakdown,
 } from '../config/propertyDefaults';
+import { calculateBookingTotal } from '../lib/pricingUtils';
 import { safeHostDisplayName } from '../lib/host';
 import { parseTripFromSearch } from '../lib/tripSearch';
 import { navigateTo } from '../lib/navigation';
@@ -131,8 +131,18 @@ export default function PropertyPage() {
   }, [hasValidDates, selectedCheckIn, selectedCheckOut]);
 
   const tripBreakdown = useMemo(
-    () => computeFeeBreakdown(totalPrice, bookingNights),
-    [totalPrice, bookingNights],
+    () =>
+      property
+        ? calculateBookingTotal(totalPrice, bookingNights, numGuests, property)
+        : {
+            baseTotal: 0,
+            fees: 0,
+            taxes: 0,
+            grandTotal: 0,
+            cleaningFee: 0,
+            serviceFee: 0,
+          },
+    [totalPrice, bookingNights, numGuests, property],
   );
 
   useEffect(() => {
@@ -725,8 +735,13 @@ export default function PropertyPage() {
           </div>
         </div>
 
-        {/* Two-column content + sticky sidebar — before gallery on mobile for instant booking */}
-        <div className="order-1 lg:order-2 mt-5 sm:mt-7 lg:mt-10 grid lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px] gap-8 lg:gap-10 xl:gap-12 items-start">
+        {/* Image gallery — first on mobile (below header); before content grid on desktop */}
+        <div className="order-1 lg:order-1 mt-4 sm:mt-5 lg:mt-3">
+          <PropertyGallery images={property.images ?? []} title={propertyTitle} />
+        </div>
+
+        {/* Two-column content + sticky sidebar — after gallery on mobile */}
+        <div className="order-2 lg:order-2 mt-5 sm:mt-7 lg:mt-10 grid lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px] gap-8 lg:gap-10 xl:gap-12 items-start">
           <div className="min-w-0 space-y-9 sm:space-y-12">
             {/* 1. TITLE BLOCK */}
             <header>
@@ -1142,21 +1157,16 @@ export default function PropertyPage() {
             </DeferredMount>
           </div>
 
-          {/* Sticky booking sidebar (desktop) / first on mobile for instant access. */}
+          {/* Sticky booking sidebar (desktop) / below main content on mobile. */}
           <aside
             ref={sidebarRef}
             id="booking-sidebar"
-            className={`order-first lg:order-none xpx-booking-sidebar-sticky scroll-mt-24 lg:self-start${
+            className={`xpx-booking-sidebar-sticky scroll-mt-24 lg:self-start${
               showBooking ? ' pb-28 lg:pb-0' : ''
             }`}
           >
             {renderBookingColumn()}
           </aside>
-        </div>
-
-        {/* Image gallery — after booking on mobile; before content grid on desktop */}
-        <div className="order-2 lg:order-1 mt-4 sm:mt-5 lg:mt-3">
-          <PropertyGallery images={property.images ?? []} title={propertyTitle} />
         </div>
       </main>
 
@@ -1178,7 +1188,7 @@ export default function PropertyPage() {
                 <>
                   <div className="flex items-baseline gap-1 flex-wrap">
                     <span className="text-lg font-extrabold text-xpx-text tabular-nums">
-                      ₹{tripBreakdown.total.toLocaleString('en-IN')}
+                      ₹{tripBreakdown.grandTotal.toLocaleString('en-IN')}
                     </span>
                     <span className="text-xs text-xpx-muted">total</span>
                   </div>

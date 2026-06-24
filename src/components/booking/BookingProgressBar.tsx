@@ -1,10 +1,12 @@
+import { BOOKING_STEP_LABELS } from './bookingStepLabels';
+
 type BookingProgressBarProps = {
   currentStep: number;
   totalSteps?: number;
   labels?: string[];
 };
 
-const DEFAULT_LABELS = ['Dates', 'Guests', 'Contact', 'Verify'];
+const DEFAULT_LABELS = [...BOOKING_STEP_LABELS];
 
 /**
  * Sticky booking progress — "Step 2 of 4" with visual bar.

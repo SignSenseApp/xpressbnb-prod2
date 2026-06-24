@@ -36,12 +36,14 @@ const CarouselSlide = memo(function CarouselSlide({
   hidden,
   nearbyDistanceKm,
   userCity,
+  carouselSuppressClickRef,
 }: {
   property: Property;
   width: number;
   hidden: boolean;
   nearbyDistanceKm?: number;
   userCity?: string | null;
+  carouselSuppressClickRef?: React.MutableRefObject<boolean>;
 }) {
   return (
     <div className="flex h-full shrink-0" style={{ width }} aria-hidden={hidden}>
@@ -51,6 +53,7 @@ const CarouselSlide = memo(function CarouselSlide({
         nearbyDistanceKm={nearbyDistanceKm}
         nearbySource="nearby_carousel"
         userCity={userCity}
+        carouselSuppressClickRef={carouselSuppressClickRef}
       />
     </div>
   );
@@ -96,6 +99,8 @@ export default function FeaturedStaysCarousel({
   const dragStartY = useRef(0);
   const dragAxisLock = useRef<'x' | 'y' | null>(null);
   const pointerIdRef = useRef<number | null>(null);
+  const pointerCapturedRef = useRef(false);
+  const dragIntentRef = useRef(false);
   const velocitySamples = useRef<VelocitySample[]>([]);
 
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -103,6 +108,8 @@ export default function FeaturedStaysCarousel({
 
   const visible = visibleSlideCount(containerWidth || 360);
   const isMobileLayout = visible <= 1;
+  /** Desktop uses arrows only — pointer capture on the track blocks card clicks. */
+  const pointerDragEnabled = isMobileLayout && count > 1;
   const slideWidth = containerWidth > 0 ? slideWidthForContainer(containerWidth, visible) : 306;
   const stride = slideWidth + GAP_PX;
 
@@ -250,13 +257,17 @@ export default function FeaturedStaysCarousel({
       setIsDragging(false);
       dragAxisLock.current = null;
       pointerIdRef.current = null;
+      pointerCapturedRef.current = false;
+      dragIntentRef.current = false;
 
       if (Math.abs(velocity) >= VELOCITY_THRESHOLD) {
+        dragIntentRef.current = true;
         setEnableTransition(true);
         setDragOffset(0);
         if (velocity < 0) goNext();
         else goPrev();
       } else if (Math.abs(deltaX) >= SWIPE_THRESHOLD_PX) {
+        dragIntentRef.current = true;
         setEnableTransition(true);
         setDragOffset(0);
         if (deltaX < 0) goNext();
@@ -272,21 +283,23 @@ export default function FeaturedStaysCarousel({
   );
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!pointerDragEnabled) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     pauseInteraction();
     dragStartX.current = e.clientX;
     dragStartY.current = e.clientY;
     dragAxisLock.current = null;
     pointerIdRef.current = e.pointerId;
+    pointerCapturedRef.current = false;
+    dragIntentRef.current = false;
     velocitySamples.current = [{ x: e.clientX, t: performance.now() }];
     setIsDragging(true);
     setEnableTransition(false);
     setDragOffset(0);
-    e.currentTarget.setPointerCapture(e.pointerId);
   };
 
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging || pointerIdRef.current !== e.pointerId) return;
+    if (!pointerDragEnabled || !isDragging || pointerIdRef.current !== e.pointerId) return;
 
     const dx = e.clientX - dragStartX.current;
     const dy = e.clientY - dragStartY.current;
@@ -298,6 +311,16 @@ export default function FeaturedStaysCarousel({
     }
     if (dragAxisLock.current === 'y') return;
 
+    if (!pointerCapturedRef.current) {
+      pointerCapturedRef.current = true;
+      dragIntentRef.current = true;
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        /* already captured */
+      }
+    }
+
     e.preventDefault();
     setDragOffset(dx);
 
@@ -306,18 +329,20 @@ export default function FeaturedStaysCarousel({
   };
 
   const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (pointerIdRef.current !== e.pointerId) return;
+    if (!pointerDragEnabled || pointerIdRef.current !== e.pointerId) return;
     const deltaX = e.clientX - dragStartX.current;
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {
-      /* already released */
+    if (pointerCapturedRef.current) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        /* already released */
+      }
     }
     finishDrag(dragAxisLock.current === 'x' ? deltaX : 0);
   };
 
   const onPointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (pointerIdRef.current !== e.pointerId) return;
+    if (!pointerDragEnabled || pointerIdRef.current !== e.pointerId) return;
     finishDrag(0);
   };
 
@@ -378,7 +403,11 @@ export default function FeaturedStaysCarousel({
         onKeyDown={onKeyDown}
       >
         <div
-          className="flex cursor-grab active:cursor-grabbing"
+          className={
+            pointerDragEnabled
+              ? 'flex cursor-grab active:cursor-grabbing'
+              : 'flex'
+          }
           style={{
             gap: GAP_PX,
             transform: `translate3d(${translateX}px, 0, 0)`,
@@ -389,10 +418,14 @@ export default function FeaturedStaysCarousel({
             willChange: 'transform',
           }}
           onTransitionEnd={handleTransitionEnd}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerCancel}
+          {...(pointerDragEnabled
+            ? {
+                onPointerDown,
+                onPointerMove,
+                onPointerUp,
+                onPointerCancel,
+              }
+            : {})}
         >
           {extendedSlides.map((property, index) => (
             <CarouselSlide
@@ -402,6 +435,7 @@ export default function FeaturedStaysCarousel({
               hidden={loopEnabled ? index !== trackIndex : index !== logicalIndex}
               nearbyDistanceKm={distanceByPropertyId?.[property.id]}
               userCity={userCity}
+              carouselSuppressClickRef={dragIntentRef}
             />
           ))}
         </div>

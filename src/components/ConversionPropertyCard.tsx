@@ -39,6 +39,8 @@ interface ConversionPropertyCardProps {
   nearbySource?: string;
   /** User city for emotional distance copy */
   userCity?: string | null;
+  /** When carousel swipe is active, block card navigation */
+  carouselSuppressClickRef?: React.MutableRefObject<boolean>;
 }
 
 function countImages(images: Property['images']): number {
@@ -63,6 +65,7 @@ export default memo(function ConversionPropertyCard({
   nearbyDistanceKm,
   nearbySource,
   userCity,
+  carouselSuppressClickRef,
 }: ConversionPropertyCardProps) {
   const cardRef = useRef<HTMLElement>(null);
   const swipeRef = useRef(false);
@@ -91,6 +94,10 @@ export default memo(function ConversionPropertyCard({
   };
 
   const handleClick = () => {
+    if (carouselSuppressClickRef?.current) {
+      carouselSuppressClickRef.current = false;
+      return;
+    }
     if (swipeRef.current) {
       swipeRef.current = false;
       return;
@@ -178,7 +185,7 @@ export default memo(function ConversionPropertyCard({
         )}
 
         {nearbyBadge && (
-          <div className="absolute left-3 top-12 z-10 max-w-[calc(100%-5rem)]">
+          <div className="pointer-events-none absolute left-3 top-12 z-10 max-w-[calc(100%-5rem)]">
             <span
               className="inline-flex flex-col rounded-full px-2.5 py-1 text-[10px] font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
               style={{ background: 'rgba(5,150,105,0.92)' }}
@@ -200,7 +207,7 @@ export default memo(function ConversionPropertyCard({
 
         {/* Floating glass price card */}
         <div
-          className="absolute bottom-3 left-3 z-10 rounded-xl px-3 py-2"
+          className="pointer-events-none absolute bottom-3 left-3 z-10 rounded-xl px-3 py-2"
           style={{
             background: 'rgba(255,255,255,0.92)',
             backdropFilter: 'blur(12px)',
@@ -217,7 +224,7 @@ export default memo(function ConversionPropertyCard({
 
         {imageCount > 0 && (
           <div
-            className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium text-white"
+            className="pointer-events-none absolute bottom-3 right-3 z-10 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium text-white"
             style={{ background: 'rgba(0,0,0,0.55)' }}
           >
             <ImageGalleryIcon className="h-3.5 w-3.5" />

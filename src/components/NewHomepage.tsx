@@ -245,7 +245,23 @@ export default function NewHomepage() {
             </div>
           }
         >
-          <PersonalizedHomeFeed onNavigate={navigate} />
+          <PersonalizedHomeFeed
+            onNavigate={navigate}
+            compactSearch={
+              <HeroSearchBar
+                cities={CITIES}
+                city={searchCity}
+                onCityChange={setSearchCity}
+                checkin={searchCheckin}
+                onCheckinChange={handleSearchCheckin}
+                checkout={searchCheckout}
+                onCheckoutChange={handleSearchCheckout}
+                guests={searchGuests}
+                onGuestsChange={setSearchGuests}
+                onSearch={handleHeroSearch}
+              />
+            }
+          />
         </Suspense>
       </>
     );

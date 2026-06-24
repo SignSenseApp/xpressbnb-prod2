@@ -51,6 +51,7 @@ export function useTransformGallery({
   const dragStartY = useRef(0);
   const dragAxisLock = useRef<'x' | 'y' | null>(null);
   const pointerIdRef = useRef<number | null>(null);
+  const pointerCapturedRef = useRef(false);
   const didSwipeRef = useRef(false);
 
   const loopEnabled = loop && count > 1;
@@ -182,6 +183,7 @@ export function useTransformGallery({
       setIsDragging(false);
       dragAxisLock.current = null;
       pointerIdRef.current = null;
+      pointerCapturedRef.current = false;
 
       if (Math.abs(deltaX) >= SWIPE_THRESHOLD_PX) {
         didSwipeRef.current = true;
@@ -207,9 +209,9 @@ export function useTransformGallery({
     dragStartY.current = e.clientY;
     dragAxisLock.current = null;
     pointerIdRef.current = e.pointerId;
+    pointerCapturedRef.current = false;
     setIsDragging(true);
     setDragOffset(0);
-    e.currentTarget.setPointerCapture(e.pointerId);
   };
 
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -224,6 +226,15 @@ export function useTransformGallery({
     }
     if (dragAxisLock.current === 'y') return;
 
+    if (!pointerCapturedRef.current) {
+      pointerCapturedRef.current = true;
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        /* already captured */
+      }
+    }
+
     e.preventDefault();
     setDragOffset(dx);
   };
@@ -231,10 +242,12 @@ export function useTransformGallery({
   const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (pointerIdRef.current !== e.pointerId) return;
     const deltaX = e.clientX - dragStartX.current;
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {
-      /* already released */
+    if (pointerCapturedRef.current) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        /* already released */
+      }
     }
     finishDrag(dragAxisLock.current === 'x' ? deltaX : 0);
   };

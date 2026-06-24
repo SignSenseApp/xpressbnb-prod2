@@ -230,7 +230,7 @@ export interface TrustPill {
 export const TRUST_PILLS: TrustPill[] = [
   { title: 'Verified & inspected', subtitle: 'Quality-checked stay', tone: 'verified' },
   { title: 'Pay at property or secure booking', subtitle: 'Flexible booking', tone: 'trust' },
-  { title: 'No hidden fees', subtitle: 'What you see is what you pay', tone: 'trust' },
+  { title: 'Transparent pricing', subtitle: 'Total shown before you inquire', tone: 'trust' },
   { title: 'Quick host response', subtitle: 'Typically replies in an hour', tone: 'trust' },
 ];
 
