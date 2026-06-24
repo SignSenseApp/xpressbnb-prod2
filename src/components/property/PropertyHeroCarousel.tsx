@@ -1,16 +1,27 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { usePrefersReducedMotion } from '../../hooks/useGalleryMotion';
+import {
+  useInViewport,
+  useIsDesktop,
+  usePageVisible,
+  usePrefersReducedMotion,
+} from '../../hooks/useGalleryMotion';
 import {
   PROPERTY_HERO_IMAGE_SIZES,
   propertyHeroImageSrc,
   propertyHeroImageSrcSet,
 } from '../../lib/propertyImages';
 
-const HERO_AUTOPLAY_MS = 4000;
+/** Desktop hero advance — 4–5s premium pacing. */
+const DESKTOP_AUTOPLAY_MS = 4500;
+/** Mobile resumes on same cadence after user engagement. */
+const MOBILE_AUTOPLAY_MS = 4500;
 const RESUME_AFTER_MS = 5000;
-const FADE_MS = 600;
+const FADE_MS = 650;
+const FADE_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
 const SWIPE_THRESHOLD_PX = 48;
+/** Matches PropertyGallery `sm:` layout split. */
+const DESKTOP_LAYOUT_PX = 640;
 
 type PropertyHeroCarouselProps = {
   images: string[];
@@ -62,18 +73,38 @@ export default function PropertyHeroCarousel({
   onSlideClick,
   onIndexChange,
 }: PropertyHeroCarouselProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const count = images.length;
+  const isDesktopLayout = useIsDesktop(DESKTOP_LAYOUT_PX);
   const reducedMotion = usePrefersReducedMotion();
+  const inViewport = useInViewport(rootRef, 0.25);
+  const pageVisible = usePageVisible();
+
   const [index, setIndex] = useState(0);
   const [hoverPaused, setHoverPaused] = useState(false);
   const [touchPaused, setTouchPaused] = useState(false);
+  const [userEngaged, setUserEngaged] = useState(false);
   const autoplayRef = useRef<number | null>(null);
   const resumeRef = useRef<number | null>(null);
 
   const dragStartX = useRef(0);
   const pointerIdRef = useRef<number | null>(null);
 
-  const paused = hoverPaused || touchPaused;
+  const markEngaged = useCallback(() => {
+    setUserEngaged(true);
+  }, []);
+
+  const interactionPaused = hoverPaused || touchPaused;
+
+  const autoplayEligible =
+    count > 1 &&
+    !reducedMotion &&
+    inViewport &&
+    pageVisible &&
+    !interactionPaused &&
+    (isDesktopLayout || userEngaged);
+
+  const autoplayMs = isDesktopLayout ? DESKTOP_AUTOPLAY_MS : MOBILE_AUTOPLAY_MS;
 
   const goNext = useCallback(() => {
     setIndex((i) => (i + 1) % count);
@@ -88,19 +119,25 @@ export default function PropertyHeroCarousel({
     resumeRef.current = window.setTimeout(() => setTouchPaused(false), RESUME_AFTER_MS);
   }, []);
 
+  const pauseAfterManualNav = useCallback(() => {
+    markEngaged();
+    setTouchPaused(true);
+    scheduleResume();
+  }, [markEngaged, scheduleResume]);
+
   useEffect(() => {
     onIndexChange?.(index);
   }, [index, onIndexChange]);
 
   useEffect(() => {
     if (autoplayRef.current != null) window.clearInterval(autoplayRef.current);
-    if (count <= 1 || reducedMotion || paused) return;
+    if (!autoplayEligible) return;
 
-    autoplayRef.current = window.setInterval(goNext, HERO_AUTOPLAY_MS);
+    autoplayRef.current = window.setInterval(goNext, autoplayMs);
     return () => {
       if (autoplayRef.current != null) window.clearInterval(autoplayRef.current);
     };
-  }, [count, goNext, paused, reducedMotion]);
+  }, [autoplayEligible, autoplayMs, goNext]);
 
   useEffect(
     () => () => {
@@ -109,6 +146,14 @@ export default function PropertyHeroCarousel({
     },
     [],
   );
+
+  const renderIndices = useMemo(() => {
+    const indices = new Set<number>([0, index]);
+    if (isDesktopLayout || userEngaged) {
+      indices.add((index + 1) % count);
+    }
+    return indices;
+  }, [count, index, isDesktopLayout, userEngaged]);
 
   if (count === 0) return null;
 
@@ -133,6 +178,7 @@ export default function PropertyHeroCarousel({
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
+    markEngaged();
     setTouchPaused(true);
     dragStartX.current = e.clientX;
     pointerIdRef.current = e.pointerId;
@@ -157,6 +203,7 @@ export default function PropertyHeroCarousel({
 
   return (
     <div
+      ref={rootRef}
       className={`group/hero relative h-full w-full overflow-hidden ${className}`}
       role="region"
       aria-roledescription="carousel"
@@ -165,46 +212,48 @@ export default function PropertyHeroCarousel({
       onKeyDown={(e) => {
         if (e.key === 'ArrowLeft') {
           e.preventDefault();
-          setTouchPaused(true);
+          pauseAfterManualNav();
           goPrev();
-          scheduleResume();
         }
         if (e.key === 'ArrowRight') {
           e.preventDefault();
-          setTouchPaused(true);
+          pauseAfterManualNav();
           goNext();
-          scheduleResume();
         }
       }}
-      onMouseEnter={() => setHoverPaused(true)}
-      onMouseLeave={() => setHoverPaused(false)}
+      onMouseEnter={() => isDesktopLayout && setHoverPaused(true)}
+      onMouseLeave={() => isDesktopLayout && setHoverPaused(false)}
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
     >
-      {images.map((originalSrc, i) => (
-        <button
-          key={originalSrc}
-          type="button"
-          onClick={() => onSlideClick?.(i)}
-          className="absolute inset-0 h-full w-full overflow-hidden"
-          style={{
-            opacity: i === index ? 1 : 0,
-            transition: reducedMotion ? 'none' : `opacity ${FADE_MS}ms ease-out`,
-            zIndex: i === index ? 1 : 0,
-            pointerEvents: i === index ? 'auto' : 'none',
-          }}
-          aria-label={`View photo ${i + 1} of ${count}`}
-        >
-          <HeroImage
-            originalSrc={originalSrc}
-            alt={`${title} — photo ${i + 1}`}
-            className={`${imageClassName} select-none`}
-            loading={i <= 1 ? 'eager' : 'lazy'}
-            isActive={i === index}
-          />
-        </button>
-      ))}
+      {images.map((originalSrc, i) => {
+        if (!renderIndices.has(i)) return null;
+        return (
+          <button
+            key={originalSrc}
+            type="button"
+            onClick={() => onSlideClick?.(i)}
+            className="absolute inset-0 h-full w-full overflow-hidden motion-reduce:transition-none"
+            style={{
+              opacity: i === index ? 1 : 0,
+              transition: reducedMotion ? 'none' : `opacity ${FADE_MS}ms ${FADE_EASING}`,
+              zIndex: i === index ? 1 : 0,
+              pointerEvents: i === index ? 'auto' : 'none',
+            }}
+            aria-label={`View photo ${i + 1} of ${count}`}
+            aria-hidden={i !== index}
+          >
+            <HeroImage
+              originalSrc={originalSrc}
+              alt={`${title} — photo ${i + 1}`}
+              className={`${imageClassName} select-none`}
+              loading={i === 0 ? 'eager' : 'lazy'}
+              isActive={i === index}
+            />
+          </button>
+        );
+      })}
 
       {showArrows && (
         <>
@@ -212,9 +261,8 @@ export default function PropertyHeroCarousel({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              setTouchPaused(true);
+              pauseAfterManualNav();
               goPrev();
-              scheduleResume();
             }}
             className="absolute left-3 top-1/2 z-[2] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/35 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/50 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white group-hover/hero:opacity-100"
             aria-label="Previous photo"
@@ -225,9 +273,8 @@ export default function PropertyHeroCarousel({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              setTouchPaused(true);
+              pauseAfterManualNav();
               goNext();
-              scheduleResume();
             }}
             className="absolute right-3 top-1/2 z-[2] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/35 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/50 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white group-hover/hero:opacity-100"
             aria-label="Next photo"
