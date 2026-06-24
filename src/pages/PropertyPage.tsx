@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   MapPin,
@@ -21,14 +21,10 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import type { Property } from '../lib/database.types';
-import BookingForm from '../components/BookingForm';
 import Header from '../components/Header';
 import SEOHead from '../components/SEOHead';
-import HostCard from '../components/HostCard';
-import OfferModal from '../components/OfferModal';
 import PropertyGallery from '../components/property/PropertyGallery';
-import PropertyReviews from '../components/property/PropertyReviews';
-import PropertySidebar from '../components/property/PropertySidebar';
+import DeferredMount from '../components/property/DeferredMount';
 import { supabase } from '../lib/supabase';
 import { getPublicPropertyById } from '../lib/publicListings';
 import { getAmenityIcon } from '../lib/amenities';
@@ -52,6 +48,23 @@ import { trackXpressEvent } from '../lib/analytics';
 import SaveListingButton from '../components/SaveListingButton';
 import PropertyTrustLine from '../components/PropertyTrustLine';
 import { snapshotFromProperty } from '../lib/savedListingsStorage';
+import { useIsDesktop, useInViewport } from '../hooks/useGalleryMotion';
+
+const BookingForm = lazy(() => import('../components/BookingForm'));
+const OfferModal = lazy(() => import('../components/OfferModal'));
+const HostCard = lazy(() => import('../components/HostCard'));
+const PropertyReviews = lazy(() => import('../components/property/PropertyReviews'));
+const PropertySidebar = lazy(() => import('../components/property/PropertySidebar'));
+
+function SidebarFallback() {
+  return (
+    <div
+      className="rounded-3xl min-h-[480px] lg:min-h-[520px]"
+      style={{ background: 'var(--xpx-surface-light)', border: '1px solid var(--xpx-border)' }}
+      aria-hidden
+    />
+  );
+}
 
 /**
  * PropertyPage — redesigned around an Apple / Expedia-grade reading flow:
@@ -76,6 +89,12 @@ export default function PropertyPage() {
   const [totalPrice, setTotalPrice] = useState(0);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [hostName, setHostName] = useState<string | null>(null);
+  const [sidebarForced, setSidebarForced] = useState(false);
+
+  const isDesktopLayout = useIsDesktop(1024);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const sidebarNearView = useInViewport(sidebarRef, 0);
+  const mountSidebar = isDesktopLayout || sidebarForced || sidebarNearView || showBooking;
 
   const tripFromSearch = useMemo(() => parseTripFromSearch(window.location.search), []);
 
@@ -253,6 +272,7 @@ export default function PropertyPage() {
   }, []);
 
   const handleBookNow = useCallback(() => {
+    setSidebarForced(true);
     setShowBooking(true);
     // On mobile the sidebar lives at the bottom of the flow; bring it into
     // view so the user doesn't have to scroll manually after tapping Book.
@@ -266,6 +286,7 @@ export default function PropertyPage() {
   }, [scrollToSidebar]);
 
   const handleRequestToBookClick = useCallback(() => {
+    setSidebarForced(true);
     if (property) {
       trackXpressEvent('request_to_book_click', {
         property_id: property.id,
@@ -600,6 +621,7 @@ export default function PropertyPage() {
               </ul>
             </header>
 
+            <DeferredMount rootMargin="400px 0px">
             {/* 2. TRUST PILLS ROW */}
             <section>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -766,12 +788,14 @@ export default function PropertyPage() {
               <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-xpx-text mb-5">
                 Meet your host
               </h2>
-              <HostCard
-                hostId={property.host_id}
-                fallbackCity={property.city}
-                propertyTitle={property.title}
-                onRequestToBook={handleBookNow}
-              />
+              <Suspense fallback={null}>
+                <HostCard
+                  hostId={property.host_id}
+                  fallbackCity={property.city}
+                  propertyTitle={property.title}
+                  onRequestToBook={handleBookNow}
+                />
+              </Suspense>
             </section>
 
             {/* 6. WHY GUESTS LOVE STAYING HERE */}
@@ -879,7 +903,9 @@ export default function PropertyPage() {
             </section>
 
             {/* 8. REVIEWS */}
-            <PropertyReviews property={property} />
+            <Suspense fallback={null}>
+              <PropertyReviews property={property} />
+            </Suspense>
 
             {/* 9. HOUSE RULES */}
             <section>
@@ -929,10 +955,12 @@ export default function PropertyPage() {
                 })}
               </div>
             </section>
+            </DeferredMount>
           </div>
 
           {/* Sticky booking sidebar (desktop) / inline (mobile). */}
           <aside
+            ref={sidebarRef}
             id="booking-sidebar"
             className={
               !showBooking
@@ -941,20 +969,26 @@ export default function PropertyPage() {
             }
           >
             {!showBooking ? (
-              <PropertySidebar
-                property={property}
-                checkIn={selectedCheckIn}
-                checkOut={selectedCheckOut}
-                nightlyTotal={totalPrice}
-                onDateRangeSelect={handleDateRangeSelect}
-                onBookNow={handleRequestToBookClick}
-                onMakeOffer={() => setShowOfferModal(true)}
-                promoCode={featuredPromo?.code ?? null}
-                promoLabel={featuredPromo?.label ?? null}
-                initialCalendarCheckIn={tripFromSearch.checkin ?? null}
-                initialCalendarCheckOut={tripFromSearch.checkout ?? null}
-                initialTripGuests={tripFromSearch.guests}
-              />
+              mountSidebar ? (
+                <Suspense fallback={<SidebarFallback />}>
+                  <PropertySidebar
+                    property={property}
+                    checkIn={selectedCheckIn}
+                    checkOut={selectedCheckOut}
+                    nightlyTotal={totalPrice}
+                    onDateRangeSelect={handleDateRangeSelect}
+                    onBookNow={handleRequestToBookClick}
+                    onMakeOffer={() => setShowOfferModal(true)}
+                    promoCode={featuredPromo?.code ?? null}
+                    promoLabel={featuredPromo?.label ?? null}
+                    initialCalendarCheckIn={tripFromSearch.checkin ?? null}
+                    initialCalendarCheckOut={tripFromSearch.checkout ?? null}
+                    initialTripGuests={tripFromSearch.guests}
+                  />
+                </Suspense>
+              ) : (
+                <SidebarFallback />
+              )
             ) : (
               <div
                 className="rounded-3xl p-5 sm:p-6"
@@ -973,17 +1007,25 @@ export default function PropertyPage() {
                   Back to availability
                 </button>
                 <p className="xpx-eyebrow mb-3">Request to book</p>
-                <BookingForm
-                  property={property}
-                  onSuccess={({ bookingId }) => {
-                    window.history.pushState({}, '', `/booking/${bookingId}`);
-                    window.dispatchEvent(new PopStateEvent('popstate'));
-                  }}
-                  checkInDate={selectedCheckIn}
-                  checkOutDate={selectedCheckOut}
-                  calculatedPrice={totalPrice}
-                  initialNumGuests={tripFromSearch.guests}
-                />
+                <Suspense
+                  fallback={
+                    <div className="flex justify-center py-12" aria-hidden>
+                      <div className="w-10 h-10 border-4 border-xpx-warm border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  }
+                >
+                  <BookingForm
+                    property={property}
+                    onSuccess={({ bookingId }) => {
+                      window.history.pushState({}, '', `/booking/${bookingId}`);
+                      window.dispatchEvent(new PopStateEvent('popstate'));
+                    }}
+                    checkInDate={selectedCheckIn}
+                    checkOutDate={selectedCheckOut}
+                    calculatedPrice={totalPrice}
+                    initialNumGuests={tripFromSearch.guests}
+                  />
+                </Suspense>
               </div>
             )}
           </aside>
@@ -1029,13 +1071,17 @@ export default function PropertyPage() {
         </div>
       )}
 
-      <OfferModal
-        open={showOfferModal}
-        onClose={() => setShowOfferModal(false)}
-        property={property}
-        checkInDate={selectedCheckIn}
-        checkOutDate={selectedCheckOut}
-      />
+      {showOfferModal && property && (
+        <Suspense fallback={null}>
+          <OfferModal
+            open={showOfferModal}
+            onClose={() => setShowOfferModal(false)}
+            property={property}
+            checkInDate={selectedCheckIn}
+            checkOutDate={selectedCheckOut}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

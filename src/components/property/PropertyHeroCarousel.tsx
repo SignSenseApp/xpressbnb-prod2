@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePrefersReducedMotion } from '../../hooks/useGalleryMotion';
+import {
+  PROPERTY_HERO_IMAGE_SIZES,
+  propertyHeroImageSrc,
+  propertyHeroImageSrcSet,
+} from '../../lib/propertyImages';
 
 const HERO_AUTOPLAY_MS = 4000;
 const RESUME_AFTER_MS = 5000;
@@ -16,6 +21,37 @@ type PropertyHeroCarouselProps = {
   onSlideClick?: (index: number) => void;
   onIndexChange?: (index: number) => void;
 };
+
+function HeroImage({
+  originalSrc,
+  alt,
+  loading,
+  className,
+  isActive,
+}: {
+  originalSrc: string;
+  alt: string;
+  loading: 'lazy' | 'eager';
+  className?: string;
+  isActive: boolean;
+}) {
+  const src = propertyHeroImageSrc(originalSrc);
+  const srcSet = propertyHeroImageSrcSet(originalSrc);
+
+  return (
+    <img
+      src={src}
+      srcSet={srcSet}
+      sizes={srcSet ? PROPERTY_HERO_IMAGE_SIZES : undefined}
+      alt={alt}
+      className={className}
+      loading={loading}
+      decoding="async"
+      fetchPriority={isActive && loading === 'eager' ? 'high' : 'auto'}
+      draggable={false}
+    />
+  );
+}
 
 export default function PropertyHeroCarousel({
   images,
@@ -84,12 +120,12 @@ export default function PropertyHeroCarousel({
         className={`relative block h-full w-full overflow-hidden ${className}`}
         aria-label="View photo 1"
       >
-        <img
-          src={images[0]}
+        <HeroImage
+          originalSrc={images[0]}
           alt={`${title} — photo 1`}
           className={imageClassName}
           loading="eager"
-          decoding="async"
+          isActive
         />
       </button>
     );
@@ -146,9 +182,9 @@ export default function PropertyHeroCarousel({
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
     >
-      {images.map((src, i) => (
+      {images.map((originalSrc, i) => (
         <button
-          key={src}
+          key={originalSrc}
           type="button"
           onClick={() => onSlideClick?.(i)}
           className="absolute inset-0 h-full w-full overflow-hidden"
@@ -160,13 +196,12 @@ export default function PropertyHeroCarousel({
           }}
           aria-label={`View photo ${i + 1} of ${count}`}
         >
-          <img
-            src={src}
+          <HeroImage
+            originalSrc={originalSrc}
             alt={`${title} — photo ${i + 1}`}
             className={`${imageClassName} select-none`}
             loading={i <= 1 ? 'eager' : 'lazy'}
-            decoding="async"
-            draggable={false}
+            isActive={i === index}
           />
         </button>
       ))}
