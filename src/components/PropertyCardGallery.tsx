@@ -8,7 +8,12 @@ import {
   galleryTransitionStyle,
   useTransformGallery,
 } from '../hooks/useTransformGallery';
-import { listPropertyImages } from '../lib/propertyImages';
+import {
+  listPropertyImages,
+  PROPERTY_CARD_IMAGE_SIZES,
+  propertyCardImageSrc,
+  propertyCardImageSrcSet,
+} from '../lib/propertyImages';
 
 const DESKTOP_HOVER_AUTOPLAY_MS = 1200;
 const HOVER_RESET_MS = 400;
@@ -28,6 +33,35 @@ function resolveSlideUrl(images: string[], index: number): string {
   if (index < 0) return images[images.length - 1] ?? '';
   if (index >= images.length) return images[0] ?? '';
   return images[index] ?? '';
+}
+
+type CardImageProps = {
+  originalSrc: string;
+  alt: string;
+  loading: 'lazy' | 'eager';
+  className?: string;
+  style?: React.CSSProperties;
+  draggable?: boolean;
+};
+
+function CardImage({ originalSrc, alt, loading, className, style, draggable }: CardImageProps) {
+  const src = propertyCardImageSrc(originalSrc);
+  const srcSet = propertyCardImageSrcSet(originalSrc);
+
+  return (
+    <img
+      src={src}
+      srcSet={srcSet}
+      sizes={srcSet ? PROPERTY_CARD_IMAGE_SIZES : undefined}
+      alt={alt}
+      loading={loading}
+      decoding="async"
+      fetchPriority="auto"
+      draggable={draggable}
+      className={className}
+      style={style}
+    />
+  );
 }
 
 export default function PropertyCardGallery({
@@ -110,12 +144,10 @@ export default function PropertyCardGallery({
   if (count === 1) {
     return (
       <div ref={rootRef} className="xpx-property-card-media">
-        <img
-          src={images[0]}
+        <CardImage
+          originalSrc={images[0]}
           alt={alt}
           loading="lazy"
-          decoding="async"
-          fetchPriority="high"
           className="h-full w-full object-cover transition-transform duration-500 ease-out motion-reduce:transition-none md:group-hover:scale-[1.03]"
         />
         {children}
@@ -126,14 +158,12 @@ export default function PropertyCardGallery({
   if (isDesktop) {
     return (
       <div ref={rootRef} className="xpx-property-card-media relative overflow-hidden">
-        {images.map((src, i) => (
-          <img
-            key={src}
-            src={src}
+        {images.map((originalSrc, i) => (
+          <CardImage
+            key={originalSrc}
+            originalSrc={originalSrc}
             alt={alt}
             loading={i === 0 ? 'eager' : 'lazy'}
-            decoding="async"
-            fetchPriority={i === 0 ? 'high' : 'low'}
             draggable={false}
             className="absolute inset-0 h-full w-full object-cover motion-reduce:transition-none"
             style={{
@@ -166,13 +196,11 @@ export default function PropertyCardGallery({
           onPointerCancel={gallery.onPointerCancel}
         >
           {gallery.extendedSlideIndices.map((slideIndex, i) => (
-            <img
+            <CardImage
               key={`${slideIndex}-${i}`}
-              src={resolveSlideUrl(images, slideIndex)}
+              originalSrc={resolveSlideUrl(images, slideIndex)}
               alt={alt}
               loading={i <= 1 ? 'eager' : 'lazy'}
-              decoding="async"
-              fetchPriority={i === 1 ? 'high' : 'low'}
               draggable={false}
               className="h-full w-full shrink-0 object-cover select-none"
               style={{ width: gallery.slideWidth || '100%' }}
