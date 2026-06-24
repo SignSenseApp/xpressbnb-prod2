@@ -55,12 +55,22 @@ const FOOTER_COPY = 'rgba(255,255,255,0.35)';
 /**
  * Pexels CDN: keep `w` modest for first paint (LCP). Pattern:
  * `https://images.pexels.com/photos/<id>/pexels-photo-<id>.jpeg?auto=compress&cs=tinysrgb&w=<width>`
- * Raising `w` slightly on large desktops is optional; 1280 is a good default for hero full-bleed.
  */
-const HERO_PEXELS_W = 1280;
+const HERO_PEXELS_W_DESKTOP = 1280;
+const HERO_IMAGE_WIDTHS = [375, 768, HERO_PEXELS_W_DESKTOP] as const;
+/** Full-bleed hero — image width always matches viewport. */
+const HERO_IMAGE_SIZES = '100vw';
 
-function pexelsPhotoUrl(photoId: string, width = HERO_PEXELS_W) {
+function pexelsPhotoUrl(photoId: string, width: number) {
   return `https://images.pexels.com/photos/${photoId}/pexels-photo-${photoId}.jpeg?auto=compress&cs=tinysrgb&w=${width}`;
+}
+
+function heroPexelsSrcSet(photoId: string): string {
+  return HERO_IMAGE_WIDTHS.map((w) => `${pexelsPhotoUrl(photoId, w)} ${w}w`).join(', ');
+}
+
+function heroPexelsSrc(photoId: string): string {
+  return pexelsPhotoUrl(photoId, HERO_PEXELS_W_DESKTOP);
 }
 
 /** Intrinsic 16:9 hints for hero `<img>` (object-cover; real aspect may vary slightly). */
@@ -81,7 +91,9 @@ const HERO_SLIDE_META = [
 const HERO_SLIDES = HERO_SLIDE_META.map(({ city, tagline, photoId }) => ({
   city,
   tagline,
-  image: pexelsPhotoUrl(photoId, HERO_PEXELS_W),
+  photoId,
+  src: heroPexelsSrc(photoId),
+  srcSet: heroPexelsSrcSet(photoId),
 }));
 
 const CITIES = ['Delhi', 'Gurgaon', 'Noida', 'Greater Noida', 'Ghaziabad', 'Rishikesh'];
@@ -142,9 +154,11 @@ export default function NewHomepage() {
 
   useEffect(() => {
     const next = (heroIndex + 1) % HERO_SLIDES.length;
-    const url = HERO_SLIDES[next].image;
+    const slide = HERO_SLIDES[next];
     const img = new Image();
-    img.src = url;
+    img.sizes = HERO_IMAGE_SIZES;
+    img.srcset = slide.srcSet;
+    img.src = slide.src;
   }, [heroIndex]);
 
   useEffect(() => {
@@ -453,13 +467,14 @@ export default function NewHomepage() {
           >
             {heroSlidesWithImgRef.current.has(i) ? (
               <img
-                src={slide.image}
+                src={slide.src}
+                srcSet={slide.srcSet}
                 alt=""
                 aria-hidden
                 className="absolute inset-0 h-full w-full max-w-none object-cover"
                 width={HERO_IMG_INTRINSIC.width}
                 height={HERO_IMG_INTRINSIC.height}
-                sizes="100vw"
+                sizes={HERO_IMAGE_SIZES}
                 loading={i === heroIndex ? 'eager' : 'lazy'}
                 fetchPriority={i === heroIndex ? 'high' : 'low'}
                 decoding="async"
