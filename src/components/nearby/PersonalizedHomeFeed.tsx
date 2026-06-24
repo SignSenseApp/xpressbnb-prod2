@@ -194,6 +194,23 @@ export default function PersonalizedHomeFeed({
             />
           </section>
         )}
+
+        {!loading &&
+          !showComingSoon &&
+          rails.length === 0 &&
+          recentlyViewed.length === 0 &&
+          trending.length === 0 && (
+            <div className="px-4 py-6 text-center">
+              <p className="text-sm text-gray-500 mb-3">No stays found nearby right now</p>
+              <button
+                type="button"
+                onClick={() => onNavigate('/stays/delhi')}
+                className="text-sm font-semibold text-emerald-600 underline underline-offset-2"
+              >
+                Explore all cities →
+              </button>
+            </div>
+          )}
       </main>
 
       <button
