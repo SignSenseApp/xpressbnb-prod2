@@ -31,6 +31,7 @@ import { ManageCookiesLink } from './CookieConsent';
 import FeaturedStaysCarousel from './FeaturedStaysCarousel';
 import { firstImageUrl } from '../lib/savedListingsStorage';
 import { getPublicListings, invalidatePublicListingsCache } from '../lib/publicListings';
+import { warmPublicHostCache } from '../lib/hostPublicCache';
 import XpModeSwitch from './XpModeSwitch';
 
 // Global brand system (premium minimal emerald scale).
@@ -199,6 +200,7 @@ export default function NewHomepage() {
       }
       const data = result.listings;
       setProperties(data);
+      warmPublicHostCache(data.map((listing) => listing.host_id));
       const grouped: Record<string, Property[]> = {};
       CITIES.forEach((c) => {
         grouped[c] = data.filter((p) => normalizeCityBucket(p.city) === c);

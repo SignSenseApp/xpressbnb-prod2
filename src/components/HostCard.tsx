@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { CheckCircle, MapPin, Shield, Languages, Sparkles, Headphones } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { fetchPublicHost } from '../lib/hostPublicCache';
 import { theme } from '../lib/theme';
 import { safeHostDisplayName, safeHostInitial, stripPhoneLike } from '../lib/host';
 import { buildTeamWhatsAppLink, TEAM_BRAND_NAME } from '../lib/team';
@@ -50,17 +50,12 @@ export default function HostCard({
     }
     (async () => {
       try {
-        const { data, error } = await supabase
-          .from('hosts')
-          .select('id, name, bio, kyc_status, total_bookings, created_at')
-          .eq('id', hostId)
-          .maybeSingle();
+        const row = await fetchPublicHost(hostId);
         if (cancelled) return;
-        if (error) {
-          console.error('HostCard: failed to load host', error);
+        if (!row) {
           setHost(null);
         } else {
-          setHost(data as HostInfo | null);
+          setHost(row as HostInfo);
         }
       } finally {
         if (!cancelled) setLoading(false);

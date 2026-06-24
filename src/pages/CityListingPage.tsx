@@ -8,6 +8,7 @@ import { theme } from '../lib/theme';
 import { buildTeamWhatsAppLink } from '../lib/team';
 import { parseTripFromSearch, formatTripChip } from '../lib/tripSearch';
 import { getPublicListingsByCity, invalidatePublicListingsCache } from '../lib/publicListings';
+import { warmPublicHostCache } from '../lib/hostPublicCache';
 import { trackXpressEvent } from '../lib/analytics';
 
 interface CityListingPageProps {
@@ -127,6 +128,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
         return;
       }
       setProperties(result.listings);
+      warmPublicHostCache(result.listings.map((listing) => listing.host_id));
     } catch (error) {
       if (requestId !== loadPropertiesRef.current) return;
       logSupabaseError('Error loading city properties', error);

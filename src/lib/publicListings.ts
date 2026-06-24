@@ -7,6 +7,7 @@ import type { Json, Property } from './database.types';
 import { cityDbInList } from './cityBuckets';
 import { trackXpressEvent } from './analytics';
 import { logSupabaseError, supabase } from './supabase';
+import { invalidatePublicHostCache } from './hostPublicCache';
 
 /** Stable core fields — changing this list requires updating publicListings.test.ts */
 export const PUBLIC_LISTING_CORE_FIELDS = [
@@ -79,6 +80,27 @@ const LOCATION_FALLBACK = 'Location coming soon';
 let memoryCache: PublicPropertyListing[] | null = null;
 let cacheAt = 0;
 let inflightAll: Promise<PublicListingsFetchResult> | null = null;
+
+const propertyByIdCache = new Map<string, { at: number; property: PublicPropertyListing }>();
+const inflightByPropertyId = new Map<string, Promise<PublicPropertyFetchResult>>();
+
+function findCachedListingById(id: string): PublicPropertyListing | null {
+  if (memoryCache && Date.now() - cacheAt < CACHE_TTL_MS) {
+    const fromList = memoryCache.find((listing) => listing.id === id);
+    if (fromList) return fromList;
+  }
+
+  const entry = propertyByIdCache.get(id);
+  if (entry && Date.now() - entry.at < CACHE_TTL_MS) {
+    return entry.property;
+  }
+
+  return null;
+}
+
+function cachePropertyById(property: PublicPropertyListing): void {
+  propertyByIdCache.set(property.id, { at: Date.now(), property });
+}
 
 function safeString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
@@ -372,43 +394,68 @@ export async function getPublicPropertyById(id: string): Promise<PublicPropertyF
     return { status: 'not_found' };
   }
 
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    const { data, error } = await supabase
-      .from('properties')
-      .select(PUBLIC_PROPERTY_DETAIL_SELECT)
-      .eq('id', trimmed)
-      .eq('is_active', true)
-      .maybeSingle();
-
-    if (error) {
-      logSupabaseError(`getPublicPropertyById attempt ${attempt}`, error);
-      if (attempt < 2) {
-        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-        continue;
-      }
-      trackXpressEvent('property_load_failed', { property_id: trimmed, error_category: 'public_property_id' });
-      return { status: 'error', code: 'load_failed' };
-    }
-
-    if (!data) {
-      return { status: 'not_found' };
-    }
-
-    const property = normalizePublicPropertyListing(data);
-    if (!property) {
-      return { status: 'not_found' };
-    }
-
-    return { status: 'success', property };
+  const cached = findCachedListingById(trimmed);
+  if (cached) {
+    return { status: 'success', property: cached };
   }
 
-  return { status: 'error', code: 'load_failed' };
+  const inflight = inflightByPropertyId.get(trimmed);
+  if (inflight) {
+    return inflight;
+  }
+
+  const run = async (): Promise<PublicPropertyFetchResult> => {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const { data, error } = await supabase
+        .from('properties')
+        .select(PUBLIC_PROPERTY_DETAIL_SELECT)
+        .eq('id', trimmed)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (error) {
+        logSupabaseError(`getPublicPropertyById attempt ${attempt}`, error);
+        if (attempt < 2) {
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+          continue;
+        }
+        trackXpressEvent('property_load_failed', {
+          property_id: trimmed,
+          error_category: 'public_property_id',
+        });
+        return { status: 'error', code: 'load_failed' };
+      }
+
+      if (!data) {
+        return { status: 'not_found' };
+      }
+
+      const property = normalizePublicPropertyListing(data);
+      if (!property) {
+        return { status: 'not_found' };
+      }
+
+      cachePropertyById(property);
+      return { status: 'success', property };
+    }
+
+    return { status: 'error', code: 'load_failed' };
+  };
+
+  const promise = run().finally(() => {
+    inflightByPropertyId.delete(trimmed);
+  });
+  inflightByPropertyId.set(trimmed, promise);
+  return promise;
 }
 
 /** Clear cached public inventory (e.g. manual retry after error). */
 export function invalidatePublicListingsCache(): void {
   memoryCache = null;
   cacheAt = 0;
+  propertyByIdCache.clear();
+  inflightByPropertyId.clear();
+  invalidatePublicHostCache();
 }
 
 /**

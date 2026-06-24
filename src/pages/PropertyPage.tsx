@@ -27,6 +27,7 @@ import PropertyGallery from '../components/property/PropertyGallery';
 import DeferredMount from '../components/property/DeferredMount';
 import { supabase } from '../lib/supabase';
 import { getPublicPropertyById } from '../lib/publicListings';
+import { fetchPublicHost } from '../lib/hostPublicCache';
 import { getAmenityIcon } from '../lib/amenities';
 import { generatePropertyStructuredData, generateBreadcrumbStructuredData } from '../lib/seo';
 import { listFeaturedPromoCodes } from '../lib/offers';
@@ -210,17 +211,9 @@ export default function PropertyPage() {
   // independently re-renderable.
   const loadHostName = async (hostId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('hosts')
-        .select('name')
-        .eq('id', hostId)
-        .maybeSingle();
-      if (error) {
-        console.error('PropertyPage: failed to load host name', error);
-        return;
-      }
-      if (data?.name) {
-        setHostName(safeHostDisplayName(data.name, 'Verified Host'));
+      const row = await fetchPublicHost(hostId);
+      if (row?.name) {
+        setHostName(safeHostDisplayName(row.name, 'Verified Host'));
       }
     } catch (err) {
       console.error('PropertyPage: host name fetch threw', err);

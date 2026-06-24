@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { fetchPublicHost } from '../lib/hostPublicCache';
 import { safeHostDisplayName, safeHostInitial } from '../lib/host';
 import { VerifiedShieldIcon } from './icons/PropertyCardIcons';
 
@@ -23,25 +23,17 @@ export default function PropertyCardHostRow({
       return;
     }
 
-    (async () => {
-      try {
-        const { data, error } = await supabase
-          .from('hosts')
-          .select('name, kyc_status')
-          .eq('id', hostId)
-          .maybeSingle();
-        if (cancelled) return;
-        if (error || !data) {
-          setHostName(null);
-          setHostVerified(Boolean(propertyVerified));
-        } else {
-          setHostName(safeHostDisplayName(data.name));
-          setHostVerified(data.kyc_status === 'verified' || Boolean(propertyVerified));
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+    void fetchPublicHost(hostId).then((row) => {
+      if (cancelled) return;
+      if (!row) {
+        setHostName(null);
+        setHostVerified(Boolean(propertyVerified));
+      } else {
+        setHostName(safeHostDisplayName(row.name));
+        setHostVerified(row.kyc_status === 'verified' || Boolean(propertyVerified));
       }
-    })();
+      setLoading(false);
+    });
 
     return () => {
       cancelled = true;
