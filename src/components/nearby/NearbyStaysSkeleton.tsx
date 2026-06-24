@@ -9,7 +9,7 @@ export default function NearbyStaysSkeleton() {
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className="xpx-property-card shrink-0 w-[78vw] min-w-[78vw] max-w-[78vw] md:w-auto md:min-w-0 md:max-w-[380px] overflow-hidden"
+          className="xpx-property-card shrink-0 w-[85vw] min-w-[85vw] max-w-[85vw] md:w-auto md:min-w-0 md:max-w-[380px] overflow-hidden"
         >
           <div className="xpx-property-card-media animate-pulse" style={{ background: SURFACE_LIGHT }} />
           <div className="space-y-3 p-5">
