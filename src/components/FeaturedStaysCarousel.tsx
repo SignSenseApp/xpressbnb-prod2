@@ -44,10 +44,10 @@ const CarouselSlide = memo(function CarouselSlide({
   userCity?: string | null;
 }) {
   return (
-    <div className="shrink-0" style={{ width }} aria-hidden={hidden}>
+    <div className="flex h-full shrink-0" style={{ width }} aria-hidden={hidden}>
       <ConversionPropertyCard
         property={property}
-        className="mx-0 w-full max-w-none md:mx-0"
+        className="mx-0 h-full w-full max-w-none md:mx-0"
         nearbyDistanceKm={nearbyDistanceKm}
         nearbySource="nearby_carousel"
         userCity={userCity}

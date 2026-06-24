@@ -228,52 +228,57 @@ export default memo(function ConversionPropertyCard({
         )}
       </PropertyCardGallery>
 
-      {/* Card body */}
-      <div className="flex min-w-0 flex-1 flex-col gap-3.5 px-5 pb-5 pt-4">
-        {/* Title */}
-        <div className="min-w-0">
-          <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-[#111827] sm:text-base">
-            {property.title}
-          </h3>
-          <div className="mt-1.5 flex min-w-0 items-center gap-1.5 text-xs text-[#6B7280]">
-            <LocationPinIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            <span className="truncate">{locationLabel}</span>
+      {/* Card body — fixed-height zones for grid alignment */}
+      <div className="xpx-property-card-body">
+        <h3
+          className="xpx-property-card-zone-title"
+          title={property.title}
+        >
+          {property.title}
+        </h3>
+
+        <div
+          className="xpx-property-card-zone-location"
+          title={locationLabel}
+        >
+          <LocationPinIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span className="xpx-property-card-zone-location__text">{locationLabel}</span>
+        </div>
+
+        <div className="xpx-property-card-zone-host">
+          <PropertyCardHostRow
+            hostId={property.host_id}
+            propertyVerified={property.is_verified}
+          />
+        </div>
+
+        <div className="xpx-property-card-zone-meta">
+          <div className="xpx-property-card-zone-meta__grid">
+            <SpecCell icon={<GuestsIcon className="h-[18px] w-[18px]" />} value={guests} label="Guests" />
+            <SpecCell icon={<BedroomIcon className="h-[18px] w-[18px]" />} value={bedrooms} label="Bedroom" />
+            <SpecCell icon={<BathroomIcon className="h-[18px] w-[18px]" />} value={bathrooms} label="Bathroom" />
           </div>
         </div>
 
-        {/* Host row */}
-        <PropertyCardHostRow
-          hostId={property.host_id}
-          propertyVerified={property.is_verified}
-        />
-
-        {/* Specs grid */}
-        <div className="grid grid-cols-3 divide-x divide-[#E5E7EB] py-1">
-          <SpecCell icon={<GuestsIcon className="h-[18px] w-[18px]" />} value={guests} label="Guests" />
-          <SpecCell icon={<BedroomIcon className="h-[18px] w-[18px]" />} value={bedrooms} label="Bedroom" />
-          <SpecCell icon={<BathroomIcon className="h-[18px] w-[18px]" />} value={bathrooms} label="Bathroom" />
+        <div className="xpx-property-card-zone-score">
+          <button
+            type="button"
+            onClick={openStayScore}
+            className="xpx-property-card-zone-score__btn transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#16A34A]"
+            aria-label={stayScore.label}
+          >
+            <StarOutlineIcon className="h-4 w-4 shrink-0 text-[#16A34A]" aria-hidden />
+            <span className="xpx-property-card-zone-score__label" title={stayScore.label}>
+              {stayScore.label}
+            </span>
+            <InfoCircleIcon className="h-4 w-4 shrink-0 text-[#6B7280]" aria-hidden />
+          </button>
         </div>
 
-        {/* XpressBNB Stay Score */}
-        <button
-          type="button"
-          onClick={openStayScore}
-          className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#16A34A]"
-          style={{ background: '#F1FAF5' }}
-          aria-label={stayScore.label}
-        >
-          <StarOutlineIcon className="h-4 w-4 shrink-0 text-[#16A34A]" aria-hidden />
-          <span className="min-w-0 flex-1 text-sm font-semibold text-[#16A34A]">
-            {stayScore.label}
-          </span>
-          <InfoCircleIcon className="h-4 w-4 shrink-0 text-[#6B7280]" aria-hidden />
-        </button>
-
-        {/* Trust row */}
-        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 pt-0.5">
-          <TrustItem icon={<HomeOutlineIcon className="h-3.5 w-3.5" />} label="Direct with host" />
-          <TrustItem icon={<ShieldOutlineIcon className="h-3.5 w-3.5" />} label="No platform fee" />
-          <TrustItem icon={<PercentOutlineIcon className="h-3.5 w-3.5" />} label="Zero commission" />
+        <div className="xpx-property-card-zone-benefits">
+          <TrustItem icon={<HomeOutlineIcon className="h-3.5 w-3.5 shrink-0" />} label="Direct with host" />
+          <TrustItem icon={<ShieldOutlineIcon className="h-3.5 w-3.5 shrink-0" />} label="No platform fee" />
+          <TrustItem icon={<PercentOutlineIcon className="h-3.5 w-3.5 shrink-0" />} label="Zero commission" />
         </div>
       </div>
     </article>
@@ -289,22 +294,28 @@ function SpecCell({
   value: number;
   label: string;
 }) {
+  const specLabel = `${value} ${label}`;
   return (
-    <div className="flex flex-col items-center gap-0.5 px-1 text-center">
+    <div
+      className="flex h-full flex-col items-center justify-center gap-0.5 px-1 text-center"
+      title={specLabel}
+    >
       <span className="text-[#6B7280]" aria-hidden>
         {icon}
       </span>
-      <span className="text-sm font-bold tabular-nums text-[#111827]">{value}</span>
-      <span className="text-[10px] text-[#6B7280]">{label}</span>
+      <span className="text-sm font-bold tabular-nums leading-none text-[#111827]">{value}</span>
+      <span className="truncate max-w-full text-[10px] leading-none text-[#6B7280]">{label}</span>
     </div>
   );
 }
 
 function TrustItem({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#16A34A] sm:text-[11px]">
-      <span aria-hidden>{icon}</span>
-      {label}
+    <span className="xpx-property-card-zone-benefits__item" title={label}>
+      <span aria-hidden className="shrink-0">
+        {icon}
+      </span>
+      <span className="truncate">{label}</span>
     </span>
   );
 }
