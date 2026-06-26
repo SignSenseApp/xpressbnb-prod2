@@ -222,8 +222,18 @@ function PrivacyCopy() {
   );
 }
 
-export function CookieConsentBanner() {
-  const visible = useCookieBannerVisible();
+type CookieConsentBannerProps = {
+  /** When true, visibility is controlled by the guest onboarding orchestrator. */
+  orchestrated?: boolean;
+  forceVisible?: boolean;
+};
+
+export function CookieConsentBanner({
+  orchestrated = false,
+  forceVisible = false,
+}: CookieConsentBannerProps) {
+  const naturalVisible = useCookieBannerVisible();
+  const visible = orchestrated ? forceVisible : naturalVisible;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);

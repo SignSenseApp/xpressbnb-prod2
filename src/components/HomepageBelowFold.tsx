@@ -19,6 +19,7 @@ import { TEAM_EMAIL } from '../lib/team';
 import { ManageCookiesLink } from './CookieConsent';
 import FeaturedStaysCarousel from './FeaturedStaysCarousel';
 import NearbyStaysSection from './nearby/NearbyStaysSection';
+import { OnboardingListingsEngagement } from './onboarding/OnboardingListingsEngagement';
 import { firstImageUrl } from '../lib/savedListingsStorage';
 import { getPublicListings, invalidatePublicListingsCache } from '../lib/publicListings';
 import { warmPublicHostCache } from '../lib/hostPublicCache';
@@ -127,7 +128,7 @@ export default function HomepageBelowFold({
       <NearbyStaysSection onNavigate={onNavigate} fallbackTrending={featuredProperties} />
 
       {/* ──── Featured Stays ──── */}
-      <section id="listings" className="scroll-mt-28 xpx-section" style={{ background: BASE }}>
+      <OnboardingListingsEngagement id="listings" className="scroll-mt-28 xpx-section" style={{ background: BASE }}>
         <div className="xpx-container">
           <SectionHeader
             label="HANDPICKED FOR YOU"
@@ -170,7 +171,7 @@ export default function HomepageBelowFold({
             <FeaturedStaysCarousel properties={featuredProperties} />
           )}
         </div>
-      </section>
+      </OnboardingListingsEngagement>
 
       {/* ──── Top Cities ──── */}
       <section className="xpx-section" style={{ background: SURFACE_LIGHT }}>

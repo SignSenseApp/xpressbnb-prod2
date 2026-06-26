@@ -15,9 +15,7 @@ import {
   markPermissionDenied,
   markPromptShown,
   markPromptDismissed,
-  shouldShowLocationPrompt,
   subscribeLocationPreference,
-  LOCATION_PROMPT_DELAY_MS,
   type StoredLocationPreference,
 } from '../lib/locationPreferences';
 import {
@@ -81,8 +79,8 @@ function labelFromPref(pref: StoredLocationPreference): string | null {
   return pref.city ?? null;
 }
 
-export function useNearbyStays(options?: { autoPrompt?: boolean }) {
-  const autoPrompt = options?.autoPrompt ?? true;
+/** Location stays hook — prompt is owned by GuestOnboardingContext when autoPrompt is false. */
+export function useNearbyStays(_options?: { autoPrompt?: boolean }) {
   const [state, setState] = useState<NearbyStaysState>(() => {
     const pref = readLocationPreference();
     if (pref?.permission === 'granted' && pref.coords) {
@@ -107,8 +105,6 @@ export function useNearbyStays(options?: { autoPrompt?: boolean }) {
   });
 
   const loadSeqRef = useRef(0);
-  const promptTimerRef = useRef<number | null>(null);
-  const hasAutoPromptedRef = useRef(false);
   const freshGrantRef = useRef(false);
 
   const loadInventory = useCallback(
@@ -374,31 +370,15 @@ export function useNearbyStays(options?: { autoPrompt?: boolean }) {
       return;
     }
 
-    if (!autoPrompt || hasAutoPromptedRef.current) return;
     if (!isGeolocationSupported()) return;
 
     void queryGeolocationPermission().then((perm) => {
       if (perm === 'denied' || perm === 'blocked') {
         markPermissionDenied(perm === 'blocked' ? 'blocked' : 'denied');
         setState((prev) => ({ ...prev, permission: perm }));
-        return;
       }
-
-      const currentPref = readLocationPreference();
-      if (!shouldShowLocationPrompt(currentPref)) return;
-
-      hasAutoPromptedRef.current = true;
-      promptTimerRef.current = window.setTimeout(() => {
-        openPrompt();
-      }, LOCATION_PROMPT_DELAY_MS);
     });
-
-    return () => {
-      if (promptTimerRef.current != null) {
-        window.clearTimeout(promptTimerRef.current);
-      }
-    };
-  }, [autoPrompt, loadInventory, openPrompt, resolveLocation]);
+  }, [loadInventory, resolveLocation]);
 
   useEffect(() => {
     return subscribeLocationPreference(() => {

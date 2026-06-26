@@ -16,6 +16,9 @@ import {
 type InstallAppPromptProps = {
   /** Hide on dense flows (checkout, host dashboard optional) */
   hidden?: boolean;
+  /** When true, visibility follows orchestrator instead of a timer. */
+  orchestrated?: boolean;
+  forceVisible?: boolean;
 };
 
 function PlatformTabs({
@@ -171,36 +174,40 @@ export function InstallAppHelpModal({
   );
 }
 
-export default function InstallAppPrompt({ hidden = false }: InstallAppPromptProps) {
-  const [visible, setVisible] = useState(false);
+export default function InstallAppPrompt({
+  hidden = false,
+  orchestrated = false,
+  forceVisible = false,
+}: InstallAppPromptProps) {
+  const [naturalVisible, setNaturalVisible] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [nativeReady, setNativeReady] = useState(false);
   const platform = getInstallPlatform();
 
   const refresh = useCallback(() => {
-    setVisible(shouldShowInstallBanner() && !hidden);
+    setNaturalVisible(shouldShowInstallBanner() && !hidden);
     setNativeReady(canNativeInstall());
   }, [hidden]);
 
   useEffect(() => {
-    if (isStandaloneApp() || hidden) return;
+    if (orchestrated || isStandaloneApp() || hidden) return;
 
     attachInstallPromptListener(refresh);
     window.addEventListener('xpx-install-available', refresh);
-
-    const timer = window.setTimeout(refresh, 2500);
+    refresh();
 
     return () => {
-      window.clearTimeout(timer);
       window.removeEventListener('xpx-install-available', refresh);
     };
-  }, [hidden, refresh]);
+  }, [hidden, orchestrated, refresh]);
+
+  const visible = orchestrated ? forceVisible && !hidden : naturalVisible;
 
   const handleInstall = async () => {
     if (nativeReady) {
       const result = await triggerNativeInstall();
       if (result === 'accepted') {
-        setVisible(false);
+        setNaturalVisible(false);
         return;
       }
     }
@@ -209,7 +216,7 @@ export default function InstallAppPrompt({ hidden = false }: InstallAppPromptPro
 
   const handleDismiss = () => {
     dismissInstallBanner();
-    setVisible(false);
+    setNaturalVisible(false);
   };
 
   if (!visible) {

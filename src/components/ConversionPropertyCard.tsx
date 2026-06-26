@@ -8,6 +8,7 @@ import PropertyCardGallery from './PropertyCardGallery';
 import { snapshotFromProperty } from '../lib/savedListingsStorage';
 import { listPropertyImages } from '../lib/propertyImages';
 import { trackXpressEvent } from '../lib/analytics';
+import { useGuestOnboardingOptional } from '../contexts/GuestOnboardingContext';
 import { bucketDistanceKm } from '../lib/nearbyDistanceCopy';
 import {
   prefetchPropertyOnInteraction,
@@ -104,6 +105,7 @@ export default memo(function ConversionPropertyCard({
   const swipeRef = useRef(false);
   const [isHovered, setIsHovered] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const onboarding = useGuestOnboardingOptional();
 
   useEffect(() => {
     const node = cardRef.current;
@@ -145,6 +147,7 @@ export default memo(function ConversionPropertyCard({
           }
         : {}),
     });
+    onboarding?.recordListingEngagement();
     if (nearbyDistanceKm != null) {
       trackXpressEvent('nearby_card_clicked', {
         property_id: property.id,

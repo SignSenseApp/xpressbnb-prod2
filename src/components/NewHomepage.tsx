@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, type CSSProperties } from 'react';
 import { useState, useEffect, useRef } from 'react';
 import {
   Search,
@@ -20,6 +20,8 @@ import { scrollToId } from '../lib/smoothScroll';
 import XpModeSwitch from './XpModeSwitch';
 import HomepageBelowFoldGate from './HomepageBelowFoldGate';
 import { useNearbyLocationOptional } from '../contexts/NearbyLocationContext';
+import { useGuestOnboardingOptional } from '../contexts/GuestOnboardingContext';
+import { usePrefersReducedMotion } from '../hooks/useGalleryMotion';
 import { readLocationPreference } from '../lib/locationPreferences';
 
 const PersonalizedHomeFeed = lazy(() => import('./nearby/PersonalizedHomeFeed'));
@@ -81,6 +83,7 @@ const HERO_SLIDES = HERO_SLIDE_META.map(({ city, tagline, photoId }) => ({
 const CITIES = ['Delhi', 'Gurgaon', 'Noida', 'Greater Noida', 'Ghaziabad', 'Rishikesh'];
 
 const BELOW_FOLD_ANCHOR_IDS = new Set(['listings', 'host', 'why']);
+const PERSONALIZED_CROSSFADE_MS = 220;
 
 const TRUST_BADGES = [
   {
@@ -221,53 +224,21 @@ export default function NewHomepage() {
   };
 
   const nearby = useNearbyLocationOptional();
+  const onboarding = useGuestOnboardingOptional();
+  const reducedMotion = usePrefersReducedMotion();
   const hasPersonalizedLocation =
     nearby?.permission === 'granted' &&
     Boolean(nearby.coords ?? readLocationPreference()?.coords);
+  const wantsPersonalized = hasPersonalizedLocation;
+  const showPersonalized = wantsPersonalized && (onboarding?.isOnboardingSettled ?? true);
 
-  if (hasPersonalizedLocation) {
-    return (
-      <>
-        <SEOHead
-          config={{
-            title: `Stays near ${nearby?.detectedCity ?? 'you'} | XpressBnB`,
-            description:
-              'Personalized verified stays near you. Zero commission, direct from hosts.',
-            keywords: 'nearby stays, verified homes, xpressbnb',
-            canonical: 'https://xpressbnb.com',
-            structuredData: generateOrganizationStructuredData(),
-          }}
-        />
-        <Suspense
-          fallback={
-            <div className="min-h-screen flex items-center justify-center" style={{ background: BASE }}>
-              <div className="text-sm text-xpx-muted">Curating stays for you…</div>
-            </div>
-          }
-        >
-          <PersonalizedHomeFeed
-            onNavigate={navigate}
-            compactSearch={
-              <HeroSearchBar
-                cities={CITIES}
-                city={searchCity}
-                onCityChange={setSearchCity}
-                checkin={searchCheckin}
-                onCheckinChange={handleSearchCheckin}
-                checkout={searchCheckout}
-                onCheckoutChange={handleSearchCheckout}
-                guests={searchGuests}
-                onGuestsChange={setSearchGuests}
-                onSearch={handleHeroSearch}
-              />
-            }
-          />
-        </Suspense>
-      </>
-    );
-  }
+  const crossfadeStyle = (active: boolean): CSSProperties => ({
+    opacity: active ? 1 : 0,
+    pointerEvents: active ? 'auto' : 'none',
+    transition: reducedMotion ? 'none' : `opacity ${PERSONALIZED_CROSSFADE_MS}ms cubic-bezier(0.16, 1, 0.3, 1)`,
+  });
 
-  return (
+  const standardHomepage = (
     <div className="min-h-screen relative overflow-x-clip" style={{ background: BASE, color: TEXT }}>
       <SEOHead
         config={{
@@ -566,6 +537,66 @@ export default function NewHomepage() {
           activateBelowFoldRef.current = activate;
         }}
       />
+    </div>
+  );
+
+  if (!wantsPersonalized) {
+    return standardHomepage;
+  }
+
+  return (
+    <div className="relative min-h-screen" style={{ background: BASE }}>
+      <div
+        className="min-h-screen"
+        style={{
+          ...crossfadeStyle(showPersonalized),
+          position: showPersonalized ? 'relative' : 'absolute',
+          inset: 0,
+          width: '100%',
+        }}
+        aria-hidden={!showPersonalized}
+      >
+        <SEOHead
+          config={{
+            title: `Stays near ${nearby?.detectedCity ?? 'you'} | XpressBnB`,
+            description:
+              'Personalized verified stays near you. Zero commission, direct from hosts.',
+            keywords: 'nearby stays, verified homes, xpressbnb',
+            canonical: 'https://xpressbnb.com',
+            structuredData: generateOrganizationStructuredData(),
+          }}
+        />
+        <Suspense fallback={null}>
+          <PersonalizedHomeFeed
+            onNavigate={navigate}
+            compactSearch={
+              <HeroSearchBar
+                cities={CITIES}
+                city={searchCity}
+                onCityChange={setSearchCity}
+                checkin={searchCheckin}
+                onCheckinChange={handleSearchCheckin}
+                checkout={searchCheckout}
+                onCheckoutChange={handleSearchCheckout}
+                guests={searchGuests}
+                onGuestsChange={setSearchGuests}
+                onSearch={handleHeroSearch}
+              />
+            }
+          />
+        </Suspense>
+      </div>
+      <div
+        style={{
+          ...crossfadeStyle(!showPersonalized),
+          position: showPersonalized ? 'absolute' : 'relative',
+          inset: 0,
+          width: '100%',
+        }}
+        aria-hidden={showPersonalized}
+      >
+        {standardHomepage}
+      </div>
     </div>
   );
 }

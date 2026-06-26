@@ -2,9 +2,9 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import NewHomepage from './components/NewHomepage';
 import MobileBottomNav from './components/MobileBottomNav';
-import InstallAppPrompt from './components/InstallAppPrompt';
 import NearbyLocationShell from './components/nearby/NearbyLocationShell';
-import { CookieConsentBanner } from './components/CookieConsent';
+import { GuestOnboardingProvider } from './contexts/GuestOnboardingContext';
+import GuestOnboardingOrchestrator from './components/onboarding/GuestOnboardingOrchestrator';
 import RouteFallback from './components/RouteFallback';
 import { closeHomeOverlay, getHomeOverlayPage, navigateTo, XPX_NAVIGATE_EVENT } from './lib/navigation';
 import { markIntroPreloaderSeen } from './lib/pwa';
@@ -189,17 +189,18 @@ export default function AppRouter() {
     !currentPath.startsWith('/auth');
 
   return (
-    <NearbyLocationShell autoPrompt={isGuestMarketplace}>
-      <Suspense fallback={<RouteFallback />}>
-        <div key={locationKey}>{renderContent()}</div>
-      </Suspense>
-      <CookieConsentBanner />
-      <Suspense fallback={null}>
-        <StayScoreInfoSheet />
-        <StayScoreEducationTooltip />
-      </Suspense>
-      <InstallAppPrompt hidden={currentPath.startsWith('/booking/')} />
-      <MobileBottomNav currentPath={currentPath} onNavigate={handleNavigate} />
+    <NearbyLocationShell autoPrompt={false}>
+      <GuestOnboardingProvider enabled={isGuestMarketplace}>
+        <Suspense fallback={<RouteFallback />}>
+          <div key={locationKey}>{renderContent()}</div>
+        </Suspense>
+        <Suspense fallback={null}>
+          <StayScoreInfoSheet />
+          <StayScoreEducationTooltip />
+        </Suspense>
+        <GuestOnboardingOrchestrator hidden={currentPath.startsWith('/booking/')} />
+        <MobileBottomNav currentPath={currentPath} onNavigate={handleNavigate} />
+      </GuestOnboardingProvider>
     </NearbyLocationShell>
   );
 }

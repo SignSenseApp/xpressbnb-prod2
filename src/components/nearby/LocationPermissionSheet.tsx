@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MapPin, X } from 'lucide-react';
 import { useNearbyLocation } from '../../contexts/NearbyLocationContext';
+import { useGuestOnboardingOptional } from '../../contexts/GuestOnboardingContext';
 import { getAppMode } from '../../lib/analytics';
 import { LIVE_EXPLORE_CITIES } from '../../config/exploreCities';
 import { navigateTo } from '../../lib/navigation';
@@ -13,10 +14,13 @@ const QUICK_CITIES = LIVE_EXPLORE_CITIES.filter((c) => c.status === 'live').slic
  */
 export default function LocationPermissionSheet() {
   const { isPromptOpen, dismissPrompt, acceptPrompt, phase } = useNearbyLocation();
+  const onboarding = useGuestOnboardingOptional();
   const [visible, setVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  const open = isPromptOpen && phase === 'prompt_visible';
+  const orchestratorAllows =
+    !onboarding?.enabled || onboarding.activeOverlay === 'location';
+  const open = isPromptOpen && phase === 'prompt_visible' && orchestratorAllows;
 
   useEffect(() => {
     if (open) {
