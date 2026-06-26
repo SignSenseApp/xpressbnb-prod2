@@ -1,10 +1,6 @@
-import { lazy, Suspense, type CSSProperties } from 'react';
+import { lazy, Suspense, useMemo, type CSSProperties } from 'react';
 import { useState, useEffect, useRef } from 'react';
 import {
-  Search,
-  MapPin,
-  Calendar,
-  Users,
   CheckCircle,
   ShieldCheck,
   Zap,
@@ -17,11 +13,14 @@ import SEOHead from './SEOHead';
 import { generateOrganizationStructuredData } from '../lib/seo';
 import { addDaysIso, parseTripFromSearch } from '../lib/tripSearch';
 import { scrollToId } from '../lib/smoothScroll';
+import { readScrollAnchorOffset } from '../lib/layoutTokens';
 import XpModeSwitch from './XpModeSwitch';
 import HomepageBelowFoldGate from './HomepageBelowFoldGate';
+import HeroSearchBar from './search/HeroSearchBar';
 import { useNearbyLocationOptional } from '../contexts/NearbyLocationContext';
 import { useGuestOnboardingOptional } from '../contexts/GuestOnboardingContext';
 import { usePrefersReducedMotion } from '../hooks/useGalleryMotion';
+import { useStickySearchMorph } from '../hooks/useStickySearchMorph';
 import { readLocationPreference } from '../lib/locationPreferences';
 
 const PersonalizedHomeFeed = lazy(() => import('./nearby/PersonalizedHomeFeed'));
@@ -117,6 +116,7 @@ export default function NewHomepage() {
   heroSlidesWithImgRef.current.add(heroIndex);
 
   const activateBelowFoldRef = useRef<(() => void) | null>(null);
+  const heroSearchSentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const next = (heroIndex + 1) % HERO_SLIDES.length;
@@ -156,7 +156,7 @@ export default function NewHomepage() {
       activateBelowFoldRef.current?.();
     }
     requestAnimationFrame(() => {
-      scrollToId(id, { offset: -88, duration: 1.05 });
+      scrollToId(id, { offset: readScrollAnchorOffset(), duration: 1.05 });
     });
   };
 
@@ -231,6 +231,36 @@ export default function NewHomepage() {
     Boolean(nearby.coords ?? readLocationPreference()?.coords);
   const wantsPersonalized = hasPersonalizedLocation;
   const showPersonalized = wantsPersonalized && (onboarding?.isOnboardingSettled ?? true);
+  const stickySearchActive = useStickySearchMorph(heroSearchSentinelRef, !showPersonalized);
+
+  const nearbyLocationLabel = useMemo(() => {
+    if (!nearby) return null;
+    if (nearby.permission === 'granted') {
+      const city =
+        nearby.detectedCity?.split(',')[0] ?? nearby.locationLabel?.split(',')[0] ?? null;
+      return city ? `Near ${city}` : 'Around you';
+    }
+    return 'Choose location';
+  }, [nearby]);
+
+  const handleSearchLocationClick = () => {
+    navigate('/explore');
+  };
+
+  const searchBarProps = {
+    cities: CITIES,
+    city: searchCity,
+    onCityChange: setSearchCity,
+    checkin: searchCheckin,
+    onCheckinChange: handleSearchCheckin,
+    checkout: searchCheckout,
+    onCheckoutChange: handleSearchCheckout,
+    guests: searchGuests,
+    onGuestsChange: setSearchGuests,
+    onSearch: handleHeroSearch,
+    locationLabel: nearbyLocationLabel,
+    onLocationClick: handleSearchLocationClick,
+  };
 
   const crossfadeStyle = (active: boolean): CSSProperties => ({
     opacity: active ? 1 : 0,
@@ -253,16 +283,17 @@ export default function NewHomepage() {
         }}
       />
 
-      {/* ──── Navbar (premium white bar — hero layout unchanged) ──── */}
+      {/* ──── Top chrome — safe-area aware, sticky search morph on mobile ──── */}
       <header
-        className="fixed top-0 left-0 right-0 z-50 transition-[border-color] duration-300"
+        className="fixed top-0 left-0 right-0 z-50 xpx-top-chrome transition-[border-color,box-shadow] duration-200"
         style={{
           background: SURFACE,
-          borderBottom: scrolled ? `1px solid ${BORDER}` : `1px solid rgba(226, 232, 240, 0.65)`,
-          boxShadow: 'none',
+          borderBottom: scrolled || stickySearchActive ? `1px solid ${BORDER}` : `1px solid rgba(226, 232, 240, 0.65)`,
+          boxShadow:
+            scrolled || stickySearchActive ? '0 4px 24px rgba(15, 23, 42, 0.06)' : 'none',
         }}
       >
-        <div className="xpx-container min-h-[var(--xpx-nav-height)] h-[var(--xpx-nav-height)] grid grid-cols-[auto_1fr_auto] lg:grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
+        <div className="xpx-container xpx-nav-row grid grid-cols-[auto_1fr_auto] lg:grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 justify-self-start">
             <button
               type="button"
@@ -273,7 +304,9 @@ export default function NewHomepage() {
               <img
                 src={XPRESSBNB_LOGO_PATH}
                 alt=""
-                className="h-9 w-9 sm:h-10 sm:w-10 object-contain shrink-0"
+                className={`object-contain shrink-0 transition-all duration-200 ${
+                  scrolled || stickySearchActive ? 'h-8 w-8 sm:h-9 sm:w-9' : 'h-9 w-9 sm:h-10 sm:w-10'
+                }`}
                 width={40}
                 height={40}
                 decoding="async"
@@ -360,6 +393,21 @@ export default function NewHomepage() {
           </div>
         </div>
 
+        <div
+          className="md:hidden overflow-hidden xpx-container"
+          style={{
+            maxHeight: stickySearchActive ? 'var(--xpx-sticky-search-height)' : 0,
+            opacity: stickySearchActive ? 1 : 0,
+            paddingBottom: stickySearchActive ? '0.5rem' : 0,
+            transition: reducedMotion
+              ? 'none'
+              : 'max-height 220ms cubic-bezier(0.16, 1, 0.3, 1), opacity 220ms cubic-bezier(0.16, 1, 0.3, 1), padding-bottom 220ms cubic-bezier(0.16, 1, 0.3, 1)',
+          }}
+          aria-hidden={!stickySearchActive}
+        >
+          <HeroSearchBar {...searchBarProps} variant="compact" />
+        </div>
+
         {mobileNavOpen && (
           <div
             className="lg:hidden border-t overflow-hidden"
@@ -408,7 +456,7 @@ export default function NewHomepage() {
       {/* ──── Hero ──── */}
       <section
         className="relative w-full overflow-hidden"
-        style={{ height: 'clamp(430px, 70vh, 520px)', minHeight: 430 }}
+        style={{ height: 'clamp(430px, 70svh, 520px)', minHeight: 430 }}
       >
         {HERO_SLIDES.map((slide, i) => (
           <div
@@ -451,8 +499,8 @@ export default function NewHomepage() {
           }}
         />
 
-        <div className="relative z-[1] h-full xpx-container xpx-nav-offset pb-8 md:pb-10">
-          <div className="h-full flex flex-col justify-center">
+        <div className="relative z-[1] h-full xpx-container xpx-nav-offset pb-6 md:pb-10">
+          <div className="h-full flex flex-col justify-end md:justify-center">
             <div
               className="max-w-3xl"
               style={{ animation: 'fadeInUp 560ms cubic-bezier(0.22, 1, 0.36, 1) both' }}
@@ -472,21 +520,11 @@ export default function NewHomepage() {
             </div>
 
             <div
-              className="w-full max-w-5xl mt-6 md:mt-auto md:pb-0.5"
+              ref={heroSearchSentinelRef}
+              className="w-full max-w-5xl mt-5 md:mt-auto md:pb-0.5"
               style={{ animation: 'xpx-search-float-in 620ms cubic-bezier(0.22, 1, 0.36, 1) 90ms both' }}
             >
-              <HeroSearchBar
-                cities={CITIES}
-                city={searchCity}
-                onCityChange={setSearchCity}
-                checkin={searchCheckin}
-                onCheckinChange={handleSearchCheckin}
-                checkout={searchCheckout}
-                onCheckoutChange={handleSearchCheckout}
-                guests={searchGuests}
-                onGuestsChange={setSearchGuests}
-                onSearch={handleHeroSearch}
-              />
+              <HeroSearchBar {...searchBarProps} variant="hero" />
             </div>
           </div>
         </div>
@@ -569,20 +607,7 @@ export default function NewHomepage() {
         <Suspense fallback={null}>
           <PersonalizedHomeFeed
             onNavigate={navigate}
-            compactSearch={
-              <HeroSearchBar
-                cities={CITIES}
-                city={searchCity}
-                onCityChange={setSearchCity}
-                checkin={searchCheckin}
-                onCheckinChange={handleSearchCheckin}
-                checkout={searchCheckout}
-                onCheckoutChange={handleSearchCheckout}
-                guests={searchGuests}
-                onGuestsChange={setSearchGuests}
-                onSearch={handleHeroSearch}
-              />
-            }
+            compactSearch={<HeroSearchBar {...searchBarProps} variant="compact" />}
           />
         </Suspense>
       </div>
@@ -598,362 +623,5 @@ export default function NewHomepage() {
         {standardHomepage}
       </div>
     </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════
-   Sub-components
-   ═══════════════════════════════════════════════ */
-
-interface HeroSearchBarProps {
-  cities: readonly string[];
-  city: string;
-  onCityChange: (v: string) => void;
-  checkin: string;
-  onCheckinChange: (v: string) => void;
-  checkout: string;
-  onCheckoutChange: (v: string) => void;
-  guests: number;
-  onGuestsChange: (n: number) => void;
-  onSearch: () => void;
-}
-
-function formatHeroDisplayDate(iso: string): string {
-  if (!iso) return '';
-  const d = new Date(`${iso}T12:00:00`);
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-/** Native date picker — fully invisible inputs (`opacity-0`) often ignore taps in Safari/WebKit. */
-function openHeroDatePicker(input: HTMLInputElement | null) {
-  if (!input) return;
-  try {
-    // showPicker() is synchronous and returns void in current TS lib defs.
-    const el = input as HTMLInputElement & { showPicker?: () => void };
-    if (typeof el.showPicker === 'function') {
-      el.showPicker();
-    } else {
-      input.click();
-    }
-  } catch {
-    input.click();
-  }
-}
-
-/**
- * HeroSearchBar — mobile sheet has city, dates, guests. Desktop: Airbnb-style pill with guests.
- */
-function HeroSearchBar({
-  cities,
-  city,
-  onCityChange,
-  checkin,
-  onCheckinChange,
-  checkout,
-  onCheckoutChange,
-  guests,
-  onGuestsChange,
-  onSearch,
-}: HeroSearchBarProps) {
-  const today = new Date().toISOString().split('T')[0];
-  const checkInRef = useRef<HTMLInputElement>(null);
-  const checkOutRef = useRef<HTMLInputElement>(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, [mobileOpen]);
-
-  const mobileDateSummary =
-    checkin && checkout
-      ? `${formatHeroDisplayDate(checkin)} - ${formatHeroDisplayDate(checkout)}`
-      : checkin
-        ? formatHeroDisplayDate(checkin)
-        : checkout
-          ? formatHeroDisplayDate(checkout)
-          : 'Add dates';
-
-  return (
-    <>
-      {/* Mobile — compact trigger; full search opens in sheet */}
-      <div
-        className="md:hidden w-full rounded-3xl border bg-white px-3 py-2.5"
-        style={{
-          borderColor: 'rgba(226,232,240,0.95)',
-          boxShadow: '0 14px 34px rgba(15,23,42,0.16)',
-        }}
-      >
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setMobileOpen(true)}
-            className="min-w-0 flex-1 text-left rounded-2xl px-1 py-1.5"
-            aria-label="Open search filters"
-          >
-            <div className="text-[11px] font-semibold" style={{ color: '#6B7280' }}>
-              Where to?
-            </div>
-            <div className="mt-0.5 truncate text-[15px] font-bold leading-tight" style={{ color: '#111827' }}>
-              {city}
-            </div>
-            <div className="mt-0.5 truncate text-[11px] font-semibold" style={{ color: '#6B7280' }}>
-              {mobileDateSummary} · {guests} {guests === 1 ? 'guest' : 'guests'}
-            </div>
-          </button>
-          <button
-            type="button"
-            onClick={onSearch}
-            className="inline-flex h-12 min-w-[98px] items-center justify-center gap-1.5 rounded-2xl px-4 text-sm font-semibold text-white"
-            style={{ background: ACCENT }}
-            aria-label="Search stays"
-          >
-            <Search className="h-4 w-4" />
-            Search
-          </button>
-        </div>
-      </div>
-
-      {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-[120] bg-slate-950/45 backdrop-blur-sm" onClick={() => setMobileOpen(false)}>
-          <div
-            className="absolute inset-x-0 bottom-0 rounded-t-[28px] border-t bg-white px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3"
-            style={{ borderColor: '#E5E7EB' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-slate-300" />
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-sm font-bold" style={{ color: '#111827' }}>Search stays</h3>
-              <button
-                type="button"
-                onClick={() => setMobileOpen(false)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-600"
-                aria-label="Close search"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="space-y-2.5">
-              <label className="block text-[11px] font-semibold" style={{ color: '#6B7280' }}>
-                Where to?
-                <div className="mt-1.5 flex min-h-[48px] items-center gap-2 rounded-2xl border bg-white px-3" style={{ borderColor: '#E5E7EB' }}>
-                  <MapPin className="h-4 w-4 shrink-0" style={{ color: '#9CA3AF' }} />
-                  <select
-                    value={city}
-                    onChange={(e) => onCityChange(e.target.value)}
-                    className="w-full bg-transparent text-sm font-semibold outline-none"
-                    style={{ color: '#111827' }}
-                  >
-                    {cities.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </label>
-              <div className="grid grid-cols-1 min-[390px]:grid-cols-2 gap-2.5">
-                <label className="block text-[11px] font-semibold" style={{ color: '#6B7280' }}>
-                  Check-in
-                  <div className="relative mt-1.5 min-h-[48px] flex items-center rounded-2xl border bg-white px-3" style={{ borderColor: '#E5E7EB' }}>
-                    <Calendar className="h-4 w-4 shrink-0 mr-2" style={{ color: '#9CA3AF' }} />
-                    <input
-                      type="date"
-                      min={today}
-                      value={checkin}
-                      onChange={(e) => onCheckinChange(e.target.value)}
-                      className="w-full bg-transparent text-sm font-semibold outline-none"
-                      style={{ color: '#111827' }}
-                    />
-                  </div>
-                </label>
-                <label className="block text-[11px] font-semibold" style={{ color: '#6B7280' }}>
-                  Check-out
-                  <div className="relative mt-1.5 min-h-[48px] flex items-center rounded-2xl border bg-white px-3" style={{ borderColor: '#E5E7EB' }}>
-                    <Calendar className="h-4 w-4 shrink-0 mr-2" style={{ color: '#9CA3AF' }} />
-                    <input
-                      type="date"
-                      min={checkin || today}
-                      value={checkout}
-                      onChange={(e) => onCheckoutChange(e.target.value)}
-                      className="w-full bg-transparent text-sm font-semibold outline-none"
-                      style={{ color: '#111827' }}
-                    />
-                  </div>
-                </label>
-              </div>
-              <label className="block text-[11px] font-semibold" style={{ color: '#6B7280' }}>
-                Guests
-                <div className="mt-1.5 flex min-h-[48px] items-center gap-2 rounded-2xl border bg-white px-3" style={{ borderColor: '#E5E7EB' }}>
-                  <Users className="h-4 w-4 shrink-0" style={{ color: '#9CA3AF' }} />
-                  <select
-                    value={guests}
-                    onChange={(e) => onGuestsChange(Number(e.target.value))}
-                    className="w-full bg-transparent text-sm font-semibold outline-none"
-                    style={{ color: '#111827' }}
-                  >
-                    {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
-                      <option key={n} value={n}>
-                        {n} {n === 1 ? 'guest' : 'guests'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileOpen(false);
-                  onSearch();
-                }}
-                className="mt-1 inline-flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-semibold text-white transition-all duration-200 active:scale-[0.99]"
-                style={{ background: ACCENT }}
-              >
-                <Search className="h-4 w-4" />
-                Search
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Desktop — premium segmented bar */}
-      <div
-        className="hidden md:flex items-center w-full"
-        style={{
-          background: '#ffffff',
-          borderRadius: 24,
-          boxShadow: '0 16px 40px rgba(15,23,42,0.22)',
-          minHeight: 78,
-          padding: '6px 8px',
-          maxWidth: 980,
-          width: '100%',
-          border: '1px solid rgba(226,232,240,0.9)',
-        }}
-      >
-        <div
-          className="flex flex-col justify-center min-w-0"
-          style={{ flex: '1.25', paddingLeft: 18, paddingRight: 14 }}
-        >
-          <span style={{ fontSize: 11, color: '#6B7280', fontWeight: 600 }}>Where to?</span>
-          <div className="mt-0.5 flex items-center gap-2">
-            <MapPin className="w-4 h-4 shrink-0" style={{ color: '#9CA3AF' }} />
-          <select
-            value={city}
-            onChange={(e) => onCityChange(e.target.value)}
-              className="appearance-none bg-transparent border-0 p-0 text-[14px] outline-none cursor-pointer w-full truncate"
-            style={{ color: '#111827', fontWeight: 700 }}
-          >
-            {cities.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          </div>
-        </div>
-        <div style={{ width: 1, height: 38, background: '#E5E7EB', flexShrink: 0 }} aria-hidden />
-        <div
-          className="flex flex-col justify-center min-w-[120px] shrink-0"
-          style={{ flex: 1, paddingLeft: 14, paddingRight: 14 }}
-        >
-          <span style={{ fontSize: 11, color: '#6B7280', fontWeight: 600 }}>Check-in</span>
-          <div className="relative mt-0.5 min-h-[44px] w-full flex items-center gap-2">
-            <Calendar className="w-4 h-4 shrink-0" style={{ color: '#9CA3AF' }} />
-            <input
-              ref={checkInRef}
-              type="date"
-              min={today}
-              value={checkin}
-              onChange={(e) => onCheckinChange(e.target.value)}
-              className="sr-only"
-              tabIndex={-1}
-              aria-hidden={true}
-            />
-            <button
-              type="button"
-              onClick={() => openHeroDatePicker(checkInRef.current)}
-              className="absolute inset-0 left-6 z-10 flex w-[calc(100%-1.5rem)] min-h-[44px] items-center rounded-lg border-0 bg-transparent p-0 text-left cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-[#059669] focus-visible:ring-offset-2"
-              aria-label="Choose check-in date"
-            >
-              <span className="text-[14px] font-semibold truncate" style={{ color: '#111827' }}>
-                {checkin ? formatHeroDisplayDate(checkin) : 'Add date'}
-              </span>
-            </button>
-          </div>
-        </div>
-        <div style={{ width: 1, height: 38, background: '#E5E7EB', flexShrink: 0 }} aria-hidden />
-        <div
-          className="flex flex-col justify-center min-w-[120px] shrink-0"
-          style={{ flex: 1, paddingLeft: 14, paddingRight: 14 }}
-        >
-          <span style={{ fontSize: 11, color: '#6B7280', fontWeight: 600 }}>Check-out</span>
-          <div className="relative mt-0.5 min-h-[44px] w-full flex items-center gap-2">
-            <Calendar className="w-4 h-4 shrink-0" style={{ color: '#9CA3AF' }} />
-            <input
-              ref={checkOutRef}
-              type="date"
-              min={checkin || today}
-              value={checkout}
-              onChange={(e) => onCheckoutChange(e.target.value)}
-              className="sr-only"
-              tabIndex={-1}
-              aria-hidden={true}
-            />
-            <button
-              type="button"
-              onClick={() => openHeroDatePicker(checkOutRef.current)}
-              className="absolute inset-0 left-6 z-10 flex w-[calc(100%-1.5rem)] min-h-[44px] items-center rounded-lg border-0 bg-transparent p-0 text-left cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-[#059669] focus-visible:ring-offset-2"
-              aria-label="Choose check-out date"
-            >
-              <span className="text-[14px] font-semibold truncate" style={{ color: '#111827' }}>
-                {checkout ? formatHeroDisplayDate(checkout) : 'Add date'}
-              </span>
-            </button>
-          </div>
-        </div>
-        <div style={{ width: 1, height: 38, background: '#E5E7EB', flexShrink: 0 }} aria-hidden />
-        <div
-          className="flex flex-col justify-center min-w-0"
-          style={{ flex: 0.95, paddingLeft: 14, paddingRight: 12 }}
-        >
-          <span style={{ fontSize: 11, color: '#6B7280', fontWeight: 600 }}>Guests</span>
-          <div className="mt-0.5 flex items-center gap-2">
-            <Users className="w-4 h-4 shrink-0" style={{ color: '#9CA3AF' }} />
-          <select
-            value={guests}
-            onChange={(e) => onGuestsChange(Number(e.target.value))}
-              className="appearance-none bg-transparent border-0 p-0 text-[14px] outline-none cursor-pointer w-full truncate"
-            style={{ color: '#111827', fontWeight: 700 }}
-            aria-label="Guests"
-          >
-            {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
-              <option key={n} value={n}>
-                {n} {n === 1 ? 'guest' : 'guests'}
-              </option>
-            ))}
-          </select>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onSearch}
-          className="flex items-center justify-center gap-2 shrink-0 rounded-2xl px-5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.99]"
-          style={{
-            background: ACCENT,
-            height: 58,
-            marginRight: 2,
-          }}
-          aria-label="Search stays"
-        >
-          <Search className="w-4 h-4" style={{ color: '#ffffff' }} />
-          <span className="text-sm font-semibold text-white">Search</span>
-        </button>
-      </div>
-    </>
   );
 }

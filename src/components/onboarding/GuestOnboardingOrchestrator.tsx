@@ -3,6 +3,7 @@ import { CookieConsentBanner } from '../CookieConsent';
 import InstallAppPrompt from '../InstallAppPrompt';
 import { useGuestOnboarding } from '../../contexts/GuestOnboardingContext';
 import { scrollToId } from '../../lib/smoothScroll';
+import { readScrollAnchorOffset } from '../../lib/layoutTokens';
 import WelcomeOfferModal from './WelcomeOfferModal';
 
 type GuestOnboardingOrchestratorProps = {
@@ -26,7 +27,7 @@ export default function GuestOnboardingOrchestrator({
   const handleWelcomeExplore = useCallback(() => {
     dismissWelcome();
     requestAnimationFrame(() => {
-      scrollToId('listings', { offset: -88, duration: 1.05 });
+      scrollToId('listings', { offset: readScrollAnchorOffset(), duration: 1.05 });
     });
   }, [dismissWelcome]);
 
@@ -34,7 +35,7 @@ export default function GuestOnboardingOrchestrator({
   const handleHowItWorks = useCallback(() => {
     dismissWelcome();
     requestAnimationFrame(() => {
-      scrollToId('why', { offset: -88, duration: 1.05 });
+      scrollToId('why', { offset: readScrollAnchorOffset(), duration: 1.05 });
     });
   }, [dismissWelcome]);
 

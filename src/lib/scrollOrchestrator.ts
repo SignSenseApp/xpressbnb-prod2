@@ -4,6 +4,7 @@
  */
 
 import { trackXpressEvent } from './analytics';
+import { readScrollAnchorOffset } from './layoutTokens';
 import { scrollToElement } from './smoothScroll';
 
 export type ScrollTarget =
@@ -82,7 +83,7 @@ export function orchestratedScrollTo(
     return;
   }
 
-  const offset = options?.offset ?? (target === 'nearby_stays' ? -88 : -72);
+  const offset = options?.offset ?? (target === 'nearby_stays' ? readScrollAnchorOffset() : -72);
   const duration = prefersReducedMotion() ? 0 : (options?.duration ?? 0.85);
 
   scrollToElement(el, { offset, duration });

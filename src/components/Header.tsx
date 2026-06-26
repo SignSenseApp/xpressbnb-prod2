@@ -60,7 +60,7 @@ export default function Header({
 
   return (
     <header
-      className="sticky top-0 z-50 transition-all duration-500"
+      className="sticky top-0 z-50 xpx-top-chrome transition-all duration-500"
       style={{
         background: scrolled ? 'rgba(255,255,255,0.78)' : 'transparent',
         backdropFilter: scrolled ? 'blur(20px) saturate(1.6)' : 'none',
@@ -68,7 +68,7 @@ export default function Header({
         borderBottom: scrolled ? `1px solid ${theme.border}` : '1px solid transparent',
       }}
     >
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 flex items-center justify-between h-[60px] md:h-[72px] gap-2">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-8 flex items-center justify-between xpx-nav-row gap-2">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink">
           <button
             onClick={goHome}

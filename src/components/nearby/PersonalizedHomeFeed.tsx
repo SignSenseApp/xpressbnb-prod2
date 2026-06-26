@@ -113,27 +113,29 @@ export default function PersonalizedHomeFeed({
   return (
     <div className="min-h-[100dvh] flex flex-col" style={{ background: '#FAFAF8' }}>
       <header
-        className="sticky top-0 z-40 border-b px-4 py-3 sm:px-6"
+        className="sticky top-0 z-40 xpx-top-chrome border-b"
         style={{ background: 'rgba(255,255,255,0.92)', borderColor: '#e5e7eb', backdropFilter: 'blur(12px)' }}
       >
-        <div className="xpx-container flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-xpx-text truncate">
-              {getTimeGreeting()}
-              {cityName ? `, ${cityName}` : ''}
-            </h1>
-            <p className="text-sm text-xpx-muted mt-0.5 truncate">
-              {cityName
-                ? `Vacation rentals near ${cityName}`
-                : 'Homes and apartments near you'}
-            </p>
+        <div className="xpx-container py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-xpx-text truncate">
+                {getTimeGreeting()}
+                {cityName ? `, ${cityName}` : ''}
+              </h1>
+              <p className="text-sm text-xpx-muted mt-0.5 truncate">
+                {cityName
+                  ? `Vacation rentals near ${cityName}`
+                  : 'Homes and apartments near you'}
+              </p>
+            </div>
+            <LocationIdentityChip variant="dark" />
           </div>
-          <LocationIdentityChip variant="dark" />
+          {compactSearch && <div className="mt-3">{compactSearch}</div>}
         </div>
-        {compactSearch && <div className="xpx-container mt-3">{compactSearch}</div>}
       </header>
 
-      <main className="flex-1 xpx-container py-5 sm:py-6 space-y-8 pb-28">
+      <main className="flex-1 xpx-container py-5 sm:py-6 space-y-8 xpx-mobile-bottom-pad">
         {loading && <NearbyStaysSkeleton />}
 
         {showComingSoon && (
@@ -217,8 +219,12 @@ export default function PersonalizedHomeFeed({
           setMapOpen(true);
           trackXpressEvent('map_opened', { city: cityName ?? undefined });
         }}
-        className="fixed bottom-24 right-4 z-50 inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-white shadow-lg lg:hidden"
-        style={{ background: '#059669' }}
+        className="fixed z-50 inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-white shadow-lg lg:hidden"
+        style={{
+          background: '#059669',
+          bottom: 'calc(var(--xpx-mobile-bottom-clearance) + 1rem)',
+          right: 'max(1rem, env(safe-area-inset-right, 0px))',
+        }}
         aria-label="Open map"
       >
         <Map className="h-4 w-4" />

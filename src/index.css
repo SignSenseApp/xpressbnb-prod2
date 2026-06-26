@@ -90,7 +90,14 @@ html.lenis body {
   --xpx-shadow-hover: 0 8px 24px rgba(15, 23, 42, 0.1);
 
   /** Layout rhythm — 8pt grid, Apple-like section breathing room */
-  --xpx-nav-height: 72px;
+  --xpx-safe-top: env(safe-area-inset-top, 0px);
+  --xpx-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --xpx-nav-bar-height: 56px;
+  --xpx-nav-height: var(--xpx-nav-bar-height);
+  --xpx-chrome-height: calc(var(--xpx-nav-bar-height) + var(--xpx-safe-top));
+  --xpx-sticky-search-height: 52px;
+  --xpx-chrome-with-search: calc(var(--xpx-chrome-height) + var(--xpx-sticky-search-height));
+  --xpx-scroll-anchor-offset: calc(-1 * (var(--xpx-chrome-height) + 0.75rem));
   --xpx-gutter: 1.25rem;
   --xpx-gutter-md: 2rem;
   --xpx-section-y: 4rem;
@@ -102,6 +109,16 @@ html.lenis body {
   /** Fixed mobile booking bar + cookie banner clearance */
   --xpx-mobile-cta-h: 4.5rem;
   --xpx-mobile-nav-h: 4rem;
+  --xpx-mobile-bottom-clearance: calc(var(--xpx-mobile-nav-h) + var(--xpx-safe-bottom));
+}
+
+@media (min-width: 768px) {
+  :root {
+    --xpx-nav-bar-height: 72px;
+    --xpx-sticky-search-height: 0px;
+    --xpx-chrome-with-search: var(--xpx-chrome-height);
+    --xpx-scroll-anchor-offset: calc(-1 * (var(--xpx-chrome-height) + 1rem));
+  }
 }
 
 /* ── Keyframes (must live at top level, not inside @layer) ── */
@@ -272,13 +289,27 @@ html.lenis body {
       margin-bottom: 3rem;
     }
   }
+  /** Fixed/sticky top chrome — status bar + nav row */
+  .xpx-top-chrome {
+    padding-top: var(--xpx-safe-top);
+  }
+
+  .xpx-nav-row {
+    min-height: var(--xpx-nav-bar-height);
+    height: var(--xpx-nav-bar-height);
+  }
+
   .xpx-nav-offset {
-    padding-top: calc(var(--xpx-nav-height) + env(safe-area-inset-top, 0px) + 1.25rem);
+    padding-top: calc(var(--xpx-chrome-height) + 1rem);
   }
   @media (min-width: 768px) {
     .xpx-nav-offset {
-      padding-top: calc(var(--xpx-nav-height) + env(safe-area-inset-top, 0px) + 1.5rem);
+      padding-top: calc(var(--xpx-chrome-height) + 1.25rem);
     }
+  }
+
+  .xpx-mobile-bottom-pad {
+    padding-bottom: var(--xpx-mobile-bottom-clearance);
   }
   .xpx-page {
     @apply bg-xpx-base text-xpx-text min-h-screen;
@@ -628,10 +659,10 @@ html.lenis body {
 
 @layer utilities {
   .pt-safe {
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--xpx-safe-top);
   }
   .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: var(--xpx-safe-bottom);
   }
   .min-h-screen-safe {
     min-height: 100svh;

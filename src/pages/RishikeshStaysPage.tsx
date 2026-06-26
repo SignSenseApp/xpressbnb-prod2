@@ -304,7 +304,7 @@ const RishikeshStaysPage: React.FC = () => {
       </section>
 
       <section
-        className="sticky top-[60px] md:top-[72px] z-30"
+        className="sticky top-[var(--xpx-chrome-height)] z-30"
         style={{
           background: 'rgba(255,255,255,0.85)',
           backdropFilter: 'blur(20px) saturate(1.6)',
