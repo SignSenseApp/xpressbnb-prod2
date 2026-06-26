@@ -44,3 +44,6 @@ dist-ssr
 .send-compact-line.txt
 .verify-compact-line.txt
 .mcp_migration_payload.json
+.mig_parts/
+.mcp_apply*.json
+.tmp_mig*.json

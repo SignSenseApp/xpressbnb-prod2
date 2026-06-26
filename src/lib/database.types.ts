@@ -106,12 +106,15 @@ export type Database = {
           checkin: string | null
           checkout: string | null
           created_at: string | null
+          customer_reference: string | null
+          device_fingerprint: string | null
           guest_email: string
           guest_name: string
           guest_phone: string
           host_decision_at: string | null
           host_decision_note: string | null
           host_id: string | null
+          host_viewed_at: string | null
           id: string
           include_decoration: boolean | null
           inquiry_type: string
@@ -127,11 +130,18 @@ export type Database = {
           property_id: string
           razorpay_order_id: string | null
           razorpay_payment_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          review_reason: string | null
+          approval_source: string | null
           source: string | null
+          spam_score: number | null
           special_requests: string | null
           status: string
+          submission_ip: string | null
           time_slot: string | null
           total_price: number
+          updated_at: string | null
         }
         Insert: {
           amount_total?: number | null
@@ -1353,7 +1363,13 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      host_inquiries: {
+        Row: Database['public']['Tables']['bookings']['Row'] & {
+          contact_released: boolean | null
+          quality_review_pending: boolean | null
+        }
+        Relationships: Database['public']['Tables']['bookings']['Relationships']
+      }
     }
     Functions: {
       attach_booking_razorpay_order: {
@@ -1386,6 +1402,7 @@ export type Database = {
           p_amount_total: number
           p_check_in: string
           p_check_out: string
+          p_device_fingerprint?: string
           p_guest_email: string
           p_guest_name: string
           p_guest_phone: string
@@ -1393,11 +1410,32 @@ export type Database = {
           p_include_decoration?: boolean
           p_nights: number
           p_num_guests: number
-          p_otp_verification_token: string
+          p_otp_verification_token?: string
           p_property_id: string
           p_special_requests?: string
+          p_submission_ip?: string
           p_total_price: number
+          p_turnstile_passed?: boolean
         }
+        Returns: Json
+      }
+      mark_inquiry_viewed_by_host: {
+        Args: { p_booking_id: string }
+        Returns: undefined
+      }
+      save_guest_push_subscription: {
+        Args: {
+          p_auth_key: string
+          p_customer_reference: string
+          p_endpoint: string
+          p_guest_email: string
+          p_notification_preferences?: Json
+          p_p256dh: string
+        }
+        Returns: Json
+      }
+      track_inquiry_by_reference: {
+        Args: { p_customer_reference: string; p_guest_email: string }
         Returns: Json
       }
       has_premium_access: { Args: { property_uuid: string }; Returns: boolean }

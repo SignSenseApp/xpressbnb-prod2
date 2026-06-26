@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Bell } from 'lucide-react';
-import { isPushSupported, subscribeToPushNotifications } from '../lib/pushSubscription';
+import { isPushSupported, requestAndSubscribeInquiryPush } from '../lib/pushSubscription';
 
 interface BookingNotificationSheetProps {
   bookingId: string;
+  customerReference?: string;
+  guestEmail?: string;
   isVisible: boolean;
   onDismiss: () => void;
 }
 
 export default function BookingNotificationSheet({
   bookingId,
+  customerReference,
+  guestEmail,
   isVisible,
   onDismiss,
 }: BookingNotificationSheetProps) {
@@ -59,7 +63,9 @@ export default function BookingNotificationSheet({
         return;
       }
 
-      const subscribed = await subscribeToPushNotifications(bookingId);
+      const subscribed = customerReference && guestEmail
+        ? await requestAndSubscribeInquiryPush(customerReference, guestEmail, bookingId)
+        : false;
       if (!subscribed) {
         onDismiss();
         return;

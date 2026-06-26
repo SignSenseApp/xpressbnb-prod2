@@ -8,6 +8,7 @@ export type InquiryMessageContext = {
   hostName: string;
   hostPhone: string;
   dashboardLink: string;
+  customerReference?: string | null;
 };
 
 export type Locale = 'en' | 'hi';
@@ -18,19 +19,21 @@ function pickLocale(preferred?: string | null): Locale {
 }
 
 export function guestInquirySentMessage(ctx: InquiryMessageContext, locale?: string | null): string {
+  const ref = ctx.customerReference ? ` Ref: ${ctx.customerReference}.` : '';
   const loc = pickLocale(locale);
   if (loc === 'hi') {
-    return `Aapki inquiry "${ctx.propertyTitle}" (${ctx.dateRange}) host ${ctx.hostName} ko bhej di gayi. Host: ${ctx.hostPhone}`;
+    return `Aapki inquiry "${ctx.propertyTitle}" (${ctx.dateRange}) quality review ke baad host ${ctx.hostName} ko bhej di gayi.${ref} Host: ${ctx.hostPhone}`;
   }
-  return `Your inquiry for ${ctx.propertyTitle} ${ctx.dateRange} sent to ${ctx.hostName}. Host phone: ${ctx.hostPhone}`;
+  return `Your inquiry for ${ctx.propertyTitle} ${ctx.dateRange} was quality reviewed and shared with ${ctx.hostName}.${ref} Host phone: ${ctx.hostPhone}`;
 }
 
 export function hostNewInquiryMessage(ctx: InquiryMessageContext, locale?: string | null): string {
+  const ref = ctx.customerReference ? ` Ref ${ctx.customerReference}.` : '';
   const loc = pickLocale(locale);
   if (loc === 'hi') {
-    return `Nayi inquiry: ${ctx.guestName} ${ctx.guestPhone}, ${ctx.propertyTitle} ${ctx.dateRange}. Accept/Reject: ${ctx.dashboardLink}`;
+    return `Quality reviewed inquiry: ${ctx.guestName} ${ctx.guestPhone}, ${ctx.propertyTitle} ${ctx.dateRange}.${ref} Ready to contact. Dashboard: ${ctx.dashboardLink}`;
   }
-  return `New inquiry from ${ctx.guestName} ${ctx.guestPhone} for ${ctx.propertyTitle} ${ctx.dateRange}. Open dashboard to Accept/Reject: ${ctx.dashboardLink}`;
+  return `Quality reviewed inquiry from ${ctx.guestName} ${ctx.guestPhone} for ${ctx.propertyTitle} ${ctx.dateRange}.${ref} Ready to contact. Open dashboard: ${ctx.dashboardLink}`;
 }
 
 export function guestInquiryAcceptedMessage(ctx: InquiryMessageContext, locale?: string | null): string {

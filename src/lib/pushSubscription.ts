@@ -1,5 +1,7 @@
 // npx web-push generate-vapid-keys
 
+import { supabase } from './supabase';
+
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
 
 export function isPushSupported(): boolean {
@@ -43,20 +45,21 @@ async function ensureServiceWorkerReady(): Promise<ServiceWorkerRegistration | n
   }
 }
 
-async function persistSubscription(
+async function persistSubscriptionLocally(
   bookingId: string,
+  customerReference: string,
   subscription: PushSubscription,
 ): Promise<void> {
   const subscriptionJson = subscription.toJSON();
   const userSessionId = getVisitorSessionId();
 
-  // TODO: migrate to Supabase push_subscriptions table once created in migrations
   try {
     localStorage.setItem(
       'xbnb_push_sub',
       JSON.stringify({
         user_session_id: userSessionId,
         booking_id: bookingId,
+        customer_reference: customerReference,
         subscription_json: subscriptionJson,
         created_at: new Date().toISOString(),
       }),
@@ -66,15 +69,40 @@ async function persistSubscription(
   }
 }
 
-// TODO: server sends push via web-push library
-// when host responds in host dashboard
-// Trigger: host marks inquiry as 'responded' in BookingsPage.tsx
+async function persistSubscriptionRemote(
+  customerReference: string,
+  guestEmail: string,
+  subscription: PushSubscription,
+): Promise<void> {
+  const json = subscription.toJSON();
+  if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return;
 
+  await supabase.rpc('save_guest_push_subscription', {
+    p_customer_reference: customerReference,
+    p_guest_email: guestEmail,
+    p_endpoint: json.endpoint,
+    p_p256dh: json.keys.p256dh,
+    p_auth_key: json.keys.auth,
+    p_notification_preferences: { status_updates: true },
+  });
+}
+
+/** @deprecated Use subscribeToInquiryPushNotifications */
 export async function subscribeToPushNotifications(bookingId: string): Promise<boolean> {
+  return subscribeToInquiryPushNotifications('', '', bookingId);
+}
+
+export async function subscribeToInquiryPushNotifications(
+  customerReference: string,
+  guestEmail: string,
+  bookingId: string,
+): Promise<boolean> {
   if (!isPushSupported()) return false;
 
   const vapidKey = VAPID_PUBLIC_KEY?.trim();
-  if (!vapidKey || vapidKey === 'your_key_here') return false;
+  if (!vapidKey || vapidKey === 'your_key_here') {
+    return false;
+  }
 
   const registration = await ensureServiceWorkerReady();
   if (!registration) return false;
@@ -85,9 +113,34 @@ export async function subscribeToPushNotifications(bookingId: string): Promise<b
       applicationServerKey: urlBase64ToUint8Array(vapidKey),
     });
 
-    await persistSubscription(bookingId, subscription);
+    await persistSubscriptionLocally(bookingId, customerReference, subscription);
+
+    if (customerReference && guestEmail) {
+      try {
+        await persistSubscriptionRemote(customerReference, guestEmail, subscription);
+      } catch {
+        /* graceful fallback — local only */
+      }
+    }
+
     return true;
   } catch {
     return false;
   }
+}
+
+export async function requestAndSubscribeInquiryPush(
+  customerReference: string,
+  guestEmail: string,
+  bookingId: string,
+): Promise<boolean> {
+  if (!isPushSupported()) return false;
+  if (Notification.permission === 'denied') return false;
+
+  if (Notification.permission === 'default') {
+    const result = await Notification.requestPermission();
+    if (result !== 'granted') return false;
+  }
+
+  return subscribeToInquiryPushNotifications(customerReference, guestEmail, bookingId);
 }

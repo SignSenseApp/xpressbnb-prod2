@@ -15,6 +15,7 @@
  *    render without effects.
  */
 import type { Property } from '../lib/database.types';
+import { listPropertyAmenities } from '../lib/amenities';
 
 /**
  * State inference per city. Some legacy rows have an empty `state` field;
@@ -37,7 +38,7 @@ export function inferStateFromCity(city: string | null | undefined): string {
  * meaningful applies.
  */
 export function inferSubtitle(property: Property): string | null {
-  const amenities = (property.amenities ?? []).map((a) => a.toLowerCase());
+  const amenities = listPropertyAmenities(property.amenities).map((a) => a.toLowerCase());
   if (amenities.some((a) => a.includes('pool') || a.includes('swim'))) return 'with Swimming Pool';
   if (amenities.some((a) => a.includes('mountain'))) return 'with Mountain Views';
   if (amenities.some((a) => a.includes('beach') || a.includes('waterfront'))) return 'with River / Beach Access';
@@ -52,7 +53,7 @@ export function inferSubtitle(property: Property): string | null {
  * non-fake chips that read like a curator wrote them.
  */
 export function inferFeatureHighlights(property: Property): string[] {
-  const amenities = (property.amenities ?? []).map((a) => a.toLowerCase());
+  const amenities = listPropertyAmenities(property.amenities).map((a) => a.toLowerCase());
   const cityLower = (property.city ?? '').toLowerCase();
   const titleLower = (property.title ?? '').toLowerCase();
   const out: string[] = [];

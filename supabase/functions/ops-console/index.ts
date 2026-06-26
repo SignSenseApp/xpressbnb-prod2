@@ -10,8 +10,10 @@ import { corsHeadersFor } from '../_shared/cors.ts';
  */
 
 type RequestBody = {
-  action?: 'snapshot' | 'deactivate_property';
+  action?: 'snapshot' | 'deactivate_property' | 'approve_inquiry' | 'reject_inquiry';
   property_id?: string;
+  booking_id?: string;
+  reason?: string;
 };
 
 type PropertyRow = {
@@ -42,12 +44,16 @@ type BookingRow = {
   status: string | null;
   phone_verified: boolean;
   guest_phone: string;
+  guest_name: string | null;
+  guest_email: string | null;
   host_id: string | null;
   property_id: string;
   amount_total: number | null;
   total_price: number | null;
   offer_amount: number | null;
   host_decision_at: string | null;
+  customer_reference: string | null;
+  spam_score: number | null;
 };
 
 type FunnelWindowMetrics = {
@@ -146,6 +152,34 @@ function maskPhone(raw: string): string {
   return `+91 *****${d.slice(-4)}`;
 }
 
+function mapInquiryRow(
+  b: BookingRow,
+  propById: Map<string, PropertyRow>,
+  hostById: Map<string, HostRow>,
+) {
+  const prop = propById.get(b.property_id);
+  const host = b.host_id ? hostById.get(b.host_id) : undefined;
+  const amount = b.amount_total ?? b.offer_amount ?? b.total_price ?? null;
+  return {
+    id: b.id,
+    created_at: b.created_at,
+    property_title: prop?.title ?? '—',
+    property_id: b.property_id,
+    city: prop?.city ?? '—',
+    status: b.status,
+    phone_verified: b.phone_verified,
+    host_name: host?.name ?? '—',
+    host_id: b.host_id,
+    amount,
+    guest_phone_masked: maskPhone(b.guest_phone),
+    guest_phone: b.guest_phone,
+    customer_reference: b.customer_reference,
+    guest_name: b.guest_name,
+    guest_email: b.guest_email,
+    spam_score: b.spam_score,
+  };
+}
+
 async function isOpsAdmin(
   email: string,
   adminClient: ReturnType<typeof createClient>,
@@ -197,7 +231,7 @@ async function requireOpsUser(req: Request) {
     return { error: jsonResponse(req, { error: 'Ops access denied' }, 403) };
   }
 
-  return { adminClient, email };
+  return { adminClient, email, userId: userData.user.id };
 }
 
 async function buildSnapshot(adminClient: ReturnType<typeof createClient>) {
@@ -215,7 +249,7 @@ async function buildSnapshot(adminClient: ReturnType<typeof createClient>) {
     adminClient
       .from('bookings')
       .select(
-        'id, created_at, status, phone_verified, guest_phone, host_id, property_id, amount_total, total_price, offer_amount',
+        'id, created_at, status, phone_verified, guest_phone, guest_name, guest_email, host_id, property_id, amount_total, total_price, offer_amount, customer_reference, spam_score',
       )
       .order('created_at', { ascending: false })
       .limit(200),
@@ -289,25 +323,12 @@ async function buildSnapshot(adminClient: ReturnType<typeof createClient>) {
   const verifiedInquiries = bookingRows
     .filter((b) => b.phone_verified === true)
     .slice(0, 50)
-    .map((b) => {
-      const prop = propById.get(b.property_id);
-      const host = b.host_id ? hostById.get(b.host_id) : undefined;
-      const amount =
-        b.amount_total ?? b.offer_amount ?? b.total_price ?? null;
-      return {
-        id: b.id,
-        created_at: b.created_at,
-        property_title: prop?.title ?? '—',
-        property_id: b.property_id,
-        city: prop?.city ?? '—',
-        status: b.status,
-        phone_verified: b.phone_verified,
-        host_name: host?.name ?? '—',
-        host_id: b.host_id,
-        amount,
-        guest_phone_masked: maskPhone(b.guest_phone),
-      };
-    });
+    .map((b) => mapInquiryRow(b, propById, hostById));
+
+  const pendingReview = bookingRows
+    .filter((b) => b.status === 'inquiry_preparing')
+    .slice(0, 50)
+    .map((b) => mapInquiryRow(b, propById, hostById));
 
   const now = Date.now();
   const minutesOld = (createdAt: string | null) => {
@@ -375,6 +396,7 @@ async function buildSnapshot(adminClient: ReturnType<typeof createClient>) {
     properties: propertyReadiness,
     hosts: hostReadiness,
     inquiries: verifiedInquiries,
+    pending_review: pendingReview,
     alerts: {
       stuck_pending_host: stuckPendingHost,
       active_missing_host_phone: activeMissingHostPhone,
@@ -399,8 +421,9 @@ Deno.serve(async (req) => {
 
   const authResult = await requireOpsUser(req);
   if ('error' in authResult && authResult.error) return authResult.error;
-  const { adminClient } = authResult as {
+  const { adminClient, userId } = authResult as {
     adminClient: ReturnType<typeof createClient>;
+    userId: string;
   };
 
   let body: RequestBody = {};
@@ -429,6 +452,45 @@ Deno.serve(async (req) => {
     }
 
     return jsonResponse(req, { ok: true, property_id: propertyId });
+  }
+
+  if (action === 'approve_inquiry') {
+    const bookingId = body.booking_id?.trim();
+    if (!bookingId) {
+      return jsonResponse(req, { error: 'booking_id required' }, 400);
+    }
+
+    const { data, error } = await adminClient.rpc('approve_inquiry_for_host', {
+      p_booking_id: bookingId,
+      p_reviewed_by: userId,
+    });
+
+    if (error) {
+      console.error('ops approve_inquiry', error.message);
+      return jsonResponse(req, { error: error.message || 'Failed to approve inquiry' }, 400);
+    }
+
+    return jsonResponse(req, { ok: true, ...(data as Record<string, unknown>) });
+  }
+
+  if (action === 'reject_inquiry') {
+    const bookingId = body.booking_id?.trim();
+    if (!bookingId) {
+      return jsonResponse(req, { error: 'booking_id required' }, 400);
+    }
+
+    const { data, error } = await adminClient.rpc('reject_inquiry', {
+      p_booking_id: bookingId,
+      p_reviewed_by: userId,
+      p_reason: body.reason?.trim() || null,
+    });
+
+    if (error) {
+      console.error('ops reject_inquiry', error.message);
+      return jsonResponse(req, { error: error.message || 'Failed to reject inquiry' }, 400);
+    }
+
+    return jsonResponse(req, { ok: true, ...(data as Record<string, unknown>) });
   }
 
   if (action === 'snapshot') {

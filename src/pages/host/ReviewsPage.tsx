@@ -10,11 +10,11 @@ interface ExternalReviewRow {
   id: string;
   reviewer_name: string;
   rating: number;
-  comment: string;
+  comment: string | null;
   review_date: string;
   provider: string;
   source_url: string | null;
-  created_at: string;
+  created_at: string | null;
 }
 
 export default function ReviewsPage() {
@@ -169,7 +169,9 @@ export default function ReviewsPage() {
                       <div>
                         <p className="font-semibold text-xpx-text">{review.reviewer_name || 'Anonymous'}</p>
                         <p className="text-xs text-xpx-subtle">
-                          {new Date(review.created_at).toLocaleDateString()}
+                          {review.created_at
+                            ? new Date(review.created_at).toLocaleDateString()
+                            : '—'}
                         </p>
                       </div>
                       <div className="flex items-center gap-1">{renderStars(Math.round(review.rating))}</div>

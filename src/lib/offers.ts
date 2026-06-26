@@ -1,5 +1,11 @@
 import type { Property } from './database.types';
 
+/** Optional offer columns — not yet on every generated Property row type. */
+type PropertyWithOffer = Property & {
+  discount_percent?: number | null;
+  offer_label?: string | null;
+};
+
 /**
  * Offers / promotional pricing utilities.
  *
@@ -51,7 +57,7 @@ export interface OfferComputation {
  * Compute the property-level offer (DB-driven) on a given base price.
  * Returns zeros if the property has no offer columns or invalid data.
  */
-export function computeOffer(property: Property, basePrice: number): OfferComputation {
+export function computeOffer(property: PropertyWithOffer, basePrice: number): OfferComputation {
   const percent = Number(property.discount_percent ?? 0);
   if (!Number.isFinite(percent) || percent <= 0 || percent > 90 || basePrice <= 0) {
     return { finalPrice: basePrice, discountAmount: 0, discountPercent: 0, label: null };

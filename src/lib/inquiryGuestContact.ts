@@ -1,4 +1,4 @@
-/** Host-side helpers for verified guest phone on inquiry bookings. */
+/** Host-side helpers for guest contact on quality-reviewed inquiry bookings. */
 
 function normalizeGuestPhoneDigits(raw: string): string {
   const d = raw.replace(/\D/g, '');

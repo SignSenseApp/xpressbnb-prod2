@@ -7,6 +7,7 @@ import { hasPremiumAccess, getPremiumBadgeText } from '../../lib/premium';
 import ABTesting from '../../components/premium/ABTesting';
 import type { Property } from '../../lib/database.types';
 import { hasValidHostPhone } from '../../lib/host';
+import { listPropertyImages } from '../../lib/propertyImages';
 
 type SaveNotice = { kind: 'live' | 'inactive' | 'phone'; text: string };
 
@@ -235,15 +236,17 @@ export default function PropertiesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {properties.map((property) => (
+          {properties.map((property) => {
+            const coverImage = listPropertyImages(property.images)[0];
+            return (
             <div
               key={property.id}
               className="rounded-2xl overflow-hidden"
               style={{ background: 'var(--xpx-surface)', border: '1px solid var(--xpx-border)', boxShadow: '0 12px 40px rgba(15,23,42,0.06)' }}
             >
               <div className="h-48 relative" style={{ background: 'var(--xpx-surface-light)' }}>
-                {property.images?.[0] ? (
-                  <img src={property.images[0]} alt={property.title} className="w-full h-full object-cover" />
+                {coverImage ? (
+                  <img src={coverImage} alt={property.title} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Building2 className="w-16 h-16 text-xpx-subtle" />
@@ -412,7 +415,8 @@ export default function PropertiesPage() {
                 </div>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       )}
     </div>

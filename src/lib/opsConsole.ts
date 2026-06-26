@@ -46,6 +46,11 @@ export type OpsInquiryRow = {
   host_id: string | null;
   amount: number | null;
   guest_phone_masked: string;
+  guest_phone?: string;
+  customer_reference: string | null;
+  guest_name: string | null;
+  guest_email: string | null;
+  spam_score: number | null;
 };
 
 export type OpsAlerts = {
@@ -84,6 +89,7 @@ export type OpsSnapshot = {
   funnel_7d?: OpsFunnelWindow;
   view_events_caveat?: string;
   generated_at: string;
+  pending_review?: OpsInquiryRow[];
 };
 
 async function messageFromInvoke(error: unknown, data: unknown, fallback: string): Promise<string> {
@@ -144,5 +150,41 @@ export async function deactivateOpsProperty(propertyId: string): Promise<{
     return { ok: false, error: msg };
   }
 
+  return { ok: true };
+}
+
+export async function approveOpsInquiry(bookingId: string): Promise<{
+  ok: boolean;
+  error?: string;
+}> {
+  const { data, error } = await supabase.functions.invoke('ops-console', {
+    body: { action: 'approve_inquiry', booking_id: bookingId },
+  });
+
+  if (error) {
+    const msg = await messageFromInvoke(error, data, 'Failed to approve inquiry');
+    return { ok: false, error: msg };
+  }
+
+  const payload = data as { ok?: boolean; error?: string };
+  if (payload?.error) return { ok: false, error: payload.error };
+  return { ok: true };
+}
+
+export async function rejectOpsInquiry(
+  bookingId: string,
+  reason?: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const { data, error } = await supabase.functions.invoke('ops-console', {
+    body: { action: 'reject_inquiry', booking_id: bookingId, reason },
+  });
+
+  if (error) {
+    const msg = await messageFromInvoke(error, data, 'Failed to reject inquiry');
+    return { ok: false, error: msg };
+  }
+
+  const payload = data as { ok?: boolean; error?: string };
+  if (payload?.error) return { ok: false, error: payload.error };
   return { ok: true };
 }

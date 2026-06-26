@@ -32,11 +32,21 @@ import {
 import { notifyGuestInquiryDecision } from '../../lib/guestInquiryNotify';
 import { theme } from '../../lib/theme';
 import HostValueProp from '../../components/host/HostValueProp';
+import InquiryTrustBadgePill from '../../components/inquiry/InquiryTrustBadgePill';
+import InquiryHostTrustPanel from '../../components/inquiry/InquiryHostTrustPanel';
+import {
+  isInquiryContactReleased,
+  primaryInquiryTrustBadge,
+  QUALITY_REVIEW_HELPER,
+  QUALITY_REVIEW_PENDING_HELPER,
+} from '../../lib/inquiryTrust';
 
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
 type BookingStatus = BookingRow['status'];
 
 type Booking = BookingRow & {
+  contact_released?: boolean | null;
+  quality_review_pending?: boolean | null;
   properties: {
     title: string;
     city: string;
@@ -67,6 +77,9 @@ function isOfferInquiry(b: Booking): boolean {
 }
 
 function inquiryTabFor(b: Booking): InquiryTab | null {
+  if (b.status === 'inquiry_preparing' || b.status === 'inquiry_pending') {
+    return isOfferInquiry(b) ? 'offers' : 'new';
+  }
   if (b.status === 'accepted') return 'accepted';
   if (b.status === 'rejected') return 'rejected';
   if (b.status === 'cancelled' && b.payment_status === 'offer_rejected') return 'rejected';
@@ -91,7 +104,7 @@ function canHostAct(b: Booking): boolean {
 }
 
 /**
- * Inquiries hub — host reviews OTP-verified guest inquiries and offers.
+ * Inquiries hub — host reviews guest inquiries after quality review.
  * Accept sets status `accepted` (no Razorpay). Reject sets `rejected`.
  */
 interface BookingsPageProps {
@@ -102,6 +115,7 @@ export default function BookingsPage({ onNavigate }: BookingsPageProps = {}) {
   const { host } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [tab, setTab] = useState<InquiryTab>('new');
   const [counterTarget, setCounterTarget] = useState<{ booking: Booking; offer: ParsedOffer } | null>(
     null,
@@ -113,9 +127,10 @@ export default function BookingsPage({ onNavigate }: BookingsPageProps = {}) {
   const loadBookings = useCallback(async () => {
     if (!host?.id) return;
     setLoading(true);
+    setLoadError(null);
     try {
       const { data, error } = await supabase
-        .from('bookings')
+        .from('host_inquiries')
         .select('*, properties(title, city, price_per_day, price_full_day)')
         .eq('host_id', host.id)
         .order('created_at', { ascending: false });
@@ -124,6 +139,7 @@ export default function BookingsPage({ onNavigate }: BookingsPageProps = {}) {
       setBookings((data as unknown as Booking[]) || []);
     } catch (error) {
       console.error('Error loading inquiries:', error);
+      setLoadError('Could not load inquiries. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -149,39 +165,6 @@ export default function BookingsPage({ onNavigate }: BookingsPageProps = {}) {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'bookings',
-          filter: `host_id=eq.${host.id}`,
-        },
-        (payload) => {
-          loadBookings();
-          const row = payload.new as Partial<Booking> | undefined;
-          if (!row) return;
-          const isOffer =
-            row.inquiry_type === 'make_offer' ||
-            row.payment_status === 'offer_pending' ||
-            /^\s*\[OFFER/i.test(row.special_requests ?? '');
-          const guestName = row.guest_name || 'A guest';
-          const isVerified = row.phone_verified === true;
-          showToast(
-            row,
-            isOffer
-              ? 'New offer received'
-              : isVerified
-                ? 'New verified inquiry'
-                : 'New inquiry received',
-            isOffer
-              ? `${guestName} sent you an offer.`
-              : isVerified
-                ? `${guestName} verified their phone and sent a booking inquiry.`
-                : `${guestName} sent a booking inquiry.`,
-          );
-        },
-      )
-      .on(
-        'postgres_changes',
-        {
           event: 'UPDATE',
           schema: 'public',
           table: 'bookings',
@@ -191,10 +174,22 @@ export default function BookingsPage({ onNavigate }: BookingsPageProps = {}) {
           loadBookings();
           const row = payload.new as Partial<Booking> | undefined;
           const old = payload.old as Partial<Booking> | undefined;
-          if (!row?.id || row.status === old?.status) return;
-          if (row.status === 'pending_host' && old?.status !== 'pending_host') {
-            const guestName = row.guest_name || 'A guest';
-            showToast(row, 'Inquiry updated', `${guestName}'s inquiry was updated.`);
+          if (!row?.id) return;
+          const released =
+            row.phone_verified === true &&
+            Boolean(row.reviewed_at) &&
+            row.status === 'pending_host' &&
+            old?.status !== 'pending_host';
+          if (released) {
+            showToast(
+              row,
+              'Inquiry ready',
+              'Quality reviewed by XpressBNB. Guest contact is now available.',
+            );
+            return;
+          }
+          if (row.status !== old?.status && row.status === 'pending_host') {
+            showToast(row, 'Inquiry updated', 'An inquiry on your dashboard was updated.');
           }
         },
       )
@@ -337,6 +332,7 @@ export default function BookingsPage({ onNavigate }: BookingsPageProps = {}) {
 
   const statusLabel = (status: BookingStatus) => {
     if (status === 'pending_host') return 'Awaiting you';
+    if (status === 'inquiry_preparing') return 'Preparing';
     if (status === 'accepted') return 'Accepted';
     if (status === 'rejected') return 'Rejected';
     return status.replace(/_/g, ' ');
@@ -377,6 +373,12 @@ export default function BookingsPage({ onNavigate }: BookingsPageProps = {}) {
           Refresh inquiries
         </button>
       </div>
+
+      {loadError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+          {loadError}
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2">
         {TABS.map(({ id, label }) => {
@@ -472,7 +474,7 @@ function EmptyInquiries({
     },
     accepted: {
       title: 'No accepted inquiries',
-      body: 'Accepted guests get your verified WhatsApp. Collect rent directly — 0% commission to XpressBnB.',
+      body: 'Accepted guests can reach you on WhatsApp. Collect rent directly — 0% commission to XpressBnB.',
     },
     rejected: {
       title: 'No rejected inquiries',
@@ -505,12 +507,12 @@ function EmptyInquiries({
   );
 }
 
-function GuestVerifiedPhone({
+function GuestContactRow({
   booking,
 }: {
-  booking: Pick<Booking, 'phone_verified' | 'guest_phone' | 'guest_name' | 'properties'>;
+  booking: Pick<Booking, 'phone_verified' | 'guest_phone' | 'guest_name' | 'properties' | 'reviewed_at' | 'reviewed_by' | 'status' | 'contact_released'>;
 }) {
-  if (!booking.phone_verified || !booking.guest_phone?.trim()) return null;
+  if (!isInquiryContactReleased(booking) || !booking.guest_phone?.trim()) return null;
 
   const display = formatGuestPhoneDisplay(booking.guest_phone);
   const tel = guestPhoneToE164(booking.guest_phone);
@@ -525,8 +527,8 @@ function GuestVerifiedPhone({
     <div className="flex flex-wrap items-center gap-2 text-sm">
       <Phone className="w-4 h-4 text-xpx-subtle flex-shrink-0" />
       <span className="text-xpx-text font-medium">{display}</span>
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-xpx-subtle">
-        Verified
+      <span className="text-[10px] font-medium text-xpx-subtle normal-case tracking-normal">
+        Contact details reviewed
       </span>
       <a
         href={`tel:${tel}`}
@@ -573,7 +575,9 @@ function InquiryCard({
   const isOffer = isOfferInquiry(booking);
   const isBusy = busyId === booking.id;
   const styles = getStatusStyles(booking.status);
-  const showActions = canHostAct(booking);
+  const contactReleased = isInquiryContactReleased(booking);
+  const qualityReviewPending = booking.quality_review_pending === true;
+  const showActions = canHostAct(booking) && contactReleased;
   const showOfferActions = tab === 'offers' && showActions;
   const showInquiryActions = tab === 'new' && showActions;
   const list =
@@ -581,6 +585,13 @@ function InquiryCard({
     booking.properties?.price_full_day ||
     offer?.perNight ||
     0;
+  const trustBadge = primaryInquiryTrustBadge(booking);
+
+  useEffect(() => {
+    if (contactReleased && booking.status === 'pending_host' && !booking.host_viewed_at) {
+      void supabase.rpc('mark_inquiry_viewed_by_host', { p_booking_id: booking.id });
+    }
+  }, [booking.id, contactReleased, booking.status, booking.host_viewed_at]);
 
   return (
     <article
@@ -594,12 +605,25 @@ function InquiryCard({
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            {booking.phone_verified && (
+            {qualityReviewPending ? (
               <span
-                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
-                style={{ background: 'rgba(5,150,105,0.12)', color: '#047857' }}
+                className="inline-flex items-center gap-1.5 rounded-full font-bold uppercase tracking-wider"
+                style={{
+                  background: 'rgba(245,158,11,0.12)',
+                  color: '#B45309',
+                  fontSize: '10px',
+                  padding: '2px 8px',
+                }}
               >
-                Phone verified
+                <span className="inline-block w-1.5 h-1.5 rounded-full shrink-0 bg-amber-500" aria-hidden />
+                Quality Review Pending
+              </span>
+            ) : (
+              trustBadge && <InquiryTrustBadgePill badge={trustBadge} />
+            )}
+            {contactReleased && booking.customer_reference && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wide bg-slate-100 text-slate-700 border border-slate-200">
+                {booking.customer_reference}
               </span>
             )}
             {isOffer && (
@@ -626,19 +650,33 @@ function InquiryCard({
               {statusLabel(booking.status)}
             </span>
             <span className="text-xs text-xpx-subtle">
-              {new Date(booking.created_at).toLocaleString('en-IN', {
-                day: 'numeric',
-                month: 'short',
-                hour: 'numeric',
-                minute: '2-digit',
-              })}
+              {booking.created_at
+                ? new Date(booking.created_at).toLocaleString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })
+                : '—'}
             </span>
           </div>
 
           <h3 className="mt-1.5 text-lg font-bold text-xpx-text truncate">
-            {booking.properties?.title ?? 'Property'}
+            {contactReleased ? booking.guest_name : 'Inquiry in review'}
           </h3>
-          <p className="text-xs text-xpx-muted">{booking.properties?.city ?? ''}</p>
+          <p className="text-xs text-xpx-muted truncate">
+            {booking.properties?.title ?? 'Property'}
+            {booking.properties?.city ? ` · ${booking.properties.city}` : ''}
+          </p>
+          {qualityReviewPending ? (
+            <p className="mt-1.5 text-[11px] text-xpx-muted leading-relaxed max-w-prose">
+              {QUALITY_REVIEW_PENDING_HELPER}
+            </p>
+          ) : contactReleased ? (
+            <p className="mt-1.5 text-[11px] text-xpx-muted leading-relaxed max-w-prose">
+              {QUALITY_REVIEW_HELPER}
+            </p>
+          ) : null}
 
           {isOffer && offer && (
             <div className="mt-4 grid grid-cols-3 gap-3 text-center">
@@ -672,16 +710,20 @@ function InquiryCard({
           )}
 
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            <div className="flex items-center gap-2 text-xpx-muted">
-              <User className="w-4 h-4 text-xpx-subtle" />
-              <span className="text-xpx-text">{booking.guest_name}</span>
-            </div>
-            <div className="flex items-center gap-2 text-xpx-muted truncate">
-              <Mail className="w-4 h-4 text-xpx-subtle flex-shrink-0" />
-              <span className="text-xpx-text truncate">{booking.guest_email}</span>
-            </div>
+            {contactReleased && (
+              <div className="flex items-center gap-2 text-xpx-muted">
+                <User className="w-4 h-4 text-xpx-subtle" />
+                <span className="text-xpx-text">{booking.guest_name}</span>
+              </div>
+            )}
+            {contactReleased && (
+              <div className="flex items-center gap-2 text-xpx-muted truncate">
+                <Mail className="w-4 h-4 text-xpx-subtle flex-shrink-0" />
+                <span className="text-xpx-text truncate">{booking.guest_email}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-xpx-muted sm:col-span-2">
-              <GuestVerifiedPhone booking={booking} />
+              <GuestContactRow booking={booking} />
             </div>
             <div className="flex items-center gap-2 text-xpx-muted">
               <Calendar className="w-4 h-4 text-xpx-subtle" />
@@ -705,6 +747,10 @@ function InquiryCard({
               </span>
             </div>
           </div>
+
+          {contactReleased && (
+            <InquiryHostTrustPanel booking={booking} showReference={false} />
+          )}
 
           {!isOffer && (
             <div className="mt-3 flex items-center gap-2 text-lg font-bold text-xpx-text">
@@ -793,8 +839,7 @@ function InquiryCard({
           )}
 
           {tab === 'accepted' &&
-            (booking.status === 'confirmed' || booking.status === 'accepted') &&
-            booking.status !== 'completed' && (
+            (booking.status === 'confirmed' || booking.status === 'accepted') && (
               <button
                 type="button"
                 onClick={onMarkComplete}

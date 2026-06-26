@@ -169,14 +169,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const phone = metadata.phone || '';
 
       // Prefer atomic RPC (no client-side insert race, works even if RLS is strict).
-      const { data: ensured, error: rpcError } = await supabase.rpc('ensure_host_profile', {
+      const { data: ensured, error: rpcError } = await (
+        supabase.rpc as (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => ReturnType<typeof supabase.rpc>
+      )('ensure_host_profile', {
         p_name: name,
         p_email: email,
         p_phone: phone,
       });
 
       if (!rpcError && ensured) {
-        setHost(ensured as Host);
+        setHost(ensured as unknown as Host);
         return;
       }
 

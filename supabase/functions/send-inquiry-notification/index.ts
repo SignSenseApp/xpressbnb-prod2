@@ -44,7 +44,21 @@ type BookingRow = {
   check_out_date: string | null;
   status: string;
   inquiry_type: string;
+  customer_reference: string | null;
+  phone_verified: boolean;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
 };
+
+function inquiryContactReleased(booking: BookingRow): boolean {
+  return (
+    booking.phone_verified === true &&
+    booking.reviewed_at != null &&
+    booking.reviewed_by != null &&
+    booking.status !== 'inquiry_preparing' &&
+    booking.status !== 'inquiry_pending'
+  );
+}
 
 type PropertyRow = { title: string };
 type HostRow = { name: string; phone: string };
@@ -114,7 +128,7 @@ async function loadContext(bookingId: string): Promise<{
   ctx: InquiryMessageContext;
 }> {
   const bookings = await rest<BookingRow[]>(
-    `bookings?id=eq.${bookingId}&select=id,property_id,host_id,guest_name,guest_email,guest_phone,check_in_date,check_out_date,status,inquiry_type&limit=1`,
+    `bookings?id=eq.${bookingId}&select=id,property_id,host_id,guest_name,guest_email,guest_phone,check_in_date,check_out_date,status,inquiry_type,customer_reference,phone_verified,reviewed_at,reviewed_by&limit=1`,
   );
   const booking = bookings[0];
   if (!booking) throw new Error('Booking not found');
@@ -151,6 +165,7 @@ async function loadContext(bookingId: string): Promise<{
     hostName,
     hostPhone: hostPhone || '—',
     dashboardLink: dashboardBase,
+    customerReference: booking.customer_reference,
   };
 
   return { booking, propertyTitle, hostName, hostPhone, ctx };
@@ -250,6 +265,7 @@ async function processQueueItem(queue: QueueRow): Promise<{ messages: number; ok
   });
 
   const { booking, hostPhone, ctx } = await loadContext(queue.booking_id);
+  const contactReleased = inquiryContactReleased(booking);
   const locale: Locale = 'en';
   let sentCount = 0;
   let anyFailed = false;
@@ -263,20 +279,20 @@ async function processQueueItem(queue: QueueRow): Promise<{ messages: number; ok
 
   switch (queue.event_type) {
     case 'inquiry_verified':
-      tasks.push(
-        {
-          role: 'guest',
-          phone: booking.guest_phone,
-          eventSuffix: 'guest_sent',
-          body: guestInquirySentMessage(ctx, locale),
-        },
-        {
+      tasks.push({
+        role: 'guest',
+        phone: booking.guest_phone,
+        eventSuffix: 'guest_sent',
+        body: guestInquirySentMessage(ctx, locale),
+      });
+      if (contactReleased) {
+        tasks.push({
           role: 'host',
           phone: hostPhone,
           eventSuffix: 'host_new',
           body: hostNewInquiryMessage(ctx, locale),
-        },
-      );
+        });
+      }
       break;
     case 'inquiry_host_accepted':
       tasks.push({

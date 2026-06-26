@@ -23,14 +23,14 @@ interface HostCardProps {
   fallbackCity?: string;
   className?: string;
   propertyTitle?: string;
-  /** Opens the existing verified inquiry flow (BookingForm + OTP). */
+  /** Opens the booking inquiry flow (quality review before host contact). */
   onRequestToBook?: () => void;
 }
 
 /**
  * HostCard renders a trustworthy snapshot of the property host using real
- * data from the `hosts` table. Pre-OTP: no host phone — primary CTA routes
- * to verified inquiry; optional concierge line is labeled clearly.
+ * data from the `hosts` table. Before quality review: no host phone — primary CTA routes
+ * to inquiry submit; optional concierge line is labeled clearly.
  */
 export default function HostCard({
   hostId,
@@ -77,7 +77,7 @@ export default function HostCard({
   const handleConcierge = () => {
     window.open(
       buildTeamWhatsAppLink(
-        `Hi — I have a question about "${propertyTitle}" on XpressBNB before I send a verified inquiry.`,
+        `Hi — I have a question about "${propertyTitle}" on XpressBNB before I send an inquiry.`,
       ),
       '_blank',
       'noopener,noreferrer',
@@ -240,8 +240,8 @@ export default function HostCard({
           Ask {TEAM_BRAND_NAME}
         </button>
         <p className="text-[11px] text-xpx-muted text-center leading-snug pt-0.5">
-          Verified inquiry shares host contact after phone OTP. Questions first? Use concierge — not
-          direct host messaging yet.
+          Quality-reviewed inquiries share host contact after XpressBNB Operations review. Questions
+          first? Use concierge — not direct host messaging yet.
         </p>
         <PropertyTrustNotes />
       </div>

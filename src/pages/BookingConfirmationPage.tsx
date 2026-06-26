@@ -120,7 +120,7 @@ export default function BookingConfirmationPage() {
           setState({
             status: 'error',
             message:
-              'We couldn’t load this trip on this device. Sign in with the email you used to book, or open the confirmation from the same browser where you submitted your request.',
+              'We couldn’t load this trip on this device. Sign in with the email you used to book, track your inquiry with your reference at /track-inquiry, or open the confirmation from the same browser where you submitted your request.',
           });
         }
         return;
@@ -131,6 +131,7 @@ export default function BookingConfirmationPage() {
         .select(
           `
           id,
+          customer_reference,
           guest_email,
           check_in_date,
           check_out_date,
@@ -204,6 +205,7 @@ export default function BookingConfirmationPage() {
         v: 1,
         savedAt: Date.now(),
         bookingId: (row as { id: string }).id,
+        customerReference: (row as { customer_reference?: string | null }).customer_reference ?? undefined,
         propertyId: (row as { property_id: string }).property_id,
         propertyTitle: title,
         propertyCity: city,
@@ -281,7 +283,14 @@ export default function BookingConfirmationPage() {
           >
             <h1 className="text-xl font-extrabold text-xpx-text">We couldn’t show this trip</h1>
             <p className="text-sm text-xpx-muted mt-3 leading-relaxed">{state.message}</p>
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            <div className="mt-6 flex flex-col sm:flex-row flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => navigateToPage('/track-inquiry')}
+                className="inline-flex items-center justify-center min-h-12 px-5 rounded-xl font-semibold border-2 border-emerald-200 text-emerald-800 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+              >
+                Track inquiry
+              </button>
               <button
                 type="button"
                 onClick={() => navigateToPage('/auth/login')}
@@ -305,9 +314,11 @@ export default function BookingConfirmationPage() {
         )}
       </main>
 
-      {showNotifSheet && bookingId && (
+      {showNotifSheet && bookingId && state.status === 'ready' && (
         <BookingNotificationSheet
           bookingId={bookingId}
+          customerReference={state.snapshot.customerReference}
+          guestEmail={state.snapshot.guestEmail}
           isVisible={showNotifSheet}
           onDismiss={() => setShowNotifSheet(false)}
         />

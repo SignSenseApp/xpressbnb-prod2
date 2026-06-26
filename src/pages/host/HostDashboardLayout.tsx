@@ -49,10 +49,10 @@ export default function HostDashboardLayout({
 
     const loadPendingCount = async () => {
       const { count, error } = await supabase
-        .from('bookings')
+        .from('host_inquiries')
         .select('id', { count: 'exact', head: true })
         .eq('host_id', host.id)
-        .in('status', ['pending_host', 'pending', 'inquiry_pending']);
+        .in('status', ['inquiry_preparing', 'inquiry_pending', 'pending_host']);
 
       if (!error) setPendingInquiryCount(count ?? 0);
     };

@@ -3,7 +3,8 @@ import { X, Upload, MapPin, Home, DollarSign, Users, Bed, Bath, ImagePlus, Spark
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Database, Property } from '../lib/database.types';
-import { AMENITY_CATEGORIES } from '../lib/amenities';
+import { AMENITY_CATEGORIES, listPropertyAmenities } from '../lib/amenities';
+import { listPropertyImages } from '../lib/propertyImages';
 import LocationPicker from './LocationPicker';
 import { hasValidHostPhone } from '../lib/host';
 
@@ -73,11 +74,11 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
         bedrooms: property.bedrooms,
         bathrooms: property.bathrooms,
         max_guests: property.max_guests,
-        amenities: property.amenities || [],
-        images: property.images || [],
+        amenities: listPropertyAmenities(property.amenities),
+        images: listPropertyImages(property.images),
         rating: property.rating || 0,
         total_reviews: property.total_reviews || 0,
-        is_active: property.is_active
+        is_active: property.is_active ?? true
       });
     }
   }, [property]);

@@ -4,20 +4,18 @@
  */
 
 import { trackXpressEvent } from './analytics';
-import { scrollToElement, scrollToId } from './smoothScroll';
+import { scrollToElement } from './smoothScroll';
 
 export type ScrollTarget =
   | 'nearby_stays'
   | 'booking_guests'
   | 'booking_contact'
-  | 'booking_otp'
   | 'booking_submit';
 
 const TARGET_IDS: Record<ScrollTarget, string> = {
   nearby_stays: 'nearby',
   booking_guests: 'booking-step-guests',
   booking_contact: 'booking-step-contact',
-  booking_otp: 'booking-step-otp',
   booking_submit: 'booking-step-submit',
 };
 

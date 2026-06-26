@@ -8,18 +8,18 @@ import {
   Tag,
   X,
   Loader2,
+  Phone,
 } from 'lucide-react';
 import type { Property } from '../lib/database.types';
 import { supabase } from '../lib/supabase';
 import { applyDiscounts, findPromoCode, type PromoCodeDef } from '../lib/offers';
 import { calculateBookingTotal } from '../lib/pricingUtils';
 import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
-import { parseInquirySubmitResult, type FrequentAmigoStatus } from '../lib/inquiryHostContact';
-import GuestPhoneOtpStep from './GuestPhoneOtpStep';
+import type { FrequentAmigoStatus } from '../lib/inquiryHostContact';
 import BookingProgressBar from './booking/BookingProgressBar';
 import { BOOKING_STEP_LABELS } from './booking/bookingStepLabels';
-import type { BookingOtpVerifyResult } from '../lib/bookingOtp';
-import { normalizePhoneDigits } from '../lib/bookingOtp';
+import { guestEmailError } from '../lib/guestValidation';
+import { normalizePhoneDigits } from '../lib/guestValidation';
 import {
   bucketResponseMs,
   categorizeBookingError,
@@ -27,8 +27,19 @@ import {
   type AnalyticsScope,
 } from '../lib/analytics';
 import { orchestratedScrollTo } from '../lib/scrollOrchestrator';
+import TurnstileWidget from './inquiry/TurnstileWidget';
+import InquiryReceivedSuccess from './inquiry/InquiryReceivedSuccess';
+import { submitBookingInquiry } from '../lib/inquirySubmit';
+import { getDeviceFingerprint } from '../lib/deviceFingerprint';
+import {
+  subscribeToInquiryPushNotifications,
+  isPushSupported,
+} from '../lib/pushSubscription';
 
-export type BookingFormSuccessDetail = { bookingId: string };
+export type BookingFormSuccessDetail = {
+  bookingId: string;
+  customerReference: string;
+};
 
 interface BookingFormProps {
   property: Property;
@@ -62,14 +73,12 @@ function ErrorBanner({ message }: { message: string }) {
 
 function BookingStepLabels({
   currentStep,
-  phoneVerified,
 }: {
   currentStep: number;
-  phoneVerified: boolean;
 }) {
   const steps = BOOKING_STEP_LABELS.map((label, index) => {
     const n = index + 1;
-    const done = n < currentStep || (n === BOOKING_STEP_LABELS.length && phoneVerified);
+    const done = n < currentStep;
     const active = n === currentStep && !done;
     return { n, label, active, done };
   });
@@ -122,9 +131,12 @@ export default function BookingForm({
   const [promoInput, setPromoInput] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<PromoCodeDef | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
-  const [phoneVerification, setPhoneVerification] = useState<BookingOtpVerifyResult | null>(
-    null,
-  );
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<{
+    customerReference: string;
+    bookingId: string;
+    frequentAmigo?: FrequentAmigoStatus;
+  } | null>(null);
 
   const numberOfDays = useMemo(() => {
     if (!checkInDate || !checkOutDate) return 0;
@@ -185,8 +197,10 @@ export default function BookingForm({
     if (checkOutDate <= checkInDate) {
       return 'Check-out must be after check-in.';
     }
-    if (!formData.guest_name.trim() || !formData.guest_email.trim() || !formData.guest_phone.trim()) {
-      return 'Please fill all fields';
+    const emailErr = guestEmailError(formData.guest_email);
+    if (emailErr) return emailErr;
+    if (!formData.guest_name.trim()) {
+      return 'Please enter your name';
     }
     const phoneDigits = normalizePhoneDigits(formData.guest_phone);
     if (phoneDigits.length !== 10) {
@@ -195,11 +209,8 @@ export default function BookingForm({
     if (totalPrice <= 0) {
       return 'Invalid booking total. Please reselect your dates.';
     }
-    if (!phoneVerification) {
-      return 'Please verify your mobile number with the OTP sent by SMS';
-    }
-    if (phoneVerification.phoneDigits !== normalizePhoneDigits(formData.guest_phone)) {
-      return 'Phone number changed — verify again before sending your inquiry';
+    if (!turnstileToken) {
+      return 'Please complete the security check below';
     }
     return null;
   };
@@ -218,10 +229,9 @@ export default function BookingForm({
 
   const completeInquiry = (
     bookingId: string,
+    customerReference: string,
     checkIn: string,
     checkOut: string,
-    hostName: string,
-    hostPhone: string,
     amigo?: FrequentAmigoStatus,
   ) => {
     inquirySubmittedRef.current = true;
@@ -230,6 +240,7 @@ export default function BookingForm({
       v: 1,
       savedAt: Date.now(),
       bookingId,
+      customerReference,
       propertyId: property.id,
       propertyTitle: property.title,
       propertyCity: property.city,
@@ -239,11 +250,11 @@ export default function BookingForm({
       numGuests: numGuests,
       estimatedTotal: totalPrice,
       guestEmail: formData.guest_email,
-      hostContactName: hostName,
-      hostContactPhone: hostPhone,
+      hostContactName: null,
+      hostContactPhone: null,
       includeDecoration,
       paymentStatus: 'inquiry',
-      bookingStatus: 'pending_host',
+      bookingStatus: 'inquiry_preparing',
       externalListings: property.external_listings ?? null,
       ...(amigo
         ? {
@@ -255,12 +266,25 @@ export default function BookingForm({
     });
 
     setLoading(false);
-    trackXpressEvent('inquiry_success', {
-      ...analyticsScope,
-      inquiry_type: 'book_pay_later',
-      booking_step: 'complete',
+    setSubmitSuccess({
+      bookingId,
+      customerReference,
+      ...(amigo ? { frequentAmigo: amigo } : {}),
     });
-    onSuccess({ bookingId });
+
+    if (
+      isPushSupported() &&
+      typeof Notification !== 'undefined' &&
+      Notification.permission === 'granted'
+    ) {
+      void subscribeToInquiryPushNotifications(
+        customerReference,
+        formData.guest_email.trim(),
+        bookingId,
+      );
+    }
+
+    onSuccess({ bookingId, customerReference });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -303,35 +327,41 @@ export default function BookingForm({
         return;
       }
 
-      const { data: rpcData, error: insertError } = await supabase.rpc('create_pending_booking', {
-        p_property_id: property.id,
-        p_host_id: property.host_id,
-        p_guest_name: formData.guest_name.trim(),
-        p_guest_email: formData.guest_email.trim(),
-        p_guest_phone: normalizePhoneDigits(formData.guest_phone),
-        p_check_in: checkIn,
-        p_check_out: checkOut,
-        p_num_guests: numGuests,
-        p_amount_total: totalPrice,
-        p_total_price: totalPrice,
-        p_nights: numberOfDays,
-        p_otp_verification_token: phoneVerification.verificationToken,
-        p_special_requests: formData.special_requests.trim() || null,
-        p_include_decoration: includeDecoration,
+      const verified = turnstileToken;
+      if (!verified) {
+        setLoading(false);
+        return;
+      }
+
+      if (!property.host_id) {
+        setErrorMessage('This listing is missing host details. Please try again later.');
+        setLoading(false);
+        return;
+      }
+
+      const fingerprint = await getDeviceFingerprint();
+
+      const submitRes = await submitBookingInquiry({
+        inquiry_type: 'book_pay_later',
+        property_id: property.id,
+        host_id: property.host_id,
+        guest_name: formData.guest_name.trim(),
+        guest_email: formData.guest_email.trim(),
+        guest_phone: normalizePhoneDigits(formData.guest_phone),
+        check_in: checkIn,
+        check_out: checkOut,
+        num_guests: numGuests,
+        amount_total: totalPrice,
+        total_price: totalPrice,
+        nights: numberOfDays,
+        special_requests: formData.special_requests.trim() || undefined,
+        include_decoration: includeDecoration,
+        turnstile_token: verified,
+        device_fingerprint: fingerprint,
       });
 
-      if (insertError) {
-        if (import.meta.env.DEV) console.error('Booking insert error:', insertError);
-        const msg = insertError.message?.toLowerCase() ?? '';
-        let userMsg: string;
-        if (msg.includes('booking unavailable')) {
-          userMsg = 'Booking unavailable';
-        } else if (msg.includes('column') || insertError.code === 'PGRST204') {
-          userMsg =
-            'Booking could not be saved (database schema mismatch). Run the latest Supabase migrations and try again.';
-        } else {
-          userMsg = `Failed to create booking: ${insertError.message}`;
-        }
+      if (!submitRes.ok) {
+        const userMsg = submitRes.error;
         setErrorMessage(userMsg);
         trackXpressEvent('inquiry_submit_failed', {
           ...analyticsScope,
@@ -343,20 +373,7 @@ export default function BookingForm({
         return;
       }
 
-      const inquiry = parseInquirySubmitResult(rpcData);
-      if (!inquiry) {
-        const hostLoadMsg =
-          'Inquiry saved, but host contact could not be loaded. Please open your confirmation link or try again.';
-        setErrorMessage(hostLoadMsg);
-        trackXpressEvent('inquiry_submit_failed', {
-          ...analyticsScope,
-          error_category: 'host_contact',
-          booking_step: 'send',
-          response_time_bucket: bucketResponseMs(performance.now() - submitStarted),
-        });
-        setLoading(false);
-        return;
-      }
+      const inquiry = submitRes.result;
 
       trackXpressEvent('inquiry_submit_success', {
         ...analyticsScope,
@@ -372,10 +389,9 @@ export default function BookingForm({
 
       completeInquiry(
         inquiry.bookingId,
+        inquiry.customerReference,
         checkIn,
         checkOut,
-        inquiry.hostName,
-        inquiry.hostPhone,
         inquiry.frequentAmigo,
       );
     } catch (error) {
@@ -404,34 +420,17 @@ export default function BookingForm({
 
   const prevGuestsStepRef = useRef(false);
   useEffect(() => {
-    if (hasDetails && !phoneVerification && !prevGuestsStepRef.current) {
-      orchestratedScrollTo('booking_otp', { skipIfVisible: true, highlight: true });
+    if (hasDetails && !prevGuestsStepRef.current) {
+      orchestratedScrollTo('booking_contact', { skipIfVisible: true, highlight: true });
     }
     prevGuestsStepRef.current = hasDetails;
-  }, [hasDetails, phoneVerification]);
-
-  const prevVerifiedRef = useRef(false);
-  useEffect(() => {
-    if (phoneVerification && !prevVerifiedRef.current) {
-      trackXpressEvent('booking_step_completed', {
-        ...analyticsScope,
-        booking_step: 'verify',
-      });
-    }
-    prevVerifiedRef.current = Boolean(phoneVerification);
-  }, [phoneVerification, analyticsScope]);
+  }, [hasDetails]);
 
   useEffect(() => {
     const onAbandon = () => {
-      if (inquirySubmittedRef.current || loading) return;
-      if (!hasDates && !hasDetails && !phoneVerification) return;
-      const step = !hasDates
-        ? 'dates'
-        : !hasDetails
-          ? 'contact'
-          : !phoneVerification
-            ? 'otp'
-            : 'send';
+      if (inquirySubmittedRef.current || loading || submitSuccess) return;
+      if (!hasDates && !hasDetails) return;
+      const step = !hasDates ? 'dates' : !hasDetails ? 'contact' : 'send';
       trackXpressEvent('booking_abandonment', {
         ...analyticsScope,
         abandonment_step: step,
@@ -439,15 +438,25 @@ export default function BookingForm({
     };
     window.addEventListener('pagehide', onAbandon);
     return () => window.removeEventListener('pagehide', onAbandon);
-  }, [analyticsScope, hasDates, hasDetails, loading, phoneVerification]);
+  }, [analyticsScope, hasDates, hasDetails, loading, submitSuccess]);
 
-  const bookingStep = phoneVerification
-    ? 4
-    : hasDetails
-      ? 4
-      : hasDates
-        ? 3
-        : 1;
+  const bookingStep = hasDetails ? 4 : hasDates ? 3 : 1;
+
+  if (submitSuccess) {
+    return (
+      <InquiryReceivedSuccess
+        variant="booking"
+        customerReference={submitSuccess.customerReference}
+        propertyTitle={property.title}
+        checkInLabel={checkInDate!.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+        checkOutLabel={checkOutDate!.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+        estimatedTotal={totalPrice}
+        guestEmail={formData.guest_email.trim()}
+        frequentAmigo={submitSuccess.frequentAmigo}
+        analyticsScope={analyticsScope}
+      />
+    );
+  }
 
   return (
     <form
@@ -463,10 +472,7 @@ export default function BookingForm({
         </div>
       )}
       <BookingProgressBar currentStep={bookingStep} labels={[...BOOKING_STEP_LABELS]} />
-      <BookingStepLabels
-        currentStep={bookingStep}
-        phoneVerified={Boolean(phoneVerification)}
-      />
+      <BookingStepLabels currentStep={bookingStep} />
 
       {checkInDate && checkOutDate && (
         <div
@@ -536,17 +542,29 @@ export default function BookingForm({
           />
         </div>
 
-        <div className="md:col-span-2" id="booking-step-otp">
-          <GuestPhoneOtpStep
-            phone={formData.guest_phone}
-            onPhoneChange={(guest_phone) => setFormData({ ...formData, guest_phone })}
-            verified={phoneVerification}
-            onVerified={setPhoneVerification}
-            onClearVerification={() => setPhoneVerification(null)}
-            disabled={loading}
-            analyticsScope={analyticsScope}
+        <div className="md:col-span-2">
+          <label className="block text-[11px] font-bold uppercase tracking-[0.14em] text-xpx-subtle mb-2">
+            <Phone className="w-3.5 h-3.5 inline mr-1" aria-hidden />
+            Mobile number
+          </label>
+          <input
+            type="tel"
+            required
+            inputMode="numeric"
+            autoComplete="tel"
+            value={formData.guest_phone}
+            onChange={(e) => setFormData({ ...formData, guest_phone: e.target.value })}
+            className="xpx-input"
+            placeholder="10-digit mobile"
           />
+          <p className="text-[11px] text-xpx-subtle mt-1.5 leading-relaxed">
+            Used so we can reach you about your inquiry.
+          </p>
         </div>
+      </div>
+
+      <div className="flex justify-center py-1">
+        <TurnstileWidget onToken={setTurnstileToken} disabled={loading} />
       </div>
 
       <div
@@ -719,6 +737,7 @@ export default function BookingForm({
         <button
           type="submit"
           disabled={loading}
+          aria-busy={loading}
           className="w-full py-3.5 rounded-2xl font-bold text-[15px] text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 motion-reduce:transition-none"
           style={{ background: 'var(--xpx-cta)', minHeight: 52 }}
         >

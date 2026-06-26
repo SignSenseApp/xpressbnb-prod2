@@ -8,8 +8,8 @@ import { supabase } from './supabase';
 // projection of a property row can be passed in.
 export interface Property {
   id: string;
-  is_premium: boolean;
-  premium_plan: string;
+  is_premium: boolean | null;
+  premium_plan: string | null;
   premium_expiry: string | null;
 }
 

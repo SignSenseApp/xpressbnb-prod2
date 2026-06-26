@@ -8,7 +8,7 @@ import {
 } from '../lib/externalListingProof';
 
 const SHARE_LINE =
-  'Found a stay without guest commission on XpressBNB. Verified inquiry — coordinate directly with your host.';
+  'Found a stay without guest commission on XpressBNB. Quality-reviewed inquiry — coordinate directly with your host.';
 
 type ZeroCommissionSavingsReceiptProps = {
   estimatedTotal?: number;
@@ -38,9 +38,9 @@ function PriceRow({
 }
 
 const TRUST_BULLETS = [
-  'Phone verified before host contact',
-  'Verified inquiry sent to host dashboard',
-  'Host contact unlocked after OTP',
+  'Contact details checked during quality review',
+  'Inquiry reviewed by XpressBNB before reaching the host',
+  'Host contact shared after Operations review',
   'No guest commission added by XpressBNB',
 ] as const;
 
@@ -194,7 +194,7 @@ export default function ZeroCommissionSavingsReceipt({
       )}
 
       <p className="text-[11px] text-xpx-muted leading-relaxed">
-        No hidden guest commission. No fake confirmation. Verified lead first, direct host contact
+        No hidden guest commission. No fake confirmation. Quality review first, direct host contact
         next.
       </p>
 

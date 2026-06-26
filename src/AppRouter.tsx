@@ -12,6 +12,7 @@ import { loadPropertyPageModule } from './lib/propertyRouteChunk';
 
 const PropertyPage = lazy(() => loadPropertyPageModule());
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'));
+const TrackInquiryPage = lazy(() => import('./pages/TrackInquiryPage'));
 const CityListingPage = lazy(() => import('./pages/CityListingPage'));
 const RishikeshStaysPage = lazy(() => import('./pages/RishikeshStaysPage'));
 const ExploreCitiesPage = lazy(() => import('./pages/ExploreCitiesPage'));
@@ -104,6 +105,10 @@ export default function AppRouter() {
 
     if (currentPath.startsWith('/booking/')) {
       return <BookingConfirmationPage />;
+    }
+
+    if (currentPath.startsWith('/track-inquiry')) {
+      return <TrackInquiryPage />;
     }
 
     if (currentPath.startsWith('/property/')) {

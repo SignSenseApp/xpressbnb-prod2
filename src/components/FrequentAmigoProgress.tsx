@@ -46,7 +46,7 @@ export default function FrequentAmigoProgress({ status }: FrequentAmigoProgressP
               faster.
             </p>
             <p className="mt-2 text-xs leading-relaxed text-xpx-subtle">
-              Your verified inquiry is already with the host.
+              Your inquiry is already with the host.
             </p>
           </div>
         </div>

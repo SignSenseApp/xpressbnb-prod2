@@ -86,12 +86,12 @@ export default function OverviewPage({ onNavigate }: OverviewPageProps = {}) {
           .eq('host_id', host.id)
           .eq('is_active', false),
         supabase
-          .from('bookings')
+          .from('host_inquiries')
           .select('id', { count: 'exact', head: true })
           .eq('host_id', host.id)
           .gte('created_at', since)
           .neq('status', 'cancelled'),
-        supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('host_id', host.id),
+        supabase.from('host_inquiries').select('id', { count: 'exact', head: true }).eq('host_id', host.id),
         supabase.from('properties').select('*').eq('host_id', host.id).order('created_at', { ascending: false }),
       ]);
 

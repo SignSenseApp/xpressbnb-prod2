@@ -8,6 +8,21 @@ import {
   MapPin, Palmtree, Building, DoorOpen, Eye
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import type { Json } from './database.types';
+
+/** Normalized amenity labels from a property row's `amenities` JSON column. */
+export function listPropertyAmenities(
+  amenities: Json | string[] | null | undefined,
+): string[] {
+  if (!Array.isArray(amenities)) return [];
+  const out: string[] = [];
+  for (const item of amenities) {
+    if (item != null && typeof item === 'string' && item.trim().length > 0) {
+      out.push(item.trim());
+    }
+  }
+  return out;
+}
 
 export interface AmenityCategory {
   name: string;

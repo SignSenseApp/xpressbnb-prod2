@@ -255,8 +255,7 @@ export default function PropertySidebar({
       <p
         className="mt-3 text-[11px] text-xpx-subtle text-center leading-snug px-1"
       >
-        Verify your phone to send an inquiry. Host contact is shared after verification — no online
-        payment on this step.
+        Verify your details and complete the security check to send your inquiry. Host contact is shared after quality review — no online payment on this step.
       </p>
       <PropertyTrustNotes className="mt-3 px-1" />
 

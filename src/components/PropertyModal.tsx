@@ -1,10 +1,10 @@
 import { X, MapPin, Users, Bed, Bath, ChevronLeft, ChevronRight, Share2, Copy, Check, CheckCircle } from 'lucide-react';
 import type { Property } from '../lib/database.types';
 import BookingForm from './BookingForm';
-import { navigateTo } from '../lib/navigation';
 import PropertyMapView from './PropertyMapView';
 import { useMemo, useState } from 'react';
-import { getAmenityIcon } from '../lib/amenities';
+import { getAmenityIcon, listPropertyAmenities } from '../lib/amenities';
+import { listPropertyImages } from '../lib/propertyImages';
 
 interface PropertyModalProps {
   property: Property;
@@ -29,6 +29,15 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const propertyImages = useMemo(
+    () => listPropertyImages(property.images),
+    [property.images],
+  );
+  const propertyAmenities = useMemo(
+    () => listPropertyAmenities(property.amenities),
+    [property.amenities],
+  );
+
   const openLightbox = (index: number) => {
     setCurrentImageIndex(index);
     setShowLightbox(true);
@@ -39,12 +48,12 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
   };
 
   const nextImage = () => {
-    const imageCount = property.images?.length || 1;
+    const imageCount = propertyImages.length || 1;
     setCurrentImageIndex((prev) => (prev + 1) % imageCount);
   };
 
   const prevImage = () => {
-    const imageCount = property.images?.length || 1;
+    const imageCount = propertyImages.length || 1;
     setCurrentImageIndex((prev) => (prev - 1 + imageCount) % imageCount);
   };
 
@@ -102,9 +111,9 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                 className="aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer hover:opacity-95 transition-opacity bg-gradient-to-br from-gray-200 to-gray-300"
                 onClick={() => openLightbox(0)}
               >
-                {property.images?.[0] ? (
+                {propertyImages[0] ? (
                   <img
-                    src={property.images[0]}
+                    src={propertyImages[0]}
                     alt={property.title}
                     className="w-full h-full object-cover"
                   />
@@ -114,27 +123,27 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                   </div>
                 )}
               </div>
-              {property.images && property.images.length > 1 && (
+              {propertyImages.length > 1 && (
                 <div className="grid grid-cols-2 gap-4">
-                  {property.images[1] && (
+                  {propertyImages[1] && (
                     <div
                       className="aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer hover:opacity-95 transition-opacity"
                       onClick={() => openLightbox(1)}
                     >
                       <img
-                        src={property.images[1]}
+                        src={propertyImages[1]}
                         alt={property.title}
                         className="w-full h-full object-cover"
                       />
                     </div>
                   )}
-                  {property.images.length > 2 && (
+                  {propertyImages.length > 2 && (
                     <div
                       className="aspect-[4/3] rounded-2xl overflow-hidden bg-gradient-to-br from-[#50C878] to-[#3dae68] flex items-center justify-center cursor-pointer hover:from-[#3dae68] hover:to-[#3dae68] transition-all"
                       onClick={() => openLightbox(0)}
                     >
                       <div className="text-center text-white">
-                        <p className="text-3xl font-bold">+{property.images.length - 2}</p>
+                        <p className="text-3xl font-bold">+{propertyImages.length - 2}</p>
                         <p className="text-sm">View all photos</p>
                       </div>
                     </div>
@@ -250,11 +259,11 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                   <p className="text-gray-600 leading-relaxed">{property.description}</p>
                 </div>
 
-                {property.amenities && property.amenities.length > 0 && (
+                {propertyAmenities.length > 0 && (
                   <div className="mb-6 pb-6 border-b border-gray-200">
                     <h3 className="font-bold text-lg mb-3 text-gray-900">Amenities</h3>
                     <div className="grid grid-cols-2 gap-3">
-                      {property.amenities.map((amenity, index) => {
+                      {propertyAmenities.map((amenity: string, index: number) => {
                         const Icon = getAmenityIcon(amenity);
                         return (
                           <div key={index} className="flex items-center gap-3 text-gray-700">
@@ -302,9 +311,8 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                     <h3 className="font-bold text-xl mb-4 text-gray-900">Complete Your Booking</h3>
                     <BookingForm
                       property={property}
-                      onSuccess={({ bookingId }) => {
-                        onClose();
-                        navigateTo(`/booking/${bookingId}`);
+                      onSuccess={() => {
+                        /* Success UI stays inline in BookingForm */
                       }}
                       checkInDate={defaultCheckIn}
                       checkOutDate={defaultCheckOut}
@@ -338,11 +346,11 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
 
           {/* Image Counter */}
           <div className="absolute top-4 left-4 z-[70] bg-black/50 text-white px-4 py-2 rounded-full backdrop-blur-sm">
-            <span className="font-semibold">{currentImageIndex + 1} / {property.images?.length || 1}</span>
+            <span className="font-semibold">{currentImageIndex + 1} / {propertyImages.length || 1}</span>
           </div>
 
           {/* Previous Button */}
-          {property.images && property.images.length > 1 && (
+          {propertyImages.length > 1 && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -360,14 +368,14 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
             onClick={(e) => e.stopPropagation()}
           >
             <img
-              src={property.images[currentImageIndex]}
+              src={propertyImages[currentImageIndex]}
               alt={`${property.title} - Image ${currentImageIndex + 1}`}
               className="max-w-full max-h-[85vh] object-contain rounded-lg"
             />
           </div>
 
           {/* Next Button */}
-          {property.images.length > 1 && (
+          {propertyImages.length > 1 && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -380,10 +388,10 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
           )}
 
           {/* Thumbnail Strip */}
-          {property.images.length > 1 && (
+          {propertyImages.length > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[70] max-w-full overflow-x-auto">
               <div className="flex gap-2 px-4">
-                {property.images.map((img, index) => (
+                {propertyImages.map((img: string, index: number) => (
                   <button
                     key={index}
                     onClick={(e) => {

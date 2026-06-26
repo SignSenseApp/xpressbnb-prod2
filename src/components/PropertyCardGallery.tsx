@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import {
   useInViewport,
   useIsDesktop,
@@ -217,7 +217,7 @@ export default function PropertyCardGallery({
 
   return (
     <div ref={rootRef} className="xpx-property-card-media overflow-hidden">
-      <div ref={gallery.containerRef} className="h-full w-full overflow-hidden">
+      <div ref={gallery.containerRef as RefObject<HTMLDivElement>} className="h-full w-full overflow-hidden">
         <div
           className="flex h-full touch-pan-y"
           style={galleryTransitionStyle(

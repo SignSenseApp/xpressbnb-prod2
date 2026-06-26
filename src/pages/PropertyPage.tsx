@@ -28,7 +28,8 @@ import DeferredMount from '../components/property/DeferredMount';
 import { supabase } from '../lib/supabase';
 import { getPublicPropertyById } from '../lib/publicListings';
 import { fetchPublicHost } from '../lib/hostPublicCache';
-import { getAmenityIcon } from '../lib/amenities';
+import { getAmenityIcon, listPropertyAmenities } from '../lib/amenities';
+import { listPropertyImages } from '../lib/propertyImages';
 import { generatePropertyStructuredData, generateBreadcrumbStructuredData } from '../lib/seo';
 import { listFeaturedPromoCodes } from '../lib/offers';
 import {
@@ -477,8 +478,8 @@ export default function PropertyPage() {
               >
                 <BookingForm
                   property={property!}
-                  onSuccess={({ bookingId }) => {
-                    navigateTo(`/booking/${bookingId}`);
+                  onSuccess={() => {
+                    /* Success UI stays inline in BookingForm */
                   }}
                   checkInDate={selectedCheckIn}
                   checkOutDate={selectedCheckOut}
@@ -577,7 +578,7 @@ export default function PropertyPage() {
   const featuredPromo = listFeaturedPromoCodes()[0];
 
   const basePrice = property.price_per_day || property.price_full_day || 0;
-  const amenitiesAll = property.amenities ?? [];
+  const amenitiesAll = listPropertyAmenities(property.amenities);
   const amenitiesPreview = amenitiesAll.slice(0, 9);
   const moreAmenities = Math.max(0, amenitiesAll.length - amenitiesPreview.length);
 
@@ -606,7 +607,7 @@ export default function PropertyPage() {
           canonical: `https://xpressbnb.com/property/${property.id}`,
           ogTitle: `${propertyTitle} - ${propertyLocation}`,
           ogDescription: property.description.substring(0, 200),
-          ogImage: property.images?.[0],
+          ogImage: listPropertyImages(property.images)[0],
           structuredData: {
             '@context': 'https://schema.org',
             '@graph': [

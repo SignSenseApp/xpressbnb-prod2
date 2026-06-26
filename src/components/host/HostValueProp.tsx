@@ -92,7 +92,7 @@ export default function HostValueProp({
           <BenefitItem
             icon={MessageCircle}
             title="Direct WhatsApp with guest"
-            body="Verified phone after you accept — coordinate check-in without a middleman."
+            body="Guest contact after you accept — coordinate check-in without a middleman."
             compact={!isFull}
           />
           <BenefitItem

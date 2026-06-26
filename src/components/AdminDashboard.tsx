@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { X, Calendar, User, Mail, Phone, Home, Clock, DollarSign, CheckCircle, XCircle, AlertCircle, Plus, Lock, Edit, Trash2, EyeOff, Eye } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Booking, Property } from '../lib/database.types';
+import { listPropertyImages } from '../lib/propertyImages';
 import PropertyListingForm from './PropertyListingForm';
 
 interface AdminDashboardProps {
@@ -12,7 +13,6 @@ interface BookingWithProperty extends Booking {
   property: Property;
 }
 
-const ADMIN_PASSWORD = 'Renu_Anil@123b';
 
 export default function AdminDashboard({ onClose }: AdminDashboardProps) {
   const [bookings, setBookings] = useState<BookingWithProperty[]>([]);
@@ -22,7 +22,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState<'bookings' | 'properties'>('bookings');
   const [showListPropertyForm, setShowListPropertyForm] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
@@ -35,13 +35,8 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      setError('');
-    } else {
-      setError('Incorrect password. Please try again.');
-      setPassword('');
-    }
+    setError('Admin has moved to the Ops Console. Sign in at /ops with your team account.');
+    setPassword('');
   };
 
   const loadBookings = async () => {
@@ -334,7 +329,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
                       <div className="flex-1">
                         <div className="flex items-start gap-4">
                           <img
-                            src={booking.property.images[0]}
+                            src={listPropertyImages(booking.property.images)[0] ?? ''}
                             alt={booking.property.title}
                             className="w-24 h-24 rounded-xl object-cover"
                           />
@@ -444,7 +439,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
                     <div key={property.id} className="p-6 hover:bg-gray-50 transition-colors">
                       <div className="flex items-start gap-4">
                         <img
-                          src={property.images[0]}
+                          src={listPropertyImages(property.images)[0] ?? ''}
                           alt={property.title}
                           className="w-32 h-32 rounded-xl object-cover"
                         />
@@ -487,7 +482,7 @@ export default function AdminDashboard({ onClose }: AdminDashboardProps) {
                               Edit
                             </button>
                             <button
-                              onClick={() => togglePropertyActive(property.id, property.is_active)}
+                              onClick={() => togglePropertyActive(property.id, property.is_active ?? false)}
                               className={`px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 ${
                                 property.is_active
                                   ? 'bg-amber-600 text-white hover:bg-amber-700'

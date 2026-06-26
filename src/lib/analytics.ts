@@ -45,7 +45,8 @@ export type XpressEventName =
   | 'property_recommended'
   | 'destination_recommended'
   | 'booking_progress_step'
-  | 'nearby_returning_user';
+  | 'nearby_returning_user'
+  | 'check_availability_click';
 
 export type InquiryType = 'book_pay_later' | 'make_offer';
 

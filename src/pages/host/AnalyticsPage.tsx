@@ -23,8 +23,8 @@ export default function AnalyticsPage() {
   interface AnalyticsPropertyRow {
     id: string;
     title: string;
-    is_premium: boolean;
-    premium_plan: string;
+    is_premium: boolean | null;
+    premium_plan: string | null;
     premium_expiry: string | null;
   }
   const [properties, setProperties] = useState<AnalyticsPropertyRow[]>([]);
@@ -78,7 +78,7 @@ useEffect(() => {
 
       // Get bookings and views for these properties
       const [bookingsRes, viewsRes] = await Promise.all([
-        supabase.from('bookings').select('*').eq('host_id', host.id),
+        supabase.from('host_inquiries').select('*').eq('host_id', host.id),
         propertyIds.length > 0
           ? supabase
               .from('view_events')

@@ -28,7 +28,12 @@ export async function fetchPropertyEngagement(propertyId: string): Promise<Prope
   };
 
   try {
-    const { data, error } = await supabase.rpc('get_public_property_engagement', {
+    const { data, error } = await (
+      supabase.rpc as (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => ReturnType<typeof supabase.rpc>
+    )('get_public_property_engagement', {
       p_property_id: propertyId,
     });
 

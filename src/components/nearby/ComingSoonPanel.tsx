@@ -7,6 +7,7 @@ type ComingSoonPanelProps = {
   nearestCities: NearestServicedCity[];
   onExploreCity: (slug: string) => void;
   onDiscoverNearby: () => void;
+  weekendGetawaySlug?: string;
 };
 
 /**

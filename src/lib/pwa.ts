@@ -62,7 +62,7 @@ export function registerServiceWorker(): void {
   if ('requestIdleCallback' in window) {
     window.requestIdleCallback(() => register(), { timeout: 4000 });
   } else {
-    window.addEventListener('load', register, { once: true });
+    globalThis.addEventListener('load', register, { once: true });
   }
 }
 

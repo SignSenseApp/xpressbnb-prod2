@@ -1,9 +1,6 @@
-import { useState } from 'react';
 import {
   Calendar,
   CheckCircle2,
-  Copy,
-  Check,
   Home,
   LifeBuoy,
   Mail,
@@ -13,6 +10,7 @@ import {
   Users,
 } from 'lucide-react';
 import type { BookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
+import CustomerReferenceField from './inquiry/CustomerReferenceField';
 import {
   buildHostDirectWhatsAppLink,
   formatHostPhoneDisplay,
@@ -50,15 +48,20 @@ export default function GuestTripConfirmation({
   source,
   onBackHome,
 }: GuestTripConfirmationProps) {
-  const [copiedRef, setCopiedRef] = useState(false);
-
   const total = snapshot.estimatedTotal;
+  const publicRef = snapshot.customerReference ?? null;
+  const isPreparing =
+    snapshot.bookingStatus === 'inquiry_preparing' ||
+    snapshot.bookingStatus === 'inquiry_pending';
+  const refForSupport = publicRef ?? 'unavailable';
+
   const waSupport = buildTeamWhatsAppLink(
-    `Hi XpressBnB, I need help with my booking.\nReference: ${snapshot.bookingId}\nProperty: ${snapshot.propertyTitle}`,
+    `Hi XpressBnB, I need help with my inquiry.\nReference: ${refForSupport}\nProperty: ${snapshot.propertyTitle}`,
   );
   const hostPhoneDigits = snapshot.hostContactPhone?.replace(/\D/g, '').slice(-10) ?? '';
   const showHostDirect =
     Boolean(hostPhoneDigits) &&
+    !isPreparing &&
     (snapshot.paymentStatus === 'paid' ||
       snapshot.paymentStatus === 'inquiry' ||
       snapshot.paymentStatus === 'offer_pending');
@@ -72,23 +75,25 @@ export default function GuestTripConfirmation({
         snapshot.hostContactName?.split(/\s+/)[0],
       )
     : buildTeamWhatsAppLink(
-        `Hi XpressBnB, I need help with my booking.\nReference: ${snapshot.bookingId}\nProperty: ${snapshot.propertyTitle}`,
+        `Hi XpressBnB, I need help with my inquiry.\nReference: ${refForSupport}\nProperty: ${snapshot.propertyTitle}`,
       );
 
-  const copyRef = async () => {
-    try {
-      await navigator.clipboard.writeText(snapshot.bookingId);
-      setCopiedRef(true);
-      setTimeout(() => setCopiedRef(false), 2000);
-    } catch {
-      /* ignore */
+  const paymentStatusLabel = (() => {
+    switch (snapshot.paymentStatus) {
+      case 'inquiry':
+        return isPreparing ? 'Preparing your inquiry' : 'Inquiry submitted';
+      case 'offer_pending':
+        return isPreparing ? 'Preparing your offer' : 'Offer submitted';
+      case 'paid':
+        return 'Paid';
+      default:
+        return 'Inquiry submitted';
     }
-  };
-
+  })();
   const mailSupport = `mailto:${TEAM_EMAIL}?subject=${encodeURIComponent(
-    `Booking help — ${snapshot.bookingId}`,
+    `Inquiry help — ${refForSupport}`,
   )}&body=${encodeURIComponent(
-    `Booking reference: ${snapshot.bookingId}\nProperty: ${snapshot.propertyTitle}\n\n`,
+    `Inquiry reference: ${refForSupport}\nProperty: ${snapshot.propertyTitle}\n\n`,
   )}`;
 
   return (
@@ -105,11 +110,12 @@ export default function GuestTripConfirmation({
           <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10" strokeWidth={2} style={{ color: '#3dae68' }} />
         </div>
         <h1 id="trip-confirmation-title" className="text-2xl sm:text-3xl font-extrabold text-xpx-text tracking-tight">
-          You&apos;re all set
+          {isPreparing ? 'Your inquiry has been received' : "You're all set"}
         </h1>
         <p className="text-xpx-muted mt-2 text-sm sm:text-base leading-relaxed">
-          We&apos;ve shared your stay details with the host. Keep this summary handy — it has your trip basics and how
-          to reach out.
+          {isPreparing
+            ? "We're reviewing your inquiry before introducing you to the host. Save your reference below to track progress."
+            : "We've shared your stay details with the host. Keep this summary handy — it has your trip basics and how to reach out."}
         </p>
       </div>
 
@@ -190,39 +196,17 @@ export default function GuestTripConfirmation({
             <span className="text-xl font-extrabold tabular-nums">₹{total.toLocaleString('en-IN')}</span>
           </div>
           <p className="text-xs text-xpx-subtle">
-            Payment status:{' '}
-            <span className="font-medium text-xpx-muted">{snapshot.paymentStatus}</span>
+            Status:{' '}
+            <span className="font-medium text-xpx-muted">{paymentStatusLabel}</span>
           </p>
         </div>
       </section>
 
-      <section
-        className="mt-6 rounded-2xl p-5 sm:p-6"
-        style={{
-          background: 'linear-gradient(135deg, rgba(80,200,120,0.08) 0%, var(--xpx-surface-light) 100%)',
-          border: '1px solid var(--xpx-border-strong)',
-        }}
-        aria-labelledby="booking-ref-heading"
-      >
-        <h2 id="booking-ref-heading" className="text-sm font-bold text-xpx-text mb-3">
-          Booking reference
-        </h2>
-        <p className="text-xs text-xpx-muted mb-3">Share this if you message support or your host.</p>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <code className="flex-1 min-w-0 break-all rounded-xl px-3 py-3 text-sm font-mono bg-white/80 border border-slate-200/80 text-xpx-text">
-            {snapshot.bookingId}
-          </code>
-          <button
-            type="button"
-            onClick={copyRef}
-            className="inline-flex items-center justify-center gap-2 min-h-12 px-5 rounded-xl font-semibold text-sm bg-white border border-slate-200 text-xpx-text hover:bg-slate-50 transition-colors"
-            aria-label={copiedRef ? 'Reference copied' : 'Copy booking reference'}
-          >
-            {copiedRef ? <Check className="w-5 h-5 text-emerald-600" aria-hidden /> : <Copy className="w-5 h-5" aria-hidden />}
-            {copiedRef ? 'Copied' : 'Copy'}
-          </button>
+      {publicRef ? (
+        <div className="mt-6">
+          <CustomerReferenceField reference={publicRef} label="Inquiry reference" />
         </div>
-      </section>
+      ) : null}
 
       <section
         className="mt-6 rounded-2xl p-5 sm:p-6"
@@ -233,7 +217,12 @@ export default function GuestTripConfirmation({
           Host contact
         </h2>
         <p className="text-sm text-xpx-muted leading-relaxed mb-4">
-          {showHostDirect ? (
+          {isPreparing ? (
+            <>
+              We&apos;re preparing your inquiry before introducing you to the host. You&apos;ll receive host contact
+              details once your inquiry is forwarded.
+            </>
+          ) : showHostDirect ? (
             <>
               Your host is{' '}
               <span className="font-semibold text-xpx-text">

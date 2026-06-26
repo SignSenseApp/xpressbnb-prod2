@@ -11,8 +11,10 @@ export type FrequentAmigoStatus = {
 /** Parsed from create_pending_booking / create_make_offer_inquiry (jsonb). */
 export type InquirySubmitResult = {
   bookingId: string;
-  hostName: string;
-  hostPhone: string;
+  customerReference?: string;
+  status?: string;
+  hostName?: string;
+  hostPhone?: string;
   frequentAmigo?: FrequentAmigoStatus;
 };
 
@@ -71,14 +73,21 @@ export function parseInquirySubmitResult(data: unknown): InquirySubmitResult | n
   if (!data || typeof data !== 'object') return null;
   const o = data as Record<string, unknown>;
   const bookingId = String(o.booking_id ?? o.bookingId ?? '');
+  const customerReference = String(o.customer_reference ?? o.customerReference ?? '') || undefined;
   const hostPhone = String(o.host_phone ?? o.hostPhone ?? '');
   const hostNameRaw = String(o.host_name ?? o.hostName ?? '');
-  if (!bookingId || !hostPhone) return null;
+  if (!bookingId) return null;
   const frequentAmigo = parseFrequentAmigoStatus(o.frequent_amigo ?? o.frequentAmigo);
   return {
     bookingId,
-    hostPhone: normalizeHostPhoneDigits(hostPhone),
-    hostName: safeHostDisplayName(hostNameRaw, 'Host'),
+    ...(customerReference ? { customerReference } : {}),
+    status: o.status ? String(o.status) : undefined,
+    ...(hostPhone
+      ? {
+          hostPhone: normalizeHostPhoneDigits(hostPhone),
+          hostName: safeHostDisplayName(hostNameRaw, 'Host'),
+        }
+      : {}),
     ...(frequentAmigo ? { frequentAmigo } : {}),
   };
 }

@@ -16,6 +16,8 @@ export type BookingConfirmationSnapshot = {
   v: 1;
   savedAt: number;
   bookingId: string;
+  /** Public tracking ID — preferred over bookingId in guest UI */
+  customerReference?: string;
   propertyId: string;
   propertyTitle: string;
   propertyCity: string;

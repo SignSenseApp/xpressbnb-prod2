@@ -141,7 +141,7 @@ export default function CalendarSyncPage() {
                     <RefreshCw className="w-5 h-5" style={{ color: 'var(--xpx-warm)' }} />
                     Import External Calendars
                   </h4>
-                  {property.external_calendars && property.external_calendars.length > 0 ? (
+                  {Array.isArray(property.external_calendars) && property.external_calendars.length > 0 ? (
                     <div className="space-y-2">
                       {(property.external_calendars as unknown as ExternalCalendarEntry[]).map((cal, index) => (
                         <div

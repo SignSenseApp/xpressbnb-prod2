@@ -1,11 +1,13 @@
 import { MapPin, Users, Bed, Bath, CheckCircle } from 'lucide-react';
 import type { Property } from '../lib/database.types';
+import { listPropertyImages } from '../lib/propertyImages';
 
 interface PropertyCardProps {
   property: Property;
 }
 
 export default function PropertyCard({ property }: PropertyCardProps) {
+  const coverImage = listPropertyImages(property.images)[0];
   const handleClick = () => {
     window.history.pushState({}, '', `/property/${property.id}`);
     window.dispatchEvent(new PopStateEvent('popstate'));
@@ -17,9 +19,9 @@ export default function PropertyCard({ property }: PropertyCardProps) {
       className="bg-white rounded-[22px] transition-all duration-300 cursor-pointer overflow-hidden group border border-xpx-border shadow-xpx-card hover:shadow-xpx-hover"
     >
       <div className="relative h-64 overflow-hidden bg-xpx-surface-light">
-        {property.images?.[0] ? (
+        {coverImage ? (
           <img
-            src={property.images[0]}
+            src={coverImage}
             alt={property.title}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />

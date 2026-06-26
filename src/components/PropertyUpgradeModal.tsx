@@ -8,6 +8,8 @@ import {
   type HostBillingCycle,
   type HostPlanTier,
 } from '../lib/hostSubscriptionPricing';
+import { listPropertyImages } from '../lib/propertyImages';
+import type { Json } from '../lib/database.types';
 
 interface Property {
   id: string;
@@ -15,7 +17,7 @@ interface Property {
   city: string;
   state: string;
   images: string[];
-  is_premium: boolean;
+  is_premium: boolean | null;
   premium_expiry: string | null;
 }
 
@@ -72,7 +74,12 @@ export default function PropertyUpgradeModal({
       if (propertiesError) throw propertiesError;
 
       if (propertiesData && propertiesData.length > 0) {
-        setProperties(propertiesData);
+        setProperties(
+          propertiesData.map((row) => ({
+            ...row,
+            images: listPropertyImages(row.images as Json),
+          })),
+        );
 
         const { data: subscriptionsData, error: subscriptionsError } = await supabase
           .from('property_subscriptions')

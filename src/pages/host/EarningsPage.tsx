@@ -26,7 +26,7 @@ export default function EarningsPage() {
 
     try {
       const { data: bookings, error } = await supabase
-        .from('bookings')
+        .from('host_inquiries')
         .select('*')
         .eq('host_id', host.id)
         .order('created_at', { ascending: false });
@@ -45,6 +45,7 @@ export default function EarningsPage() {
       const thisMonth = bookings
         ?.filter((b) =>
           b.payment_status === 'paid' &&
+          b.created_at != null &&
           new Date(b.created_at) >= thisMonthStart
         )
         .reduce((sum, b) => sum + Number(b.amount_total || 0), 0) || 0;
@@ -52,6 +53,7 @@ export default function EarningsPage() {
       const lastMonth = bookings
         ?.filter((b) =>
           b.payment_status === 'paid' &&
+          b.created_at != null &&
           new Date(b.created_at) >= lastMonthStart &&
           new Date(b.created_at) <= lastMonthEnd
         )
@@ -147,7 +149,9 @@ export default function EarningsPage() {
                     className="hover:bg-slate-50 transition-colors"
                   >
                     <td className="py-3 px-4 text-sm text-xpx-muted">
-                      {new Date(transaction.created_at).toLocaleDateString()}
+                      {transaction.created_at
+                        ? new Date(transaction.created_at).toLocaleDateString()
+                        : '—'}
                     </td>
                     <td className="py-3 px-4 text-sm text-xpx-text">{transaction.guest_name}</td>
                     <td className="py-3 px-4 text-sm text-xpx-muted font-mono">

@@ -90,7 +90,8 @@ export default function InquirySuccessModal({
           {headline}
         </h3>
         <p className="text-sm text-xpx-muted mt-1.5 leading-relaxed max-w-sm mx-auto">
-          Verified inquiry delivered. Host contact is unlocked — reach out below.
+          Your inquiry is with XpressBNB Operations for quality review. Host contact unlocks after
+          review — not identity verification.
         </p>
       </div>
 

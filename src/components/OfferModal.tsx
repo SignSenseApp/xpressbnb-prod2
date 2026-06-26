@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { X, Tag, MessageCircle, Mail, User, ArrowDown, Sparkles } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 import { theme } from '../lib/theme';
 import type { Property } from '../lib/database.types';
 import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
-import { parseInquirySubmitResult, type FrequentAmigoStatus } from '../lib/inquiryHostContact';
-import GuestPhoneOtpStep from './GuestPhoneOtpStep';
-import InquirySuccessModal from './InquirySuccessModal';
-import { navigateTo } from '../lib/navigation';
-import type { BookingOtpVerifyResult } from '../lib/bookingOtp';
-import { normalizePhoneDigits } from '../lib/bookingOtp';
+import type { FrequentAmigoStatus } from '../lib/inquiryHostContact';
+import InquiryReceivedSuccess from './inquiry/InquiryReceivedSuccess';
+import TurnstileWidget from './inquiry/TurnstileWidget';
+import { normalizePhoneDigits } from '../lib/guestValidation';
+import { guestEmailError } from '../lib/guestValidation';
+import { submitBookingInquiry } from '../lib/inquirySubmit';
+import { getDeviceFingerprint } from '../lib/deviceFingerprint';
+import {
+  isPushSupported,
+  subscribeToInquiryPushNotifications,
+} from '../lib/pushSubscription';
 import {
   bucketResponseMs,
   categorizeBookingError,
@@ -58,16 +62,12 @@ export default function OfferModal({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [phoneVerification, setPhoneVerification] = useState<BookingOtpVerifyResult | null>(
-    null,
-  );
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [completedBookingId, setCompletedBookingId] = useState<string | null>(null);
-  const [inquiryHostName, setInquiryHostName] = useState<string | null>(null);
-  const [inquiryHostPhone, setInquiryHostPhone] = useState<string | null>(null);
+  const [customerReference, setCustomerReference] = useState<string | null>(null);
   const [frequentAmigo, setFrequentAmigo] = useState<FrequentAmigoStatus | null>(null);
 
   const analyticsScope: AnalyticsScope = useMemo(
@@ -87,10 +87,8 @@ export default function OfferModal({
       setOffer(defaultOffer);
       setError(null);
       setSuccess(false);
-      setCompletedBookingId(null);
-      setInquiryHostName(null);
-      setInquiryHostPhone(null);
-      setPhoneVerification(null);
+      setCustomerReference(null);
+      setTurnstileToken(null);
       trackXpressEvent('booking_form_started', {
         ...analyticsScope,
         booking_step: 'details',
@@ -118,13 +116,13 @@ export default function OfferModal({
     e.preventDefault();
     setError(null);
 
-    if (!name.trim() || !email.trim()) {
-      setError('Please share your name and email so the host can reply.');
-      trackXpressEvent('inquiry_submit_failed', {
-        ...analyticsScope,
-        error_category: 'validation',
-        booking_step: 'send',
-      });
+    if (!name.trim()) {
+      setError('Please share your name so the host can reply.');
+      return;
+    }
+    const emailErr = guestEmailError(email);
+    if (emailErr) {
+      setError(emailErr);
       return;
     }
     if (offer < minOffer || offer > maxOffer) {
@@ -136,8 +134,8 @@ export default function OfferModal({
       setError('Please enter a valid 10-digit mobile number.');
       return;
     }
-    if (!phoneVerification || phoneVerification.phoneDigits !== phoneDigits) {
-      setError('Please verify your mobile number with the OTP before sending your offer.');
+    if (!turnstileToken) {
+      setError('Please complete the security check below.');
       return;
     }
 
@@ -148,6 +146,7 @@ export default function OfferModal({
       booking_step: 'send',
     });
 
+    try {
     const today = new Date();
     const fmt = (d: Date) => d.toISOString().split('T')[0];
     const checkin = checkInDate ? fmt(checkInDate) : fmt(today);
@@ -162,22 +161,26 @@ export default function OfferModal({
       return;
     }
 
-    const { data: rpcData, error: insertError } = await supabase.rpc('create_make_offer_inquiry', {
-      p_property_id: property.id,
-      p_host_id: property.host_id,
-      p_guest_name: name.trim(),
-      p_guest_email: email.trim(),
-      p_check_in: checkin,
-      p_check_out: checkout,
-      p_offer_amount: offer,
-      p_guest_phone: phoneDigits,
-      p_otp_verification_token: phoneVerification.verificationToken,
-      p_offer_message: message.trim() || null,
+    const fingerprint = await getDeviceFingerprint();
+
+    const submitRes = await submitBookingInquiry({
+      inquiry_type: 'make_offer',
+      property_id: property.id,
+      host_id: property.host_id,
+      guest_name: name.trim(),
+      guest_email: email.trim(),
+      guest_phone: phoneDigits,
+      check_in: checkin,
+      check_out: checkout,
+      num_guests: 1,
+      offer_amount: offer,
+      offer_message: message.trim() || undefined,
+      turnstile_token: turnstileToken,
+      device_fingerprint: fingerprint,
     });
 
-    if (insertError) {
-      console.error('Offer insert failed', insertError);
-      const errMsg = insertError.message || 'Could not send your offer. Please try again.';
+    if (!submitRes.ok) {
+      const errMsg = submitRes.error || 'Could not send your offer. Please try again.';
       setError(errMsg);
       trackXpressEvent('inquiry_submit_failed', {
         ...analyticsScope,
@@ -189,18 +192,7 @@ export default function OfferModal({
       return;
     }
 
-    const inquiry = parseInquirySubmitResult(rpcData);
-    if (!inquiry) {
-      setError('Offer sent, but host contact could not be loaded. Please try again.');
-      trackXpressEvent('inquiry_submit_failed', {
-        ...analyticsScope,
-        error_category: 'host_contact',
-        booking_step: 'send',
-        response_time_bucket: bucketResponseMs(performance.now() - submitStarted),
-      });
-      setSubmitting(false);
-      return;
-    }
+    const inquiry = submitRes.result;
 
     trackXpressEvent('inquiry_submit_success', {
       ...analyticsScope,
@@ -212,6 +204,7 @@ export default function OfferModal({
       v: 1,
       savedAt: Date.now(),
       bookingId: inquiry.bookingId,
+      customerReference: inquiry.customerReference,
       propertyId: property.id,
       propertyTitle: property.title,
       propertyCity: property.city,
@@ -221,11 +214,11 @@ export default function OfferModal({
       numGuests: 1,
       estimatedTotal: totalOffer,
       guestEmail: email.trim(),
-      hostContactName: inquiry.hostName,
-      hostContactPhone: inquiry.hostPhone,
+      hostContactName: null,
+      hostContactPhone: null,
       includeDecoration: false,
       paymentStatus: 'offer_pending',
-      bookingStatus: 'pending_host',
+      bookingStatus: 'inquiry_preparing',
       externalListings: property.external_listings ?? null,
       ...(inquiry.frequentAmigo
         ? {
@@ -236,19 +229,34 @@ export default function OfferModal({
         : {}),
     });
 
-    setCompletedBookingId(inquiry.bookingId);
-    setInquiryHostName(inquiry.hostName);
-    setInquiryHostPhone(inquiry.hostPhone);
+    if (
+      isPushSupported() &&
+      typeof Notification !== 'undefined' &&
+      Notification.permission === 'granted'
+    ) {
+      void subscribeToInquiryPushNotifications(
+        inquiry.customerReference,
+        email.trim(),
+        inquiry.bookingId,
+      );
+    }
+
+    setCustomerReference(inquiry.customerReference);
     setFrequentAmigo(inquiry.frequentAmigo ?? null);
     setSubmitting(false);
     setSuccess(true);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Could not send your offer. Please try again.';
+      setError(errMsg);
+      trackXpressEvent('inquiry_submit_failed', {
+        ...analyticsScope,
+        error_category: categorizeBookingError(errMsg),
+        booking_step: 'send',
+      });
+      setSubmitting(false);
+    }
   };
 
-  const goToConfirmation = () => {
-    if (!completedBookingId) return;
-    navigateTo(`/booking/${completedBookingId}`);
-    onClose();
-  };
 
   return (
     <div
@@ -303,32 +311,27 @@ export default function OfferModal({
             submit button — the form scrolls inside the sheet. */}
         <div className="overflow-y-auto overscroll-contain flex-1" style={{ WebkitOverflowScrolling: 'touch' }}>
 
-        {success && inquiryHostName && inquiryHostPhone ? (
+        {success && customerReference ? (
           <div className="px-5 sm:px-6 pb-6 pt-2">
-            <InquirySuccessModal
+            <InquiryReceivedSuccess
               variant="offer"
-              hostName={inquiryHostName}
-              hostPhone={inquiryHostPhone}
+              customerReference={customerReference}
               propertyTitle={property.title}
               checkInLabel={
                 checkInDate
-                  ? checkInDate.toLocaleDateString('en-IN')
-                  : new Date().toLocaleDateString('en-IN')
+                  ? checkInDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })
+                  : new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })
               }
               checkOutLabel={
                 checkOutDate
-                  ? checkOutDate.toLocaleDateString('en-IN')
+                  ? checkOutDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })
                   : new Date(
                       Date.now() + inferredNights * 24 * 60 * 60 * 1000,
-                    ).toLocaleDateString('en-IN')
+                    ).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })
               }
               estimatedTotal={totalOffer}
-              offerPerNight={offer}
-              externalListings={property.external_listings}
+              guestEmail={email.trim()}
               frequentAmigo={frequentAmigo}
-              onViewConfirmation={goToConfirmation}
-              onDismiss={onClose}
-              dismissLabel="Band karein"
               analyticsScope={analyticsScope}
             />
           </div>
@@ -436,15 +439,23 @@ export default function OfferModal({
               </div>
             </div>
 
-            <GuestPhoneOtpStep
-              phone={phone}
-              onPhoneChange={setPhone}
-              verified={phoneVerification}
-              onVerified={setPhoneVerification}
-              onClearVerification={() => setPhoneVerification(null)}
-              disabled={submitting}
-              analyticsScope={analyticsScope}
-            />
+            <label className="block">
+              <span className="block text-xs uppercase tracking-wide font-bold text-xpx-muted mb-2">
+                Mobile number
+              </span>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="10-digit mobile"
+                className="xpx-input"
+                required
+                inputMode="numeric"
+                autoComplete="tel"
+              />
+            </label>
+
+            <TurnstileWidget onToken={setTurnstileToken} disabled={submitting} />
 
             {/* Contact details */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
