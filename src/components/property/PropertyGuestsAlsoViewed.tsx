@@ -67,7 +67,6 @@ export default function PropertyGuestsAlsoViewed({
       <h3 className="text-lg font-extrabold text-xpx-text mb-3">{title}</h3>
       <FeaturedStaysCarousel
         properties={list}
-        userCity={nearby?.detectedCity ?? property.city}
       />
     </div>
   );

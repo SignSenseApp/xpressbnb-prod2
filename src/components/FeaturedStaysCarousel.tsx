@@ -35,14 +35,12 @@ const CarouselSlide = memo(function CarouselSlide({
   width,
   hidden,
   nearbyDistanceKm,
-  userCity,
   carouselSuppressClickRef,
 }: {
   property: Property;
   width: number;
   hidden: boolean;
   nearbyDistanceKm?: number;
-  userCity?: string | null;
   carouselSuppressClickRef?: React.MutableRefObject<boolean>;
 }) {
   return (
@@ -52,7 +50,6 @@ const CarouselSlide = memo(function CarouselSlide({
         className="mx-0 h-full w-full max-w-none md:mx-0"
         nearbyDistanceKm={nearbyDistanceKm}
         nearbySource="nearby_carousel"
-        userCity={userCity}
         carouselSuppressClickRef={carouselSuppressClickRef}
       />
     </div>
@@ -61,9 +58,8 @@ const CarouselSlide = memo(function CarouselSlide({
 
 type FeaturedStaysCarouselProps = {
   properties: Property[];
-  /** Optional distance map for nearby personalization badges */
+  /** Optional distance map for nearby personalization */
   distanceByPropertyId?: Record<string, number>;
-  userCity?: string | null;
 };
 
 /**
@@ -73,7 +69,6 @@ type FeaturedStaysCarouselProps = {
 export default function FeaturedStaysCarousel({
   properties,
   distanceByPropertyId,
-  userCity,
 }: FeaturedStaysCarouselProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -434,7 +429,6 @@ export default function FeaturedStaysCarousel({
               width={slideWidth}
               hidden={loopEnabled ? index !== trackIndex : index !== logicalIndex}
               nearbyDistanceKm={distanceByPropertyId?.[property.id]}
-              userCity={userCity}
               carouselSuppressClickRef={dragIntentRef}
             />
           ))}

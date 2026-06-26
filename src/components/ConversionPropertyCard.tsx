@@ -8,7 +8,7 @@ import PropertyCardGallery from './PropertyCardGallery';
 import { snapshotFromProperty } from '../lib/savedListingsStorage';
 import { listPropertyImages } from '../lib/propertyImages';
 import { trackXpressEvent } from '../lib/analytics';
-import { formatEmotionalNearbyBadge } from '../lib/nearbyDistanceCopy';
+import { bucketDistanceKm } from '../lib/nearbyDistanceCopy';
 import {
   prefetchPropertyOnInteraction,
   prefetchPropertyOnViewport,
@@ -37,8 +37,6 @@ interface ConversionPropertyCardProps {
   nearbyDistanceKm?: number;
   /** Analytics source for nearby funnel */
   nearbySource?: string;
-  /** User city for emotional distance copy */
-  userCity?: string | null;
   /** When carousel swipe is active, block card navigation */
   carouselSuppressClickRef?: React.MutableRefObject<boolean>;
 }
@@ -100,7 +98,6 @@ export default memo(function ConversionPropertyCard({
   className = '',
   nearbyDistanceKm,
   nearbySource,
-  userCity,
   carouselSuppressClickRef,
 }: ConversionPropertyCardProps) {
   const cardRef = useRef<HTMLElement>(null);
@@ -144,7 +141,7 @@ export default memo(function ConversionPropertyCard({
       ...(nearbyDistanceKm != null
         ? {
             nearby_source: nearbySource ?? 'nearby',
-            distance_km_bucket: formatEmotionalNearbyBadge(nearbyDistanceKm, { userCity }).distanceKmBucket,
+            distance_km_bucket: bucketDistanceKm(nearbyDistanceKm),
           }
         : {}),
     });
@@ -154,7 +151,7 @@ export default memo(function ConversionPropertyCard({
         property_slug: property.slug ?? undefined,
         city: property.city,
         nearby_source: nearbySource ?? 'nearby',
-        distance_km_bucket: formatEmotionalNearbyBadge(nearbyDistanceKm, { userCity }).distanceKmBucket,
+        distance_km_bucket: bucketDistanceKm(nearbyDistanceKm),
       });
     }
     const q = tripQuery.startsWith('?') ? tripQuery : tripQuery ? `?${tripQuery}` : '';
@@ -170,10 +167,6 @@ export default memo(function ConversionPropertyCard({
   const imageCount = countImages(property.images);
   const stayScore = computeXpressbnbStayScore(property);
   const locationLabel = formatLocation(property.city, property.state);
-  const nearbyBadge =
-    nearbyDistanceKm != null
-      ? formatEmotionalNearbyBadge(nearbyDistanceKm, { userCity })
-      : null;
   const guests = property.max_guests ?? 0;
   const bedrooms = property.bedrooms ?? 0;
   const bathrooms = property.bathrooms ?? 0;
@@ -215,22 +208,6 @@ export default memo(function ConversionPropertyCard({
             <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-[#16A34A] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
               <VerifiedShieldIcon className="h-3.5 w-3.5" />
               Verified
-            </span>
-          </div>
-        )}
-
-        {nearbyBadge && (
-          <div className="pointer-events-none absolute left-3 top-12 z-10 max-w-[calc(100%-5rem)]">
-            <span
-              className="inline-flex flex-col rounded-full px-2.5 py-1 text-[10px] font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
-              style={{ background: 'rgba(5,150,105,0.92)' }}
-            >
-              <span>{nearbyBadge.primary}</span>
-              {(nearbyBadge.secondary || nearbyBadge.emotionalTag) && (
-                <span className="font-medium opacity-90">
-                  {nearbyBadge.secondary ?? nearbyBadge.emotionalTag}
-                </span>
-              )}
             </span>
           </div>
         )}

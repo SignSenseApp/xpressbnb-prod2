@@ -172,7 +172,6 @@ export default function PersonalizedHomeFeed({
               <FeaturedStaysCarousel
                 properties={rail.properties}
                 distanceByPropertyId={distanceMap}
-                userCity={cityName}
               />
             </section>
           ))}
@@ -190,7 +189,6 @@ export default function PersonalizedHomeFeed({
             <FeaturedStaysCarousel
               properties={trending}
               distanceByPropertyId={distanceMap}
-              userCity={cityName}
             />
           </section>
         )}
