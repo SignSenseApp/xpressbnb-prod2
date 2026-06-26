@@ -1,26 +1,32 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { usePrefersReducedMotion } from '../../hooks/useGalleryMotion';
 
 const HERO_IMAGE = '/images/onboarding/welcome-hero.jpg';
 const MOTION_MS = 200;
 const EASE_OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
 
+const TRUST_CHIPS = [
+  'No upfront account',
+  'Direct host pricing',
+  'Privacy-first booking',
+] as const;
+
 type WelcomeOfferModalProps = {
   open: boolean;
   onExplore: () => void;
-  onSignIn: () => void;
+  onHowItWorks: () => void;
   onDismiss: () => void;
 };
 
 /**
- * Premium brand introduction — not a discount popup.
+ * Product education modal — explains browse-first, account-later in under 5 seconds.
  * Shown once after cookie + location flow and first listings engagement.
  */
 export default function WelcomeOfferModal({
   open,
   onExplore,
-  onSignIn,
+  onHowItWorks,
   onDismiss,
 }: WelcomeOfferModalProps) {
   const titleId = useId();
@@ -60,6 +66,37 @@ export default function WelcomeOfferModal({
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onDismiss]);
 
+  useEffect(() => {
+    if (!open) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const focusable = () =>
+      Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => el.offsetParent !== null || el === document.activeElement);
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const items = focusable();
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    dialog.addEventListener('keydown', onKeyDown);
+    return () => dialog.removeEventListener('keydown', onKeyDown);
+  }, [open]);
+
   if (!mounted) return null;
 
   const backdropStyle = {
@@ -84,7 +121,7 @@ export default function WelcomeOfferModal({
     >
       <button
         type="button"
-        aria-label="Close welcome"
+        aria-label="Close"
         className="absolute inset-0 bg-slate-900/45 backdrop-blur-[6px]"
         style={backdropStyle}
         onClick={onDismiss}
@@ -105,13 +142,13 @@ export default function WelcomeOfferModal({
           boxShadow: '0 32px 80px rgba(15, 23, 42, 0.14)',
         }}
       >
-        <div className="relative aspect-[16/10] sm:aspect-[5/3] w-full overflow-hidden">
+        <div className="relative aspect-[16/10] w-full overflow-hidden">
           <img
             src={HERO_IMAGE}
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
             width={1040}
-            height={624}
+            height={650}
             decoding="async"
             fetchPriority="high"
           />
@@ -119,7 +156,7 @@ export default function WelcomeOfferModal({
             className="absolute inset-0"
             style={{
               background:
-                'linear-gradient(to top, rgba(15,23,42,0.42) 0%, rgba(15,23,42,0.04) 55%, transparent 100%)',
+                'linear-gradient(to top, rgba(15,23,42,0.38) 0%, rgba(15,23,42,0.04) 55%, transparent 100%)',
             }}
             aria-hidden
           />
@@ -134,39 +171,45 @@ export default function WelcomeOfferModal({
         </div>
 
         <div className="px-6 pt-6 pb-6 sm:px-8 sm:pt-7 sm:pb-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-xpx-subtle">
-            XpressBnB
-          </p>
           <h2
             id={titleId}
-            className="mt-2 text-[26px] sm:text-[30px] font-extrabold text-xpx-text tracking-tight leading-[1.12]"
+            className="text-[26px] sm:text-[30px] font-extrabold text-xpx-text tracking-tight leading-[1.1]"
           >
-            Welcome to XpressBnB
+            Travel first.
+            <span className="block">Create an account later.</span>
           </h2>
           <p id={descId} className="mt-3 text-[15px] sm:text-base text-xpx-muted leading-relaxed">
-            Discover verified stays and connect directly with hosts.
-            <span className="block mt-2">No guest commission. Transparent pricing. Built for effortless travel.</span>
+            Browse verified stays, send your first inquiry, and we&apos;ll create your secure guest
+            profile only when you&apos;re ready. No unnecessary sign-ups. No guest commission.
           </p>
 
-          <div className="mt-7 flex flex-col sm:flex-row gap-3">
+          <ul
+            className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-5 sm:gap-y-2"
+            aria-label="Trust highlights"
+          >
+            {TRUST_CHIPS.map((chip) => (
+              <li key={chip} className="flex items-center gap-1.5 text-[13px] text-xpx-muted">
+                <Check className="h-3.5 w-3.5 shrink-0 text-xpx-text" strokeWidth={2.5} aria-hidden />
+                {chip}
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-7 flex flex-col items-stretch gap-3">
             <button
               type="button"
               onClick={onExplore}
-              className="flex-1 min-h-[48px] rounded-2xl text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              className="w-full min-h-[48px] rounded-2xl text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
               style={{ background: 'var(--xpx-cta, #059669)' }}
             >
-              Explore stays
+              Start exploring
             </button>
             <button
               type="button"
-              onClick={onSignIn}
-              className="flex-1 min-h-[48px] rounded-2xl text-[15px] font-semibold text-xpx-text transition-colors duration-150 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
-              style={{
-                background: 'var(--xpx-surface, #ffffff)',
-                border: '1px solid var(--xpx-border-strong, #CBD5E1)',
-              }}
+              onClick={onHowItWorks}
+              className="self-center text-[15px] font-semibold text-xpx-text underline underline-offset-[3px] transition-opacity duration-150 hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 rounded-sm"
             >
-              Sign in
+              How it works →
             </button>
           </div>
         </div>

@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { CookieConsentBanner } from '../CookieConsent';
 import InstallAppPrompt from '../InstallAppPrompt';
 import { useGuestOnboarding } from '../../contexts/GuestOnboardingContext';
-import { navigateTo } from '../../lib/navigation';
+import { scrollToId } from '../../lib/smoothScroll';
 import WelcomeOfferModal from './WelcomeOfferModal';
 
 type GuestOnboardingOrchestratorProps = {
@@ -25,15 +25,17 @@ export default function GuestOnboardingOrchestrator({
 
   const handleWelcomeExplore = useCallback(() => {
     dismissWelcome();
-    const listings = document.getElementById('listings');
-    if (listings) {
-      listings.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    requestAnimationFrame(() => {
+      scrollToId('listings', { offset: -88, duration: 1.05 });
+    });
   }, [dismissWelcome]);
 
-  const handleWelcomeSignIn = useCallback(() => {
+  // Homepage #why — same product-education destination as nav "About" and host "See how it works"
+  const handleHowItWorks = useCallback(() => {
     dismissWelcome();
-    navigateTo('/auth/login');
+    requestAnimationFrame(() => {
+      scrollToId('why', { offset: -88, duration: 1.05 });
+    });
   }, [dismissWelcome]);
 
   if (!enabled) {
@@ -51,7 +53,7 @@ export default function GuestOnboardingOrchestrator({
       <WelcomeOfferModal
         open={activeOverlay === 'welcome'}
         onExplore={handleWelcomeExplore}
-        onSignIn={handleWelcomeSignIn}
+        onHowItWorks={handleHowItWorks}
         onDismiss={dismissWelcome}
       />
       <InstallAppPrompt hidden={hidden} orchestrated forceVisible={canShowInstallPrompt} />

@@ -1,12 +1,12 @@
 /**
- * Guest first-visit onboarding — persisted engagement + welcome offer state.
+ * Guest first-visit onboarding — persisted engagement + product education modal state.
  * Overlay sequencing is owned by GuestOnboardingContext; this module is storage + signals.
  */
 
 export const WELCOME_OFFER_SEEN_KEY = 'xpx_welcome_offer_seen_v1';
 export const ONBOARDING_ENGAGEMENT_KEY = 'xpx_onboarding_engagement_v1';
 
-/** Brief pause before welcome after property-row intent (ms). */
+/** Brief pause before product-education modal after property-row intent (ms). */
 export const WELCOME_INTRO_PAUSE_MS = 400;
 
 /** Listing interactions before PWA install may appear. */

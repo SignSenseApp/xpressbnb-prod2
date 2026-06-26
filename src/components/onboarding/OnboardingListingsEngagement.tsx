@@ -10,7 +10,7 @@ type OnboardingListingsEngagementProps = {
 
 /**
  * Fires property-row visibility when the listings section enters the viewport —
- * intent signal for the welcome offer (no timers).
+ * intent signal for the product-education modal (no timers).
  */
 export function OnboardingListingsEngagement({
   children,
