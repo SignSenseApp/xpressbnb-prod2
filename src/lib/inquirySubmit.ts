@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { parseFrequentAmigoStatus, type FrequentAmigoStatus } from './inquiryHostContact';
+import { safeHostDisplayName } from './host';
 
 export type MarketplaceInquiryResult = {
   bookingId: string;
@@ -8,6 +9,8 @@ export type MarketplaceInquiryResult = {
   spamScore: number;
   requiresReview: boolean;
   frequentAmigo?: FrequentAmigoStatus;
+  hostName?: string;
+  hostPhone?: string;
 };
 
 export type SubmitBookingInquiryPayload = {
@@ -60,6 +63,11 @@ export function parseMarketplaceInquiryResult(data: unknown): MarketplaceInquiry
   if (!bookingId || !customerReference) return null;
 
   const frequentAmigo = parseFrequentAmigoStatus(o.frequent_amigo ?? o.frequentAmigo);
+  const hostPhoneRaw = String(o.host_phone ?? o.hostPhone ?? '');
+  const hostNameRaw = String(o.host_name ?? o.hostName ?? '');
+  const hostPhoneDigits = hostPhoneRaw.replace(/\D/g, '');
+  const hostPhone =
+    hostPhoneDigits.length >= 10 ? hostPhoneDigits.slice(-10) : undefined;
 
   return {
     bookingId,
@@ -68,6 +76,12 @@ export function parseMarketplaceInquiryResult(data: unknown): MarketplaceInquiry
     spamScore: Number(o.spam_score ?? o.spamScore ?? 0),
     requiresReview: o.requires_review === true || o.requiresReview === true,
     ...(frequentAmigo ? { frequentAmigo } : {}),
+    ...(hostPhone
+      ? {
+          hostPhone,
+          hostName: safeHostDisplayName(hostNameRaw, 'Host'),
+        }
+      : {}),
   };
 }
 

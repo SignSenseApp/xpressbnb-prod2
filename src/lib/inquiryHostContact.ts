@@ -47,6 +47,21 @@ export function buildHostDirectWhatsAppLink(
   return `https://wa.me/${wa}?text=${encodeURIComponent(message)}`;
 }
 
+/** Post-inquiry success — English prefilled message for direct host contact. */
+export function buildInquirySuccessWhatsAppLink(
+  hostPhoneDigits: string,
+  propertyTitle?: string,
+): string {
+  const base = 'Hi, I submitted an inquiry through XpressBnB for your property.';
+  const message = propertyTitle?.trim()
+    ? `${base} (${propertyTitle.trim()})`
+    : base;
+  const cleaned = normalizeHostPhoneDigits(hostPhoneDigits);
+  if (cleaned.length < 10) return '';
+  const wa = cleaned.length > 10 ? cleaned : `91${cleaned}`;
+  return `https://wa.me/${wa}?text=${encodeURIComponent(message)}`;
+}
+
 export function parseFrequentAmigoStatus(data: unknown): FrequentAmigoStatus | null {
   if (!data || typeof data !== 'object') return null;
   const o = data as Record<string, unknown>;

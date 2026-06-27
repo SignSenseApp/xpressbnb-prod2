@@ -3,13 +3,21 @@ import { X, Tag, MessageCircle, Mail, User, ArrowDown, Sparkles } from 'lucide-r
 import { theme } from '../lib/theme';
 import type { Property } from '../lib/database.types';
 import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
-import type { FrequentAmigoStatus } from '../lib/inquiryHostContact';
-import InquiryReceivedSuccess from './inquiry/InquiryReceivedSuccess';
 import InquiryConfidenceStrip from './inquiry/InquiryConfidenceStrip';
 import InquiryHoneypotField from './inquiry/InquiryHoneypotField';
+import InquirySubmitTransition, {
+  scheduleInquiryTransitionSteps,
+} from './inquiry/InquirySubmitTransition';
 import { normalizePhoneDigits } from '../lib/guestValidation';
 import { guestEmailError } from '../lib/guestValidation';
 import { submitBookingInquiry } from '../lib/inquirySubmit';
+import {
+  inquirySuccessPath,
+  saveInquirySuccessSnapshot,
+  type InquirySuccessSnapshot,
+} from '../lib/inquirySuccessStorage';
+import { navigateTo } from '../lib/navigation';
+import type { InquiryTransitionStep } from '../lib/inquirySuccessMotion';
 import { getDeviceFingerprint } from '../lib/deviceFingerprint';
 import {
   isPushSupported,
@@ -78,9 +86,9 @@ export default function OfferModal({
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [customerReference, setCustomerReference] = useState<string | null>(null);
-  const [frequentAmigo, setFrequentAmigo] = useState<FrequentAmigoStatus | null>(null);
+  const [transitionStep, setTransitionStep] = useState<InquiryTransitionStep | null>(null);
+  const pendingSuccessRef = useRef<InquirySuccessSnapshot | null>(null);
+  const transitionCancelRef = useRef<(() => void) | null>(null);
 
   const analyticsScope: AnalyticsScope = useMemo(
     () => ({
@@ -98,8 +106,10 @@ export default function OfferModal({
     if (open) {
       setOffer(defaultOffer);
       setError(null);
-      setSuccess(false);
-      setCustomerReference(null);
+      setTransitionStep(null);
+      pendingSuccessRef.current = null;
+      transitionCancelRef.current?.();
+      transitionCancelRef.current = null;
       setHoneypot('');
       formOpenedAtRef.current = createInquiryFormOpenedAt();
       trackXpressEvent('booking_form_started', {
@@ -162,6 +172,7 @@ export default function OfferModal({
     }
 
     setSubmitting(true);
+    setTransitionStep(0);
     const submitStarted = performance.now();
     trackXpressEvent('inquiry_submit_started', {
       ...analyticsScope,
@@ -180,6 +191,7 @@ export default function OfferModal({
     if (!property.host_id) {
       setError('This listing is missing host details. Please try again later.');
       setSubmitting(false);
+      setTransitionStep(null);
       return;
     }
 
@@ -213,10 +225,13 @@ export default function OfferModal({
         response_time_bucket: bucketResponseMs(performance.now() - submitStarted),
       });
       setSubmitting(false);
+      setTransitionStep(null);
       return;
     }
 
     const inquiry = submitRes.result;
+    const hostContactName = inquiry.hostName ?? null;
+    const hostContactPhone = inquiry.hostPhone ?? null;
 
     trackXpressEvent('inquiry_submit_success', {
       ...analyticsScope,
@@ -240,8 +255,8 @@ export default function OfferModal({
       numGuests: 1,
       estimatedTotal: totalOffer,
       guestEmail: email.trim(),
-      hostContactName: null,
-      hostContactPhone: null,
+      hostContactName,
+      hostContactPhone,
       includeDecoration: false,
       paymentStatus: 'offer_pending',
       bookingStatus: 'inquiry_preparing',
@@ -255,6 +270,31 @@ export default function OfferModal({
         : {}),
     });
 
+    const successSnapshot: InquirySuccessSnapshot = {
+      v: 1,
+      savedAt: Date.now(),
+      variant: 'offer',
+      bookingId: inquiry.bookingId,
+      customerReference: inquiry.customerReference,
+      guestName: name.trim(),
+      guestEmail: email.trim(),
+      guestPhone: phoneDigits,
+      propertyId: property.id,
+      propertyTitle: property.title,
+      propertyCity: property.city,
+      propertySlug: property.slug ?? null,
+      hostId: property.host_id ?? null,
+      hostContactName,
+      hostContactPhone,
+      checkIn: checkin,
+      checkOut: checkout,
+      numGuests: 1,
+      estimatedTotal: totalOffer,
+      ...(inquiry.frequentAmigo ? { frequentAmigo: inquiry.frequentAmigo } : {}),
+    };
+    saveInquirySuccessSnapshot(successSnapshot);
+    pendingSuccessRef.current = successSnapshot;
+
     if (
       isPushSupported() &&
       typeof Notification !== 'undefined' &&
@@ -267,10 +307,10 @@ export default function OfferModal({
       );
     }
 
-    setCustomerReference(inquiry.customerReference);
-    setFrequentAmigo(inquiry.frequentAmigo ?? null);
-    setSubmitting(false);
-    setSuccess(true);
+    transitionCancelRef.current?.();
+    transitionCancelRef.current = scheduleInquiryTransitionSteps((step) => {
+      setTransitionStep(step);
+    });
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Could not send your offer. Please try again.';
       setError(errMsg);
@@ -280,7 +320,18 @@ export default function OfferModal({
         booking_step: 'send',
       });
       setSubmitting(false);
+      setTransitionStep(null);
     }
+  };
+
+  const handleTransitionComplete = () => {
+    const snap = pendingSuccessRef.current;
+    transitionCancelRef.current?.();
+    transitionCancelRef.current = null;
+    setTransitionStep(null);
+    setSubmitting(false);
+    onClose();
+    if (snap) navigateTo(inquirySuccessPath(snap));
   };
 
 
@@ -337,32 +388,7 @@ export default function OfferModal({
             submit button — the form scrolls inside the sheet. */}
         <div className="overflow-y-auto overscroll-contain flex-1" style={{ WebkitOverflowScrolling: 'touch' }}>
 
-        {success && customerReference ? (
-          <div className="px-5 sm:px-6 pb-6 pt-2">
-            <InquiryReceivedSuccess
-              variant="offer"
-              customerReference={customerReference}
-              propertyTitle={property.title}
-              checkInLabel={
-                checkInDate
-                  ? checkInDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })
-                  : new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })
-              }
-              checkOutLabel={
-                checkOutDate
-                  ? checkOutDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })
-                  : new Date(
-                      Date.now() + inferredNights * 24 * 60 * 60 * 1000,
-                    ).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })
-              }
-              estimatedTotal={totalOffer}
-              guestEmail={email.trim()}
-              frequentAmigo={frequentAmigo}
-              analyticsScope={analyticsScope}
-            />
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="relative px-5 sm:px-6 pb-6 pt-2 space-y-5">
+        <form onSubmit={handleSubmit} className="relative px-5 sm:px-6 pb-6 pt-2 space-y-5">
             <InquiryHoneypotField value={honeypot} onChange={setHoneypot} />
             {/* Listed vs Your offer comparison.
                 On the smallest widths the labels could collide — switch to a
@@ -576,9 +602,11 @@ export default function OfferModal({
               Hosts see your offer with the dates and message. No payment is taken yet.
             </p>
           </form>
-        )}
         </div>
       </div>
+      {transitionStep !== null && (
+        <InquirySubmitTransition step={transitionStep} onComplete={handleTransitionComplete} />
+      )}
     </div>
   );
 }

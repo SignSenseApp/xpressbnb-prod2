@@ -13,6 +13,7 @@ import { loadPropertyPageModule } from './lib/propertyRouteChunk';
 const PropertyPage = lazy(() => loadPropertyPageModule());
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'));
 const TrackInquiryPage = lazy(() => import('./pages/TrackInquiryPage'));
+const InquirySuccessPage = lazy(() => import('./pages/InquirySuccessPage'));
 const CityListingPage = lazy(() => import('./pages/CityListingPage'));
 const RishikeshStaysPage = lazy(() => import('./pages/RishikeshStaysPage'));
 const ExploreCitiesPage = lazy(() => import('./pages/ExploreCitiesPage'));
@@ -111,6 +112,10 @@ export default function AppRouter() {
       return <TrackInquiryPage />;
     }
 
+    if (currentPath.startsWith('/inquiry/success/')) {
+      return <InquirySuccessPage />;
+    }
+
     if (currentPath.startsWith('/property/')) {
       return <PropertyPage />;
     }
@@ -198,7 +203,11 @@ export default function AppRouter() {
           <StayScoreInfoSheet />
           <StayScoreEducationTooltip />
         </Suspense>
-        <GuestOnboardingOrchestrator hidden={currentPath.startsWith('/booking/')} />
+        <GuestOnboardingOrchestrator
+          hidden={
+            currentPath.startsWith('/booking/') || currentPath.startsWith('/inquiry/success/')
+          }
+        />
         <MobileBottomNav currentPath={currentPath} onNavigate={handleNavigate} />
       </GuestOnboardingProvider>
     </NearbyLocationShell>

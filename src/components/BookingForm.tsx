@@ -15,7 +15,6 @@ import { supabase } from '../lib/supabase';
 import { applyDiscounts, findPromoCode, type PromoCodeDef } from '../lib/offers';
 import { calculateBookingTotal } from '../lib/pricingUtils';
 import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
-import type { FrequentAmigoStatus } from '../lib/inquiryHostContact';
 import BookingProgressBar from './booking/BookingProgressBar';
 import { BOOKING_STEP_LABELS } from './booking/bookingStepLabels';
 import { guestEmailError } from '../lib/guestValidation';
@@ -28,9 +27,18 @@ import {
 } from '../lib/analytics';
 import { orchestratedScrollTo } from '../lib/scrollOrchestrator';
 import InquiryHoneypotField from './inquiry/InquiryHoneypotField';
-import InquiryReceivedSuccess from './inquiry/InquiryReceivedSuccess';
+import InquirySubmitTransition, {
+  scheduleInquiryTransitionSteps,
+} from './inquiry/InquirySubmitTransition';
 import InquiryConfidenceStrip from './inquiry/InquiryConfidenceStrip';
-import { submitBookingInquiry } from '../lib/inquirySubmit';
+import { submitBookingInquiry, type MarketplaceInquiryResult } from '../lib/inquirySubmit';
+import {
+  inquirySuccessPath,
+  saveInquirySuccessSnapshot,
+  type InquirySuccessSnapshot,
+} from '../lib/inquirySuccessStorage';
+import { navigateTo } from '../lib/navigation';
+import type { InquiryTransitionStep } from '../lib/inquirySuccessMotion';
 import { getDeviceFingerprint } from '../lib/deviceFingerprint';
 import {
   buildInquiryAbusePayload,
@@ -144,11 +152,9 @@ export default function BookingForm({
   const [promoError, setPromoError] = useState<string | null>(null);
   const [honeypot, setHoneypot] = useState('');
   const formOpenedAtRef = useRef(createInquiryFormOpenedAt());
-  const [submitSuccess, setSubmitSuccess] = useState<{
-    customerReference: string;
-    bookingId: string;
-    frequentAmigo?: FrequentAmigoStatus;
-  } | null>(null);
+  const [transitionStep, setTransitionStep] = useState<InquiryTransitionStep | null>(null);
+  const pendingSuccessRef = useRef<InquirySuccessSnapshot | null>(null);
+  const transitionCancelRef = useRef<(() => void) | null>(null);
 
   const numberOfDays = useMemo(() => {
     if (!checkInDate || !checkOutDate) return 0;
@@ -247,20 +253,21 @@ export default function BookingForm({
   };
 
   const completeInquiry = (
-    bookingId: string,
-    customerReference: string,
+    inquiry: MarketplaceInquiryResult,
     checkIn: string,
     checkOut: string,
-    amigo?: FrequentAmigoStatus,
   ) => {
     inquirySubmittedRef.current = true;
     markInquirySubmitCooldown();
 
+    const hostContactName = inquiry.hostName ?? null;
+    const hostContactPhone = inquiry.hostPhone ?? null;
+
     saveBookingConfirmationSnapshot({
       v: 1,
       savedAt: Date.now(),
-      bookingId,
-      customerReference,
+      bookingId: inquiry.bookingId,
+      customerReference: inquiry.customerReference,
       propertyId: property.id,
       propertyTitle: property.title,
       propertyCity: property.city,
@@ -270,27 +277,45 @@ export default function BookingForm({
       numGuests: numGuests,
       estimatedTotal: totalPrice,
       guestEmail: formData.guest_email,
-      hostContactName: null,
-      hostContactPhone: null,
+      hostContactName,
+      hostContactPhone,
       includeDecoration,
       paymentStatus: 'inquiry',
       bookingStatus: 'inquiry_preparing',
       externalListings: property.external_listings ?? null,
-      ...(amigo
+      ...(inquiry.frequentAmigo
         ? {
-            frequentAmigoCount: amigo.qualifyingCount,
-            frequentAmigoUnlocked: amigo.unlocked,
-            frequentAmigoThreshold: amigo.threshold,
+            frequentAmigoCount: inquiry.frequentAmigo.qualifyingCount,
+            frequentAmigoUnlocked: inquiry.frequentAmigo.unlocked,
+            frequentAmigoThreshold: inquiry.frequentAmigo.threshold,
           }
         : {}),
     });
 
-    setLoading(false);
-    setSubmitSuccess({
-      bookingId,
-      customerReference,
-      ...(amigo ? { frequentAmigo: amigo } : {}),
-    });
+    const successSnapshot: InquirySuccessSnapshot = {
+      v: 1,
+      savedAt: Date.now(),
+      variant: 'booking',
+      bookingId: inquiry.bookingId,
+      customerReference: inquiry.customerReference,
+      guestName: formData.guest_name.trim(),
+      guestEmail: formData.guest_email.trim(),
+      guestPhone: normalizePhoneDigits(formData.guest_phone),
+      propertyId: property.id,
+      propertyTitle: property.title,
+      propertyCity: property.city,
+      propertySlug: property.slug ?? null,
+      hostId: property.host_id ?? null,
+      hostContactName,
+      hostContactPhone,
+      checkIn,
+      checkOut,
+      numGuests,
+      estimatedTotal: totalPrice,
+      ...(inquiry.frequentAmigo ? { frequentAmigo: inquiry.frequentAmigo } : {}),
+    };
+    saveInquirySuccessSnapshot(successSnapshot);
+    pendingSuccessRef.current = successSnapshot;
 
     if (
       isPushSupported() &&
@@ -298,13 +323,27 @@ export default function BookingForm({
       Notification.permission === 'granted'
     ) {
       void subscribeToInquiryPushNotifications(
-        customerReference,
+        inquiry.customerReference,
         formData.guest_email.trim(),
-        bookingId,
+        inquiry.bookingId,
       );
     }
 
-    onSuccess({ bookingId, customerReference });
+    onSuccess({ bookingId: inquiry.bookingId, customerReference: inquiry.customerReference });
+
+    transitionCancelRef.current?.();
+    transitionCancelRef.current = scheduleInquiryTransitionSteps((step) => {
+      setTransitionStep(step);
+    });
+  };
+
+  const handleTransitionComplete = () => {
+    const snap = pendingSuccessRef.current;
+    transitionCancelRef.current?.();
+    transitionCancelRef.current = null;
+    setTransitionStep(null);
+    setLoading(false);
+    if (snap) navigateTo(inquirySuccessPath(snap));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -325,6 +364,7 @@ export default function BookingForm({
     if (!checkInDate || !checkOutDate) return;
 
     setLoading(true);
+    setTransitionStep(0);
     const submitStarted = performance.now();
     trackXpressEvent('inquiry_submit_started', {
       ...analyticsScope,
@@ -344,6 +384,7 @@ export default function BookingForm({
           response_time_bucket: bucketResponseMs(performance.now() - submitStarted),
         });
         setLoading(false);
+        setTransitionStep(null);
         return;
       }
 
@@ -353,6 +394,7 @@ export default function BookingForm({
       if (!property.host_id) {
         setErrorMessage('This listing is missing host details. Please try again later.');
         setLoading(false);
+        setTransitionStep(null);
         return;
       }
 
@@ -386,6 +428,7 @@ export default function BookingForm({
           response_time_bucket: bucketResponseMs(performance.now() - submitStarted),
         });
         setLoading(false);
+        setTransitionStep(null);
         return;
       }
 
@@ -403,13 +446,7 @@ export default function BookingForm({
         });
       }
 
-      completeInquiry(
-        inquiry.bookingId,
-        inquiry.customerReference,
-        checkIn,
-        checkOut,
-        inquiry.frequentAmigo,
-      );
+      completeInquiry(inquiry, checkIn, checkOut);
     } catch (error) {
       if (import.meta.env.DEV) console.error('Booking error:', error);
       const errMsg =
@@ -424,6 +461,7 @@ export default function BookingForm({
         booking_step: 'send',
       });
       setLoading(false);
+      setTransitionStep(null);
     }
   };
 
@@ -444,7 +482,7 @@ export default function BookingForm({
 
   useEffect(() => {
     const onAbandon = () => {
-      if (inquirySubmittedRef.current || loading || submitSuccess) return;
+      if (inquirySubmittedRef.current || loading || transitionStep !== null) return;
       if (!hasDates && !hasDetails) return;
       const step = !hasDates ? 'dates' : !hasDetails ? 'contact' : 'send';
       trackXpressEvent('booking_abandonment', {
@@ -454,27 +492,12 @@ export default function BookingForm({
     };
     window.addEventListener('pagehide', onAbandon);
     return () => window.removeEventListener('pagehide', onAbandon);
-  }, [analyticsScope, hasDates, hasDetails, loading, submitSuccess]);
+  }, [analyticsScope, hasDates, hasDetails, loading, transitionStep]);
 
   const bookingStep = hasDetails ? 4 : hasDates ? 3 : 1;
 
-  if (submitSuccess) {
-    return (
-      <InquiryReceivedSuccess
-        variant="booking"
-        customerReference={submitSuccess.customerReference}
-        propertyTitle={property.title}
-        checkInLabel={checkInDate!.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
-        checkOutLabel={checkOutDate!.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
-        estimatedTotal={totalPrice}
-        guestEmail={formData.guest_email.trim()}
-        frequentAmigo={submitSuccess.frequentAmigo}
-        analyticsScope={analyticsScope}
-      />
-    );
-  }
-
   return (
+    <>
     <form
       onSubmit={handleSubmit}
       className="relative space-y-5 max-w-full overflow-x-hidden pb-[max(1rem,env(safe-area-inset-bottom))]"
@@ -771,5 +794,9 @@ export default function BookingForm({
         </p>
       </div>
     </form>
+    {transitionStep !== null && (
+      <InquirySubmitTransition step={transitionStep} onComplete={handleTransitionComplete} />
+    )}
+    </>
   );
 }

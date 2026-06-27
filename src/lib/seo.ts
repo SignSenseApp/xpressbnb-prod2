@@ -22,6 +22,7 @@ export interface SEOConfig {
   ogType?: string;
   twitterCard?: string;
   structuredData?: JsonLdRecord;
+  robots?: string;
 }
 
 export const defaultSEO: SEOConfig = {
@@ -41,6 +42,9 @@ export function updateMetaTags(config: Partial<SEOConfig>) {
   updateOrCreateMetaTag('name', 'description', seo.description);
   if (seo.keywords) {
     updateOrCreateMetaTag('name', 'keywords', seo.keywords);
+  }
+  if (seo.robots) {
+    updateOrCreateMetaTag('name', 'robots', seo.robots);
   }
 
   updateOrCreateMetaTag('property', 'og:title', seo.ogTitle || seo.title);
