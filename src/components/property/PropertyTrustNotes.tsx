@@ -1,8 +1,8 @@
 import { Shield } from 'lucide-react';
 
 const TRUST_NOTES = [
-  'Share your details to send a secure inquiry — no payment now.',
-  'We review inquiries before the host sees your contact info.',
+  'Your contact details stay private until an inquiry is reviewed.',
+  'We check inquiries before the host sees your phone or email.',
   'Carry a genuine ID if the host asks at check-in.',
   'Confirm advance, pets, parking, and special requests directly with the host.',
 ] as const;

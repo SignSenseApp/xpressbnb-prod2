@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle, MapPin, Shield, Languages, Sparkles, Headphones } from 'lucide-react';
+import { CheckCircle, MapPin, Shield, Sparkles, Headphones } from 'lucide-react';
 import { fetchPublicHost } from '../lib/hostPublicCache';
 import { theme } from '../lib/theme';
 import { safeHostDisplayName, safeHostInitial, stripPhoneLike } from '../lib/host';
@@ -164,7 +164,7 @@ export default function HostCard({
                 }}
               >
                 <Shield className="w-3 h-3" />
-                Verified
+                ID verified
               </span>
             )}
           </div>
@@ -191,27 +191,6 @@ export default function HostCard({
       {safeBio && (
         <p className="mt-4 text-sm text-xpx-muted leading-relaxed line-clamp-3">{safeBio}</p>
       )}
-
-      <dl
-        className={`mt-5 grid gap-3 text-center ${bookingCount ? 'grid-cols-3' : 'grid-cols-2'}`}
-      >
-        <div className="rounded-xl p-3" style={{ background: 'var(--xpx-surface)' }}>
-          <dt className="text-[11px] uppercase tracking-wide text-xpx-subtle">Response</dt>
-          <dd className="mt-1 text-sm font-bold text-xpx-text">~ 1 hr</dd>
-        </div>
-        <div className="rounded-xl p-3" style={{ background: 'var(--xpx-surface)' }}>
-          <dt className="text-[11px] uppercase tracking-wide text-xpx-subtle">Languages</dt>
-          <dd className="mt-1 text-sm font-bold text-xpx-text inline-flex items-center gap-1 justify-center">
-            <Languages className="w-3.5 h-3.5 text-xpx-subtle" /> EN · HI
-          </dd>
-        </div>
-        {bookingCount ? (
-          <div className="rounded-xl p-3" style={{ background: 'var(--xpx-surface)' }}>
-            <dt className="text-[11px] uppercase tracking-wide text-xpx-subtle">Bookings</dt>
-            <dd className="mt-1 text-sm font-bold text-xpx-text tabular-nums">{bookingCount}</dd>
-          </div>
-        ) : null}
-      </dl>
 
       <div className="mt-5 space-y-2.5">
         <button

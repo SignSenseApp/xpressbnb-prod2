@@ -43,13 +43,13 @@ export function stripPhoneLike(text: string | null | undefined): string {
 
 /**
  * Returns a guest-safe display name for a host.
- *  1. Pure phone in name field      -> fallback ("Verified Host")
+ *  1. Pure phone in name field      -> fallback ("Host")
  *  2. Phone embedded in name        -> strip the phone, keep the rest
  *  3. Empty after cleaning          -> fallback
  */
 export function safeHostDisplayName(
   name: string | null | undefined,
-  fallback = 'Verified Host',
+  fallback = 'Host',
 ): string {
   if (!name) return fallback;
   const trimmed = name.trim();

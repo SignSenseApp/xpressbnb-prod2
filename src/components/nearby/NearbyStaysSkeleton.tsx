@@ -12,10 +12,10 @@ export default function NearbyStaysSkeleton() {
           className="xpx-property-card shrink-0 w-[85vw] min-w-[85vw] max-w-[85vw] md:w-auto md:min-w-0 md:max-w-[380px] overflow-hidden"
         >
           <div className="xpx-property-card-media animate-pulse" style={{ background: SURFACE_LIGHT }} />
-          <div className="space-y-3 p-5">
+          <div className="xpx-property-card-skeleton-body">
             <div className="h-4 w-3/4 rounded animate-pulse" style={{ background: SURFACE_LIGHT }} />
             <div className="h-3 w-1/2 rounded animate-pulse" style={{ background: SURFACE_LIGHT }} />
-            <div className="h-8 w-full rounded-xl animate-pulse" style={{ background: SURFACE_LIGHT }} />
+            <div className="h-10 w-full rounded-xl animate-pulse" style={{ background: SURFACE_LIGHT }} />
           </div>
         </div>
       ))}

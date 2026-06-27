@@ -226,7 +226,7 @@ export default function GuestTripConfirmation({
             <>
               Your host is{' '}
               <span className="font-semibold text-xpx-text">
-                {snapshot.hostContactName ?? 'Verified Host'}
+                {snapshot.hostContactName ?? 'Host'}
               </span>
               . Inquiry bhej di hai — seedha call ya WhatsApp karein. Usually reply kuch minutes mein.
             </>

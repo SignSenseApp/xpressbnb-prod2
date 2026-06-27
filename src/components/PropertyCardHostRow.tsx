@@ -55,7 +55,7 @@ export default function PropertyCardHostRow({
     );
   }
 
-  const displayName = hostName ?? 'Verified Host';
+  const displayName = hostName ?? 'Host';
   const initial = safeHostInitial(hostName ?? displayName);
   const hostLabel = `Hosted by ${displayName}`;
 
@@ -63,7 +63,7 @@ export default function PropertyCardHostRow({
     <div className="flex h-full w-full min-w-0 items-center gap-2">
       <div
         className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full text-[11px] font-semibold text-white"
-        style={{ background: '#16A34A' }}
+        style={{ background: '#059669' }}
         aria-hidden
       >
         {initial}
@@ -77,12 +77,9 @@ export default function PropertyCardHostRow({
           <span className="font-medium">{displayName}</span>
         </p>
         {hostVerified && (
-          <span
-            className="inline-flex h-[22px] shrink-0 items-center gap-0.5 rounded-full px-2 text-[11px] font-normal leading-none text-[#16A34A]"
-            style={{ background: '#F1FAF5' }}
-          >
+          <span className="xpx-trust-micro shrink-0">
             <VerifiedShieldIcon className="h-2.5 w-2.5 shrink-0" aria-hidden />
-            <span className="whitespace-nowrap">Verified</span>
+            <span className="whitespace-nowrap">ID verified</span>
           </span>
         )}
       </div>

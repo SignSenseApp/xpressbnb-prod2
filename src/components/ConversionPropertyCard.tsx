@@ -15,7 +15,6 @@ import {
   prefetchPropertyOnViewport,
 } from '../lib/propertyPrefetch';
 import {
-  VerifiedShieldIcon,
   ImageGalleryIcon,
   LocationPinIcon,
   GuestsIcon,
@@ -23,9 +22,6 @@ import {
   BathroomIcon,
   StarOutlineIcon,
   InfoCircleIcon,
-  HomeOutlineIcon,
-  ShieldOutlineIcon,
-  PercentOutlineIcon,
 } from './icons/PropertyCardIcons';
 
 interface ConversionPropertyCardProps {
@@ -80,7 +76,7 @@ function HostPriceTag({ price }: { price: string }) {
             }}
             aria-hidden
           />
-          <span className="text-[9px] font-semibold uppercase tracking-[0.06em] text-[#059669]">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-[#059669]">
             Host listed
           </span>
         </div>
@@ -194,7 +190,7 @@ export default memo(function ConversionPropertyCard({
       onKeyDown={(e) => {
         if (e.key === 'Enter') handleClick();
       }}
-      className={`xpx-property-card group flex h-full w-full max-w-[380px] cursor-pointer flex-col overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#16A34A] motion-reduce:transition-none active:scale-[0.99] md:mx-auto ${className}`}
+      className={`xpx-property-card group flex h-full w-full max-w-[380px] cursor-pointer flex-col overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#059669] motion-reduce:transition-none motion-reduce:active:scale-100 active:opacity-[0.98] md:mx-auto md:active:opacity-100 ${className}`}
     >
       {/* Hero image gallery */}
       <PropertyCardGallery
@@ -206,15 +202,6 @@ export default memo(function ConversionPropertyCard({
           swipeRef.current = true;
         }}
       >
-        {property.is_verified && (
-          <div className="absolute left-3 top-3 z-10">
-            <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-[#16A34A] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
-              <VerifiedShieldIcon className="h-3.5 w-3.5" />
-              Verified
-            </span>
-          </div>
-        )}
-
         <SaveListingButton
           propertyId={property.id}
           getSnapshot={() => snapshotFromProperty(property)}
@@ -271,21 +258,15 @@ export default memo(function ConversionPropertyCard({
           <button
             type="button"
             onClick={openStayScore}
-            className="xpx-property-card-zone-score__btn transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#16A34A]"
+            className="xpx-property-card-zone-score__btn transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#059669]"
             aria-label={stayScore.label}
           >
-            <StarOutlineIcon className="h-4 w-4 shrink-0 text-[#16A34A]" aria-hidden />
+            <StarOutlineIcon className="h-4 w-4 shrink-0 text-[#059669]" aria-hidden />
             <span className="xpx-property-card-zone-score__label" title={stayScore.label}>
               {stayScore.label}
             </span>
             <InfoCircleIcon className="h-4 w-4 shrink-0 text-[#6B7280]" aria-hidden />
           </button>
-        </div>
-
-        <div className="xpx-property-card-zone-benefits">
-          <TrustItem icon={<HomeOutlineIcon className="h-3.5 w-3.5 shrink-0" />} label="Direct with host" />
-          <TrustItem icon={<ShieldOutlineIcon className="h-3.5 w-3.5 shrink-0" />} label="No platform fee" />
-          <TrustItem icon={<PercentOutlineIcon className="h-3.5 w-3.5 shrink-0" />} label="Zero commission" />
         </div>
       </div>
     </article>
@@ -311,18 +292,7 @@ function SpecCell({
         {icon}
       </span>
       <span className="text-sm font-bold tabular-nums leading-none text-[#111827]">{value}</span>
-      <span className="truncate max-w-full text-[10px] leading-none text-[#6B7280]">{label}</span>
+      <span className="truncate max-w-full text-xs leading-none text-[#6B7280]">{label}</span>
     </div>
-  );
-}
-
-function TrustItem({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <span className="xpx-property-card-zone-benefits__item" title={label}>
-      <span aria-hidden className="shrink-0">
-        {icon}
-      </span>
-      <span className="truncate">{label}</span>
-    </span>
   );
 }

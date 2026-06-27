@@ -2,8 +2,11 @@ import { useEffect } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { theme } from '../../lib/theme';
 import CustomerReferenceField from './CustomerReferenceField';
+import GuestIdProfileCard from './GuestIdProfileCard';
+import GuestTrustJourney from './GuestTrustJourney';
 import InquiryStatusTimeline from './InquiryStatusTimeline';
 import FrequentAmigoProgress from '../FrequentAmigoProgress';
+import { recordGuestInquiry } from '../../lib/guestTrustStorage';
 import type { FrequentAmigoStatus } from '../../lib/inquiryHostContact';
 import { trackXpressEvent, type AnalyticsScope } from '../../lib/analytics';
 import { navigateTo } from '../../lib/navigation';
@@ -34,6 +37,7 @@ export default function InquiryReceivedSuccess({
   analyticsScope,
 }: InquiryReceivedSuccessProps) {
   useEffect(() => {
+    recordGuestInquiry(customerReference);
     trackXpressEvent('inquiry_success', {
       ...analyticsScope,
       inquiry_type: variant === 'offer' ? 'make_offer' : 'book_pay_later',
@@ -87,6 +91,21 @@ export default function InquiryReceivedSuccess({
       </div>
 
       <CustomerReferenceField reference={customerReference} />
+
+      <GuestIdProfileCard />
+
+      <GuestTrustJourney
+        compact
+        context={{
+          inquiries: [
+            {
+              customerReference: customerReference.trim().toUpperCase(),
+              submittedAt: Date.now(),
+            },
+          ],
+          frequentAmigo: frequentAmigo ?? null,
+        }}
+      />
 
       <section
         className="rounded-2xl p-4 sm:p-5 text-left"
@@ -146,7 +165,8 @@ export default function InquiryReceivedSuccess({
       </button>
 
       <p className="text-[11px] text-xpx-subtle leading-relaxed pb-1">
-        No payment taken. We&apos;ll email you when your inquiry moves forward.
+        No payment taken. Your details stay private until the inquiry is reviewed. We&apos;ll email
+        you when it moves forward.
       </p>
     </div>
   );

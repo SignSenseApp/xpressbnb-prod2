@@ -33,7 +33,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
         {property.is_verified && (
           <div className="absolute top-3 right-3 rounded-full px-3.5 py-2 shadow-sm flex items-center gap-1.5 border border-emerald-200 bg-emerald-50">
             <CheckCircle className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-emerald-700" />
-            <span className="text-xs sm:text-sm font-semibold text-emerald-800 tracking-tight">Verified</span>
+            <span className="text-xs sm:text-sm font-semibold text-emerald-800 tracking-tight">Reviewed</span>
           </div>
         )}
       </div>
@@ -74,7 +74,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             </div>
             <span className="inline-flex items-center gap-1 mt-1.5 px-2.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-100">
               <CheckCircle className="w-3 h-3" />
-              Lowest Price Guaranteed
+              Host-listed price
             </span>
           </div>
           <button className="px-5 py-2.5 bg-[#059669] text-white rounded-full font-semibold hover:bg-[#047857] transition-colors">

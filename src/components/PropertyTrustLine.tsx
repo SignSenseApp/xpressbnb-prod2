@@ -20,24 +20,9 @@ interface PropertyTrustLineProps {
   className?: string;
 }
 
-function TrustChip({
-  label,
-  variant,
-}: {
-  label: string;
-  variant: 'compact' | 'page';
-}) {
-  const chipClass =
-    variant === 'page' ? 'text-xs sm:text-sm px-2.5 py-1' : 'text-[10px] px-2 py-1';
-
+function TrustChip({ label }: { label: string }) {
   return (
-    <span
-      className={`inline-flex items-center rounded-full font-semibold text-xpx-muted shrink-0 ${chipClass}`}
-      style={{
-        background: 'rgba(15,23,42,0.04)',
-        border: '1px solid var(--xpx-border)',
-      }}
-    >
+    <span className="xpx-trust-micro shrink-0">
       {label}
     </span>
   );
@@ -126,7 +111,7 @@ export default function PropertyTrustLine({
         {!omitStayScore && (
           <StayScoreBadge label={stayScore.label} variant={variant} onOpenInfo={openInfo} />
         )}
-        <TrustChip label={chipLabel} variant={variant} />
+        <TrustChip label={chipLabel} />
       </div>
       {variant === 'page' && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

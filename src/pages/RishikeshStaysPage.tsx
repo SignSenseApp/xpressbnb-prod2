@@ -167,7 +167,7 @@ const RishikeshStaysPage: React.FC = () => {
         config={{
           title: 'Rishikesh Stays — Riverside Cottages, Yoga Retreats & Boutique Hotels | XpressBnB',
           description:
-            'Discover hand-picked stays in Rishikesh — riverside cottages, Himalayan villas, yoga retreats and boutique hotels. B2B private solo show rates for organisers. Verified hosts. Transparent pricing.',
+            'Discover hand-picked stays in Rishikesh — riverside cottages, Himalayan villas, yoga retreats and boutique hotels. Direct host pricing. Zero guest commission.',
           keywords:
             'rishikesh stays, rishikesh hotels, yoga retreat rishikesh, riverside cottage rishikesh, ganga view stays, tapovan stays, laxman jhula hotels, private solo show rishikesh, b2b entertainment rishikesh',
           canonical: 'https://xpressbnb.com/stays/rishikesh',
@@ -241,10 +241,10 @@ const RishikeshStaysPage: React.FC = () => {
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             {[
-              `${properties.length} Verified Stays`,
-              'No Commission',
-              'Pay at Property',
-              'Instant Booking',
+              `${properties.length} listings`,
+              'No guest commission',
+              'Pay at property',
+              'Direct inquiries',
             ].map((label) => (
               <span
                 key={label}

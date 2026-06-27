@@ -284,7 +284,7 @@ export default function PropertyPage() {
     try {
       const row = await fetchPublicHost(hostId);
       if (row?.name) {
-        setHostName(safeHostDisplayName(row.name, 'Verified Host'));
+        setHostName(safeHostDisplayName(row.name, 'Host'));
       }
     } catch (err) {
       console.error('PropertyPage: host name fetch threw', err);
@@ -764,7 +764,7 @@ export default function PropertyPage() {
                       }}
                     >
                       <CheckCircle className="w-3.5 h-3.5" fill="currentColor" />
-                      Verified Stay
+                      Quality reviewed
                     </span>
                   )}
                 </div>
@@ -807,7 +807,7 @@ export default function PropertyPage() {
                 <li className="inline-flex items-center gap-1.5 text-xpx-muted">
                   Hosted by{' '}
                   <span className="font-semibold text-xpx-text">
-                    {hostName ?? 'Verified Host'}
+                    {hostName ?? 'Host'}
                   </span>
                 </li>
               </ul>
@@ -1193,7 +1193,7 @@ export default function PropertyPage() {
                     </span>
                     <span className="text-xs text-xpx-muted">total</span>
                   </div>
-                  <p className="text-[10.5px] text-xpx-subtle leading-tight">
+                  <p className="text-xs text-xpx-subtle leading-snug">
                     {bookingNights} {bookingNights === 1 ? 'night' : 'nights'} · incl. fees · no GST from us
                   </p>
                 </>
@@ -1205,7 +1205,7 @@ export default function PropertyPage() {
                     </span>
                     <span className="text-xs text-xpx-muted">/ night</span>
                   </div>
-                  <p className="text-[10.5px] text-xpx-subtle leading-tight">
+                  <p className="text-xs text-xpx-subtle leading-snug">
                     Starting price · host sets the rate
                   </p>
                 </>

@@ -179,8 +179,8 @@ export default function WelcomeOfferModal({
             <span className="block">Create an account later.</span>
           </h2>
           <p id={descId} className="mt-3 text-[15px] sm:text-base text-xpx-muted leading-relaxed">
-            Browse verified stays, send your first inquiry, and we&apos;ll create your secure guest
-            profile only when you&apos;re ready. No unnecessary sign-ups. No guest commission.
+            Browse direct stays, send your first inquiry, and we&apos;ll issue your private Guest
+            ID — no account required. No guest commission.
           </p>
 
           <ul

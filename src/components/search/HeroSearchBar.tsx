@@ -52,12 +52,7 @@ function SearchLocationChip({
     <button
       type="button"
       onClick={onClick}
-      className="mb-2 inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-opacity hover:opacity-80"
-      style={{
-        borderColor: 'rgba(226,232,240,0.95)',
-        background: 'rgba(255,255,255,0.92)',
-        color: '#475569',
-      }}
+      className="mb-2 xpx-trust-micro max-w-full transition-opacity hover:opacity-80"
     >
       <MapPin className="h-3 w-3 shrink-0" style={{ color: ACCENT }} aria-hidden />
       <span className="truncate">{label}</span>

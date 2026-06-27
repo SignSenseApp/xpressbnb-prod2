@@ -117,13 +117,13 @@ export interface WhyLoveItem {
 
 export const WHY_LOVE_DEFAULTS: WhyLoveItem[] = [
   {
-    title: 'Hand-picked stay',
-    subcopy: 'Every property is personally inspected before it gets listed.',
+    title: 'Curated presentation',
+    subcopy: 'Each listing is prepared with real photos and clear host pricing.',
     icon: 'sparkles',
   },
   {
-    title: 'Verified hosts',
-    subcopy: 'KYC-checked owners who reply within an hour, on average.',
+    title: 'Direct with hosts',
+    subcopy: 'Inquiries are reviewed privately before your contact is shared.',
     icon: 'shield',
   },
   {
@@ -132,8 +132,8 @@ export const WHY_LOVE_DEFAULTS: WhyLoveItem[] = [
     icon: 'leaf',
   },
   {
-    title: 'Real photos, real reviews',
-    subcopy: 'What you see in the listing is exactly what you get on arrival.',
+    title: 'What you see is what you book',
+    subcopy: 'Listing details come from the host — we do not invent review scores.',
     icon: 'heart',
   },
 ];
@@ -229,15 +229,15 @@ export interface TrustPill {
 }
 
 export const TRUST_PILLS: TrustPill[] = [
-  { title: 'Verified & inspected', subtitle: 'Quality-checked stay', tone: 'verified' },
+  { title: 'Quality reviewed', subtitle: 'When the verified badge is shown', tone: 'verified' },
   { title: 'Pay at property or secure booking', subtitle: 'Flexible booking', tone: 'trust' },
   { title: 'Transparent pricing', subtitle: 'Total shown before you inquire', tone: 'trust' },
-  { title: 'Quick host response', subtitle: 'Host replies after review', tone: 'trust' },
+  { title: 'Reviewed inquiry', subtitle: 'Checked before host contact', tone: 'trust' },
 ];
 
 export function getTrustPillsForProperty(property: Property): TrustPill[] {
   return TRUST_PILLS.map((pill) => {
-    if (pill.title === 'Verified & inspected') {
+    if (pill.title === 'Quality reviewed') {
       return property.is_verified
         ? pill
         : {
@@ -245,13 +245,6 @@ export function getTrustPillsForProperty(property: Property): TrustPill[] {
             subtitle: 'Priced and managed by the host',
             tone: 'trust',
           };
-    }
-    if (pill.title === 'Quick host response') {
-      return {
-        ...pill,
-        title: 'Reviewed inquiry',
-        subtitle: 'We check inquiries before hosts respond',
-      };
     }
     return pill;
   });

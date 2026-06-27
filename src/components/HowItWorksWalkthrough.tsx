@@ -1,7 +1,7 @@
 const STEPS = [
   {
     step: '1',
-    title: 'Explore verified stays',
+    title: 'Explore direct stays',
     body: 'Browse real listings with transparent host pricing. No account needed to look around.',
     image: '/images/trust/how-it-works-explore.jpg',
     width: 800,

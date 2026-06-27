@@ -1,7 +1,7 @@
 import { Home, Compass, Bookmark, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-const ACCENT = '#50C878';
+const ACCENT = '#059669';
 
 interface MobileBottomNavProps {
   currentPath: string;
@@ -80,12 +80,10 @@ export default function MobileBottomNav({ currentPath, onNavigate }: MobileBotto
               <button
                 key={tab.id}
                 onClick={() => handleTabClick(tab)}
-                className="relative flex-1 flex flex-col items-center justify-center gap-0.5 rounded-2xl active:scale-[0.92] transition-transform"
+                className="relative flex-1 flex flex-col items-center justify-center gap-1 rounded-2xl motion-reduce:transition-none motion-reduce:active:scale-100 active:opacity-80 transition-opacity duration-150"
                 style={{
                   color: isActive ? ACCENT : '#64748B',
-                  // Comfortable Apple-grade hit target.
                   minHeight: 56,
-                  transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
                 }}
                 aria-current={isActive ? 'page' : undefined}
                 aria-label={tab.label}
@@ -93,21 +91,18 @@ export default function MobileBottomNav({ currentPath, onNavigate }: MobileBotto
                 {/* Active pill behind the icon — slides in with spring easing.
                     Subtle warm tint, never loud. */}
                 <span
-                  className="absolute inset-x-3 top-1.5 bottom-1.5 rounded-2xl transition-all"
+                  className="absolute inset-x-3 top-1.5 bottom-1.5 rounded-2xl transition-colors duration-200 motion-reduce:transition-none"
                   style={{
-                    background: isActive ? 'rgba(80,200,120,0.14)' : 'transparent',
-                    transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
-                    transitionDuration: '260ms',
+                    background: isActive ? 'rgba(5,150,105,0.1)' : 'transparent',
                   }}
                 />
                 <Icon
-                  className="w-6 h-6 relative z-10 transition-transform"
-                  strokeWidth={isActive ? 2.4 : 1.6}
-                  style={{ transform: isActive ? 'translateY(-1px)' : 'translateY(0)' }}
+                  className="w-6 h-6 relative z-10"
+                  strokeWidth={isActive ? 2.25 : 1.75}
                 />
                 <span
-                  className="relative z-10 text-[10.5px] transition-all"
-                  style={{ fontWeight: isActive ? 700 : 500, letterSpacing: '0.01em' }}
+                  className="relative z-10 text-xs leading-tight"
+                  style={{ fontWeight: isActive ? 600 : 500 }}
                 >
                   {tab.id === 'profile' && user ? 'Dashboard' : tab.label}
                 </span>

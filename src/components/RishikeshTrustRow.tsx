@@ -20,32 +20,32 @@ interface TrustItem {
 const ITEMS: TrustItem[] = [
   {
     Icon: ShieldCheck,
-    title: 'Verified Hosts & Stays',
-    text: 'Quality checked for your peace of mind.',
+    title: 'Quality reviewed when marked',
+    text: 'Listings with a badge passed our review. Others are direct host listings.',
     tone: 'verified',
   },
   {
     Icon: Tag,
-    title: 'Zero Commission',
-    text: 'Better prices for you. Always.',
+    title: 'Zero guest commission',
+    text: 'You pay the host directly — no platform markup on the stay.',
     tone: 'trust',
   },
   {
     Icon: Banknote,
-    title: 'Pay at Property',
-    text: 'Cash or UPI accepted at check-in.',
-    tone: 'verified',
+    title: 'Pay at property',
+    text: 'Many hosts accept cash or UPI at check-in when agreed.',
+    tone: 'trust',
   },
   {
     Icon: Headphones,
-    title: 'Local Support',
-    text: "We're here for you on the ground.",
+    title: 'XpressBnB support',
+    text: 'Questions before you inquire? Our team can help.',
     tone: 'trust',
   },
   {
     Icon: MessageCircle,
-    title: 'WhatsApp Booking',
-    text: 'Chat with us. Get instant help.',
+    title: 'Private inquiries',
+    text: 'Share dates first — contact details go to the host after review.',
     tone: 'trust',
   },
 ];

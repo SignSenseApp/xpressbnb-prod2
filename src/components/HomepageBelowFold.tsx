@@ -41,11 +41,11 @@ function pexelsPhotoUrl(photoId: string, width: number) {
 const CITIES = ['Delhi', 'Gurgaon', 'Noida', 'Greater Noida', 'Ghaziabad', 'Rishikesh'];
 
 const CITY_TAGLINES: Record<string, string> = {
-  Delhi: 'Capital stays, verified hosts.',
+  Delhi: 'Capital stays, direct host pricing.',
   Gurgaon: 'Corporate hub, premium homes.',
-  Noida: 'Modern stays, direct pricing.',
+  Noida: 'Modern stays, transparent pricing.',
   'Greater Noida': 'Spacious homes, quiet neighborhoods.',
-  Rishikesh: 'Riverside retreats, verified hosts.',
+  Rishikesh: 'Riverside retreats, calm stays.',
   Ghaziabad: 'Comfortable stays near Delhi NCR.',
 };
 
@@ -127,7 +127,7 @@ export default function HomepageBelowFold({
           <SectionHeader
             label="HANDPICKED FOR YOU"
             title="Featured Stays"
-            subtitle="Premium verified properties from our community"
+            subtitle="Handpicked stays from our host community"
             action={
               <button
                 onClick={() => onCityClick('Delhi')}
@@ -173,7 +173,7 @@ export default function HomepageBelowFold({
           <SectionHeader
             label="EXPLORE"
             title="Top Destinations"
-            subtitle="Verified homes across India’s best cities"
+            subtitle="Direct host listings across India’s best cities"
           />
 
           <div className="hidden md:grid md:grid-cols-12 md:grid-rows-[minmax(240px,1fr)_minmax(210px,0.9fr)] md:gap-4 lg:gap-5">
@@ -232,7 +232,7 @@ export default function HomepageBelowFold({
               Direct stays. Real hosts. Zero commission.
             </p>
             <p className="mt-3 text-sm md:text-base leading-relaxed" style={{ color: TEXT_MUTED }}>
-              Book directly with verified hosts — no platform markup, no invented review scores.
+              Book directly with hosts — no platform markup, no invented review scores.
             </p>
           </div>
         </div>
@@ -261,7 +261,7 @@ export default function HomepageBelowFold({
                   Turn your empty space into income
                 </h2>
                 <p className="mt-4 max-w-[48ch] text-sm sm:text-[15px] md:text-base leading-relaxed" style={{ color: 'rgba(236,253,245,0.78)' }}>
-                  List in minutes. Reach verified guests. Earn more with zero platform fees.
+                  List in minutes. Reach guests directly. Earn more with zero platform fees.
                 </p>
 
                 <div className="mt-6 flex flex-col sm:flex-row gap-2.5 sm:gap-3">
@@ -326,9 +326,9 @@ export default function HomepageBelowFold({
                   />
                   <div className="absolute left-3.5 right-3.5 bottom-3.5 rounded-[14px] border px-3.5 py-2.5 backdrop-blur-sm" style={{ borderColor: 'rgba(236,253,245,0.26)', background: 'rgba(6,78,59,0.5)' }}>
                     <p className="text-xs uppercase tracking-[0.18em] font-semibold" style={{ color: 'rgba(167,243,208,0.88)' }}>
-                      Host growth snapshot
+                      Why hosts list here
                     </p>
-                    <p className="mt-1 text-[13px] font-semibold text-white">High-demand bookings across premium urban stays</p>
+                    <p className="mt-1 text-[13px] font-semibold text-white">Direct inquiries, zero commission on guest bookings</p>
                   </div>
                 </div>
 
@@ -341,15 +341,15 @@ export default function HomepageBelowFold({
                   }}
                 >
                   {[
-                    { icon: '₹', label: 'Monthly potential', value: '₹45,000+' },
-                    { icon: '%', label: 'Platform fee', value: '0%' },
-                    { icon: '✓', label: 'Verified guests', value: '100%' },
+                    { icon: '%', label: 'Guest commission', value: '0%' },
+                    { icon: '→', label: 'Inquiry flow', value: 'Direct' },
+                    { icon: '✓', label: 'Listing control', value: 'Yours' },
                   ].map((item) => (
                     <div
                       key={item.label}
                       className="flex items-center gap-2.5 py-2.5"
                       style={{
-                        borderBottom: item.label === 'Verified guests' ? 'none' : '1px solid rgba(16,185,129,0.14)',
+                        borderBottom: item.label === 'Listing control' ? 'none' : '1px solid rgba(16,185,129,0.14)',
                       }}
                     >
                       <span
@@ -448,7 +448,7 @@ export default function HomepageBelowFold({
                 </span>
               </div>
               <p className="mt-5 text-sm leading-relaxed max-w-sm" style={{ color: FOOTER_BODY }}>
-                Verified stays across Delhi NCR. Direct host pricing, zero guest commission.
+                Direct stays across Delhi NCR. Host-listed pricing, zero guest commission.
               </p>
               <p className="mt-4 text-sm" style={{ color: FOOTER_BODY }}>
                 <a
@@ -536,13 +536,13 @@ function FeaturedSkeleton() {
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
-          className="xpx-property-card shrink-0 w-[78vw] min-w-[78vw] max-w-[78vw] md:w-auto md:min-w-0 md:max-w-[380px] overflow-hidden"
+          className="xpx-property-card shrink-0 w-[85vw] min-w-[85vw] max-w-[85vw] md:w-auto md:min-w-0 md:max-w-[380px] overflow-hidden"
         >
           <div className="xpx-property-card-media animate-pulse" style={{ background: SURFACE_LIGHT }} />
-          <div className="space-y-3 p-5">
+          <div className="xpx-property-card-skeleton-body">
             <div className="h-4 w-3/4 rounded animate-pulse" style={{ background: SURFACE_LIGHT }} />
             <div className="h-3 w-1/2 rounded animate-pulse" style={{ background: SURFACE_LIGHT }} />
-            <div className="h-8 w-full rounded-xl animate-pulse" style={{ background: SURFACE_LIGHT }} />
+            <div className="h-10 w-full rounded-xl animate-pulse" style={{ background: SURFACE_LIGHT }} />
           </div>
         </div>
       ))}

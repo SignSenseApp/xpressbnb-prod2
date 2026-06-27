@@ -3,8 +3,10 @@ import { Loader2, Search } from 'lucide-react';
 import Header from '../components/Header';
 import SEOHead from '../components/SEOHead';
 import CustomerReferenceField from '../components/inquiry/CustomerReferenceField';
+import GuestTrustJourney from '../components/inquiry/GuestTrustJourney';
 import InquiryStatusTimeline from '../components/inquiry/InquiryStatusTimeline';
 import { inquiryTrackStatusLabel, trackInquiryByReference, type InquiryTrackResult, type InquiryTrackStatus } from '../lib/inquirySubmit';
+import { markGuestTrackPageVisited, updateGuestInquiryFromTrack } from '../lib/guestTrustStorage';
 import { navigateTo } from '../lib/navigation';
 
 function statusBadgeClass(status: InquiryTrackStatus): string {
@@ -57,9 +59,11 @@ export default function TrackInquiryPage() {
     }
 
     setResult(res.result);
+    updateGuestInquiryFromTrack(res.result);
   }, [reference, email]);
 
   useEffect(() => {
+    markGuestTrackPageVisited();
     if (initial.ref && initial.email) {
       void handleSearch();
     }
@@ -203,6 +207,24 @@ export default function TrackInquiryPage() {
                 </span>
               </p>
             )}
+
+            <GuestTrustJourney
+              compact
+              context={{
+                hasTrackedPage: true,
+                inquiries: [
+                  {
+                    customerReference: result.customerReference,
+                    submittedAt: result.createdAt
+                      ? new Date(result.createdAt).getTime()
+                      : Date.now(),
+                    lastDisplayStatus: result.displayStatus,
+                    reviewedAt: result.reviewedAt,
+                    phoneVerified: result.phoneVerified,
+                  },
+                ],
+              }}
+            />
           </div>
         )}
       </main>

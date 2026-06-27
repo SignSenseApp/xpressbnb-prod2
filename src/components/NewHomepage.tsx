@@ -61,9 +61,9 @@ const HERO_IMG_INTRINSIC = { width: 1920, height: 1080 } as const;
 
 const HERO_SLIDE_META = [
   { city: 'Gurgaon', tagline: 'Corporate hub, premium stays', photoId: '1571460' },
-  { city: 'Delhi', tagline: 'Capital stays, unbeatable prices', photoId: '2506988' },
+  { city: 'Delhi', tagline: 'Capital stays, direct pricing', photoId: '2506988' },
   { city: 'Rishikesh', tagline: 'Yoga capital, riverside retreats', photoId: '2161449' },
-  { city: 'Noida', tagline: 'Modern city, verified comfort', photoId: '1396122' },
+  { city: 'Noida', tagline: 'Modern city, host-listed comfort', photoId: '1396122' },
   {
     city: 'Greater Noida',
     tagline: 'Spacious homes, serene surroundings',
@@ -87,23 +87,23 @@ const PERSONALIZED_CROSSFADE_MS = 220;
 const TRUST_BADGES = [
   {
     icon: CheckCircle,
-    label: 'Verified Properties',
-    subtext: 'Every stay vetted',
+    label: 'Direct from hosts',
+    subtext: 'Listed prices, no guest commission',
   },
   {
     icon: Lock,
-    label: 'Secure Booking',
-    subtext: 'Protected payments',
+    label: 'Private inquiry',
+    subtext: 'Details reviewed before host contact',
   },
   {
     icon: Zap,
-    label: 'Zero Commission',
-    subtext: 'No middleman fees',
+    label: 'Zero commission',
+    subtext: 'No platform fees on your stay',
   },
   {
     icon: ShieldCheck,
-    label: 'Best Price Guarantee',
-    subtext: 'Listed host price, no guest fees',
+    label: 'Transparent pricing',
+    subtext: 'Total shown before you inquire',
   },
 ];
 
@@ -273,11 +273,11 @@ export default function NewHomepage() {
       <SEOHead
         config={{
           title:
-            'XpressBnB - Verified Stays in Delhi NCR | No Commission, Best Price Guaranteed',
+            'XpressBnB - Direct Stays in Delhi NCR | Zero Guest Commission',
           description:
-            'Book verified homes and apartments directly from hosts. Premium stays in Delhi, Gurgaon, Noida and Rishikesh. No brokerage, zero commission.',
+            'Book homes and apartments directly from hosts. Stays in Delhi, Gurgaon, Noida and Rishikesh. No brokerage, zero guest commission.',
           keywords:
-            'verified stays delhi, no brokerage apartments, premium stays noida, gurgaon serviced apartments, rishikesh retreats',
+            'direct stays delhi, no brokerage apartments, premium stays noida, gurgaon serviced apartments, rishikesh retreats',
           canonical: 'https://xpressbnb.com',
           structuredData: generateOrganizationStructuredData(),
         }}
@@ -506,10 +506,10 @@ export default function NewHomepage() {
               style={{ animation: 'fadeInUp 560ms cubic-bezier(0.22, 1, 0.36, 1) both' }}
             >
               <h1
-                className="text-white font-extrabold leading-[1.08] tracking-tight"
-                style={{ fontSize: 'clamp(36px, 6.1vw, 76px)', lineHeight: 0.98, textShadow: '0 8px 28px rgba(2,6,23,0.45)' }}
+                className="text-white font-extrabold tracking-tight"
+                style={{ fontSize: 'clamp(36px, 6.1vw, 76px)', lineHeight: 1.08, textShadow: '0 8px 28px rgba(2,6,23,0.45)' }}
               >
-                Find Your Verified Stay
+                Find your next stay
               </h1>
               <p
                 className="mt-4 max-w-2xl text-sm sm:text-base md:text-lg font-medium"
@@ -598,8 +598,8 @@ export default function NewHomepage() {
           config={{
             title: `Stays near ${nearby?.detectedCity ?? 'you'} | XpressBnB`,
             description:
-              'Personalized verified stays near you. Zero commission, direct from hosts.',
-            keywords: 'nearby stays, verified homes, xpressbnb',
+              'Personalized stays near you. Zero commission, direct from hosts.',
+            keywords: 'nearby stays, direct host homes, xpressbnb',
             canonical: 'https://xpressbnb.com',
             structuredData: generateOrganizationStructuredData(),
           }}
