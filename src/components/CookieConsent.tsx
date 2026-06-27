@@ -209,8 +209,8 @@ function ConsentRow({
 function PrivacyCopy() {
   return (
     <p className="text-sm sm:text-[15px] text-xpx-muted leading-relaxed">
-      Essential cookies keep you signed in and the site running. With your permission we also use
-      analytics and marketing cookies to improve XpressBnB and measure ad performance.{' '}
+      Your travel plans stay private. Essential cookies keep the site working. With your permission,
+      we also use analytics cookies to improve XpressBnB — never to sell your data.{' '}
       <button
         type="button"
         onClick={() => openHomeOverlay('privacy')}
@@ -289,7 +289,7 @@ export function CookieConsentBanner({
               id={titleId}
               className="text-xl sm:text-2xl font-extrabold text-xpx-text tracking-tight leading-tight"
             >
-              We care about your privacy
+              Your privacy matters
             </h2>
             <div className="mt-3 sm:mt-4">
               <PrivacyCopy />

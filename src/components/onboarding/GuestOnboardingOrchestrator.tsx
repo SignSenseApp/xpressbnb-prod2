@@ -31,11 +31,11 @@ export default function GuestOnboardingOrchestrator({
     });
   }, [dismissWelcome]);
 
-  // Homepage #why — same product-education destination as nav "About" and host "See how it works"
+  // Homepage #how-it-works — product education walkthrough
   const handleHowItWorks = useCallback(() => {
     dismissWelcome();
     requestAnimationFrame(() => {
-      scrollToId('why', { offset: readScrollAnchorOffset(), duration: 1.05 });
+      scrollToId('how-it-works', { offset: readScrollAnchorOffset(), duration: 1.05 });
     });
   }, [dismissWelcome]);
 

@@ -29,6 +29,7 @@ import {
 import { orchestratedScrollTo } from '../lib/scrollOrchestrator';
 import TurnstileWidget from './inquiry/TurnstileWidget';
 import InquiryReceivedSuccess from './inquiry/InquiryReceivedSuccess';
+import InquiryConfidenceStrip from './inquiry/InquiryConfidenceStrip';
 import { submitBookingInquiry } from '../lib/inquirySubmit';
 import { getDeviceFingerprint } from '../lib/deviceFingerprint';
 import {
@@ -508,6 +509,8 @@ export default function BookingForm({
           </button>
         </div>
       )}
+
+      <InquiryConfidenceStrip className="mb-4" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4" id="booking-step-contact">
         <div>

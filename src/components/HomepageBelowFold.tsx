@@ -1,14 +1,7 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import {
-  Star,
   ShieldCheck,
   Zap,
-  Lock,
-  Play,
-  Instagram,
-  Facebook,
-  Twitter,
-  Linkedin,
 } from 'lucide-react';
 import { XPRESSBNB_LOGO_IMG_CLASS, XPRESSBNB_LOGO_PATH } from '../lib/branding';
 import { logSupabaseError } from '../lib/supabase';
@@ -23,6 +16,7 @@ import { OnboardingListingsEngagement } from './onboarding/OnboardingListingsEng
 import { firstImageUrl } from '../lib/savedListingsStorage';
 import { getPublicListings, invalidatePublicListingsCache } from '../lib/publicListings';
 import { warmPublicHostCache } from '../lib/hostPublicCache';
+import HowItWorksWalkthrough from './HowItWorksWalkthrough';
 
 const ACCENT = '#059669';
 const ACCENT_LIGHT = '#ecfdf5';
@@ -47,12 +41,12 @@ function pexelsPhotoUrl(photoId: string, width: number) {
 const CITIES = ['Delhi', 'Gurgaon', 'Noida', 'Greater Noida', 'Ghaziabad', 'Rishikesh'];
 
 const CITY_TAGLINES: Record<string, string> = {
-  Delhi: 'The city that never asks questions.',
-  Gurgaon: 'All glass. No noise. No one knows.',
-  Noida: 'Far enough from everyone who knows you.',
-  'Greater Noida': 'The escape nobody talks about. Yet.',
-  Rishikesh: "The mountains won't tell anyone.",
-  Ghaziabad: "Closer than you think. Quieter than you'd expect.",
+  Delhi: 'Capital stays, verified hosts.',
+  Gurgaon: 'Corporate hub, premium homes.',
+  Noida: 'Modern stays, direct pricing.',
+  'Greater Noida': 'Spacious homes, quiet neighborhoods.',
+  Rishikesh: 'Riverside retreats, verified hosts.',
+  Ghaziabad: 'Comfortable stays near Delhi NCR.',
 };
 
 const CITY_IMAGES: Record<string, string> = {
@@ -291,8 +285,8 @@ export default function HomepageBelowFold({
                   </button>
                   <button
                     type="button"
-                    onClick={() => scrollTo('why')}
-                    className="inline-flex min-h-[48px] w-full sm:w-auto items-center justify-center gap-2 rounded-full px-5 sm:px-5.5 py-2.5 text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                    onClick={() => scrollTo('how-it-works')}
+                    className="inline-flex min-h-[48px] w-full sm:w-auto items-center justify-center rounded-full px-5 sm:px-5.5 py-2.5 text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
                     style={{
                       background: 'rgba(255,255,255,0.06)',
                       border: '1px solid rgba(236,253,245,0.45)',
@@ -305,13 +299,7 @@ export default function HomepageBelowFold({
                       e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
                     }}
                   >
-                    <span
-                      className="inline-flex h-6 w-6 items-center justify-center rounded-full"
-                      style={{ background: 'rgba(236,253,245,0.22)' }}
-                    >
-                      <Play className="h-3.5 w-3.5 fill-current" />
-                    </span>
-                    See how it works
+                    How it works
                   </button>
                 </div>
               </div>
@@ -387,36 +375,27 @@ export default function HomepageBelowFold({
         </div>
       </section>
 
-      {/* ──── Why XpressBnB ──── */}
+      {/* ──── How it works + honest trust ──── */}
       <section id="why" className="scroll-mt-28 xpx-section relative z-[1]" style={{ background: SURFACE_LIGHT }}>
-        <div className="xpx-container">
+        <div className="xpx-container space-y-10 md:space-y-12">
           <SectionHeader
-            label="WHY XPRESSBNB"
-            title="The premium way to book stays"
-            subtitle="Direct relationships, transparent pricing, verified properties"
+            label="HOW IT WORKS"
+            title="Three calm steps to your stay"
+            subtitle="Browse first. Inquire when you're ready. Hear directly from the host."
           />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 auto-rows-fr">
+          <HowItWorksWalkthrough id="how-it-works" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {(
               [
                 {
                   icon: ShieldCheck,
-                  title: '100% Verified',
-                  desc: 'Every property is personally inspected and approved before going live.',
+                  title: 'Verified when marked',
+                  desc: 'Listings with a verified badge have passed our quality review. Others are direct host listings with transparent pricing.',
                 },
                 {
                   icon: Zap,
-                  title: 'Zero Commission',
-                  desc: 'Book directly from the host. No middlemen, no surprise fees.',
-                },
-                {
-                  icon: Lock,
-                  title: 'Secure Payments',
-                  desc: 'PCI-grade encryption and instant refunds keep your money protected.',
-                },
-                {
-                  icon: Star,
-                  title: 'Best Price Guarantee',
-                  desc: 'See a lower price elsewhere? We match it and credit the difference.',
+                  title: 'Zero guest commission',
+                  desc: 'You pay the host directly. We do not add platform fees on top of the listed price.',
                 },
               ] as const
             ).map((card) => {
@@ -424,11 +403,10 @@ export default function HomepageBelowFold({
               return (
                 <div
                   key={card.title}
-                  className="group h-full rounded-[20px] p-6 flex flex-col transition-all duration-300 md:hover:-translate-y-1"
+                  className="h-full rounded-[20px] p-6 flex flex-col"
                   style={{
                     background: SURFACE,
                     border: `1px solid ${BORDER}`,
-                    boxShadow: 'none',
                   }}
                 >
                   <div
@@ -470,38 +448,17 @@ export default function HomepageBelowFold({
                 </span>
               </div>
               <p className="mt-5 text-sm leading-relaxed max-w-sm" style={{ color: FOOTER_BODY }}>
-                India&rsquo;s first zero-commission booking platform. Direct, verified, and beautifully simple.
+                Verified stays across Delhi NCR. Direct host pricing, zero guest commission.
               </p>
-              <div className="mt-6 flex items-center gap-2.5">
-                {[
-                  { label: 'Instagram', Icon: Instagram },
-                  { label: 'Facebook', Icon: Facebook },
-                  { label: 'Twitter/X', Icon: Twitter },
-                  { label: 'LinkedIn', Icon: Linkedin },
-                ].map(({ label, Icon }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    aria-label={label}
-                    className="w-9 h-9 rounded-full inline-flex items-center justify-center transition-colors"
-                    style={{
-                      border: '1px solid rgba(236,253,245,0.2)',
-                      color: 'rgba(236,253,245,0.82)',
-                      background: 'rgba(255,255,255,0.02)',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = '#ffffff';
-                      e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = 'rgba(236,253,245,0.82)';
-                      e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
-                    }}
-                  >
-                    <Icon className="h-4 w-4" />
-                  </button>
-                ))}
-              </div>
+              <p className="mt-4 text-sm" style={{ color: FOOTER_BODY }}>
+                <a
+                  href={`mailto:${TEAM_EMAIL}`}
+                  className="font-semibold underline underline-offset-2 hover:opacity-90"
+                  style={{ color: FOOTER_LINK_HOVER }}
+                >
+                  Questions? Email us
+                </a>
+              </p>
             </div>
             <FooterCol
               title="Explore"
@@ -510,9 +467,9 @@ export default function HomepageBelowFold({
             <FooterCol
               title="Company"
               items={[
-                { label: 'About', onClick: () => scrollTo('why') },
+                { label: 'How it works', onClick: () => scrollTo('how-it-works') },
                 { label: 'Become a Host', onClick: () => onNavigate('/auth/login') },
-                { label: 'Help Center', onClick: () => scrollTo('why') },
+                { label: 'Help', onClick: () => { window.location.href = `mailto:${TEAM_EMAIL}`; } },
               ]}
             />
             <FooterCol

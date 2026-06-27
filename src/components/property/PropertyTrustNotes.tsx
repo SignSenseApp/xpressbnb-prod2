@@ -1,17 +1,17 @@
 import { Shield } from 'lucide-react';
 
 const TRUST_NOTES = [
-  'Verify your phone to send an inquiry.',
-  'Host contact is shared after verification.',
-  'Carry a genuine ID if the host asks.',
-  'Confirm advance, pets, parking, and special requests with the host.',
+  'Share your details to send a secure inquiry — no payment now.',
+  'We review inquiries before the host sees your contact info.',
+  'Carry a genuine ID if the host asks at check-in.',
+  'Confirm advance, pets, parking, and special requests directly with the host.',
 ] as const;
 
 interface PropertyTrustNotesProps {
   className?: string;
 }
 
-/** Compact verified-inquiry safety copy for property page CTAs. */
+/** Compact inquiry safety copy for property page CTAs. */
 export default function PropertyTrustNotes({ className = '' }: PropertyTrustNotesProps) {
   return (
     <ul className={`space-y-1.5 text-[11px] text-xpx-muted leading-snug ${className}`}>

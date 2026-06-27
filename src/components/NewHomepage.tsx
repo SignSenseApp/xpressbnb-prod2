@@ -81,7 +81,7 @@ const HERO_SLIDES = HERO_SLIDE_META.map(({ city, tagline, photoId }) => ({
 
 const CITIES = ['Delhi', 'Gurgaon', 'Noida', 'Greater Noida', 'Ghaziabad', 'Rishikesh'];
 
-const BELOW_FOLD_ANCHOR_IDS = new Set(['listings', 'host', 'why']);
+const BELOW_FOLD_ANCHOR_IDS = new Set(['listings', 'host', 'why', 'how-it-works']);
 const PERSONALIZED_CROSSFADE_MS = 220;
 
 const TRUST_BADGES = [
@@ -103,7 +103,7 @@ const TRUST_BADGES = [
   {
     icon: ShieldCheck,
     label: 'Best Price Guarantee',
-    subtext: 'Always the best rate',
+    subtext: 'Listed host price, no guest fees',
   },
 ];
 
@@ -327,14 +327,14 @@ export default function NewHomepage() {
           </div>
 
           <nav className="hidden lg:flex items-center justify-center gap-1 justify-self-center">
-            {['Stays', 'Experiences', 'Host', 'About'].map(label => (
+            {['Stays', 'Host', 'About'].map(label => (
               <button
                 key={label}
                 type="button"
                 onClick={() =>
                   label === 'Host'
                     ? navigate('/auth/login')
-                    : scrollTo(label === 'Stays' ? 'listings' : label === 'About' ? 'why' : 'listings')
+                    : scrollTo(label === 'Stays' ? 'listings' : label === 'About' ? 'how-it-works' : 'listings')
                 }
                 className="px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[48px] inline-flex items-center"
                 style={{ color: TEXT }}
@@ -417,7 +417,7 @@ export default function NewHomepage() {
             }}
           >
             <nav className="xpx-container py-3 flex flex-col">
-              {['Stays', 'Experiences', 'Host', 'About'].map(label => (
+              {['Stays', 'Host', 'About'].map(label => (
                 <button
                   key={label}
                   type="button"
@@ -426,7 +426,7 @@ export default function NewHomepage() {
                     if (label === 'Host') {
                       navigate('/auth/login');
                     } else {
-                      scrollTo(label === 'Stays' ? 'listings' : label === 'About' ? 'why' : 'listings');
+                      scrollTo(label === 'Stays' ? 'listings' : label === 'About' ? 'how-it-works' : 'listings');
                     }
                   }}
                   className="w-full text-left py-3.5 px-2 rounded-lg text-[15px] font-medium min-h-[48px] flex items-center touch-manipulation"
@@ -515,7 +515,7 @@ export default function NewHomepage() {
                 className="mt-4 max-w-2xl text-sm sm:text-base md:text-lg font-medium"
                 style={{ color: 'rgba(248,250,252,0.95)', textShadow: '0 2px 10px rgba(2,6,23,0.45)' }}
               >
-                Direct bookings. Trusted hosts. Zero commission. Best price, always.
+                Direct bookings. Trusted hosts. Zero guest commission.
               </p>
             </div>
 
@@ -557,7 +557,7 @@ export default function NewHomepage() {
                   <div className="text-[13px] md:text-sm font-semibold leading-tight" style={{ color: TEXT }}>
                     {label}
                   </div>
-                  <div className="hidden md:block text-xs mt-1 leading-tight" style={{ color: TEXT_MUTED }}>
+                  <div className="text-xs mt-1 leading-tight" style={{ color: TEXT_MUTED }}>
                     {subtext}
                   </div>
                 </div>

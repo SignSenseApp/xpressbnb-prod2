@@ -232,8 +232,30 @@ export const TRUST_PILLS: TrustPill[] = [
   { title: 'Verified & inspected', subtitle: 'Quality-checked stay', tone: 'verified' },
   { title: 'Pay at property or secure booking', subtitle: 'Flexible booking', tone: 'trust' },
   { title: 'Transparent pricing', subtitle: 'Total shown before you inquire', tone: 'trust' },
-  { title: 'Quick host response', subtitle: 'Typically replies in an hour', tone: 'trust' },
+  { title: 'Quick host response', subtitle: 'Host replies after review', tone: 'trust' },
 ];
+
+export function getTrustPillsForProperty(property: Property): TrustPill[] {
+  return TRUST_PILLS.map((pill) => {
+    if (pill.title === 'Verified & inspected') {
+      return property.is_verified
+        ? pill
+        : {
+            title: 'Direct host listing',
+            subtitle: 'Priced and managed by the host',
+            tone: 'trust',
+          };
+    }
+    if (pill.title === 'Quick host response') {
+      return {
+        ...pill,
+        title: 'Reviewed inquiry',
+        subtitle: 'We check inquiries before hosts respond',
+      };
+    }
+    return pill;
+  });
+}
 
 /**
  * Build a Google Maps "iframe?output=embed" URL. This legacy embed format

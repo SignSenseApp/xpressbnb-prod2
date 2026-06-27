@@ -39,7 +39,7 @@ import {
   WHY_LOVE_DEFAULTS,
   getNearbyPlaces,
   getHouseRules,
-  TRUST_PILLS,
+  getTrustPillsForProperty,
   getMapEmbedUrl,
   getMapLinkUrl,
 } from '../config/propertyDefaults';
@@ -818,7 +818,7 @@ export default function PropertyPage() {
             {/* 2. TRUST PILLS ROW */}
             <section>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                {TRUST_PILLS.map((pill) => (
+                {getTrustPillsForProperty(property).map((pill) => (
                   <div
                     key={pill.title}
                     className="rounded-2xl p-4 sm:p-5 flex items-start gap-3"

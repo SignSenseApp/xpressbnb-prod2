@@ -79,10 +79,10 @@ export default function InquiryReceivedSuccess({
 
       <div>
         <h3 className="text-xl sm:text-2xl font-extrabold text-xpx-text tracking-tight">
-          Your inquiry has been received.
+          Welcome — your inquiry is in.
         </h3>
         <p className="text-sm text-xpx-muted mt-2 leading-relaxed max-w-md mx-auto">
-          We&apos;re preparing your inquiry before sending it to the host.
+          We&apos;re reviewing it now. Your Guest ID is ready so you can track everything later.
         </p>
       </div>
 
@@ -146,7 +146,7 @@ export default function InquiryReceivedSuccess({
       </button>
 
       <p className="text-[11px] text-xpx-subtle leading-relaxed pb-1">
-        No online payment taken. We&apos;ll notify you when your inquiry moves forward.
+        No payment taken. We&apos;ll email you when your inquiry moves forward.
       </p>
     </div>
   );

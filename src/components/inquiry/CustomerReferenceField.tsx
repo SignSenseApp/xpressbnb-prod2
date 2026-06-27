@@ -4,11 +4,13 @@ import { Check, Copy } from 'lucide-react';
 type CustomerReferenceFieldProps = {
   reference: string;
   label?: string;
+  description?: string;
 };
 
 export default function CustomerReferenceField({
   reference,
-  label = 'Customer Reference',
+  label = 'Your Guest ID',
+  description = 'Private to you — use it to track inquiries and future stays.',
 }: CustomerReferenceFieldProps) {
   const [copied, setCopied] = useState(false);
 
@@ -18,7 +20,6 @@ export default function CustomerReferenceField({
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      /* fallback for older browsers */
       const ta = document.createElement('textarea');
       ta.value = reference;
       ta.style.position = 'fixed';
@@ -43,7 +44,7 @@ export default function CustomerReferenceField({
       <div className="flex items-center gap-2">
         <code
           className="flex-1 min-w-0 text-lg sm:text-xl font-extrabold tracking-wide text-xpx-text tabular-nums break-all"
-          aria-label={`Customer reference ${reference}`}
+          aria-label={`Guest ID ${reference}`}
         >
           {reference}
         </code>
@@ -51,7 +52,7 @@ export default function CustomerReferenceField({
           type="button"
           onClick={() => void handleCopy()}
           className="shrink-0 inline-flex items-center gap-1.5 rounded-xl border border-xpx-border-strong bg-white px-3 py-2 text-xs font-semibold text-xpx-text hover:bg-slate-50 transition-colors min-h-[44px]"
-          aria-label={copied ? 'Copied' : 'Copy customer reference'}
+          aria-label={copied ? 'Copied' : 'Copy Guest ID'}
         >
           {copied ? (
             <>
@@ -66,9 +67,7 @@ export default function CustomerReferenceField({
           )}
         </button>
       </div>
-      <p className="text-xs text-xpx-muted mt-2 leading-relaxed">
-        Save this reference to track your inquiry anytime.
-      </p>
+      <p className="text-xs text-xpx-muted mt-2 leading-relaxed">{description}</p>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import type { Property } from '../lib/database.types';
 import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
 import type { FrequentAmigoStatus } from '../lib/inquiryHostContact';
 import InquiryReceivedSuccess from './inquiry/InquiryReceivedSuccess';
+import InquiryConfidenceStrip from './inquiry/InquiryConfidenceStrip';
 import TurnstileWidget from './inquiry/TurnstileWidget';
 import { normalizePhoneDigits } from '../lib/guestValidation';
 import { guestEmailError } from '../lib/guestValidation';
@@ -456,6 +457,8 @@ export default function OfferModal({
             </label>
 
             <TurnstileWidget onToken={setTurnstileToken} disabled={submitting} />
+
+            <InquiryConfidenceStrip className="mb-1" />
 
             {/* Contact details */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

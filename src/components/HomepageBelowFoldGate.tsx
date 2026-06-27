@@ -49,7 +49,7 @@ export default function HomepageBelowFoldGate({
   }, [active]);
 
   return (
-    <div ref={ref}>
+    <div ref={ref} className="min-h-[480px]">
       {active ? (
         <Suspense fallback={<HomepageBelowFoldSkeleton />}>
           <HomepageBelowFold
