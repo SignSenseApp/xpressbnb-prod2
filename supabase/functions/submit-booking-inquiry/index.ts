@@ -179,5 +179,26 @@ Deno.serve(async (req) => {
     return json(req, { error: msg }, status);
   }
 
-  return json(req, { ok: true, ...(data as Record<string, unknown>) });
+  const hostContact = await loadHostContact(admin, body.host_id);
+
+  return json(req, {
+    ok: true,
+    ...(data as Record<string, unknown>),
+    ...hostContact,
+  });
 });
+
+async function loadHostContact(
+  admin: ReturnType<typeof createClient>,
+  hostId: string,
+): Promise<{ host_name?: string; host_phone?: string }> {
+  const { data } = await admin.from('hosts').select('name, phone').eq('id', hostId).maybeSingle();
+  if (!data?.phone) return {};
+  const digits = String(data.phone).replace(/\D/g, '').slice(-10);
+  if (digits.length < 10) return {};
+  const name = String(data.name ?? '').trim();
+  return {
+    host_name: name || 'Host',
+    host_phone: digits,
+  };
+}

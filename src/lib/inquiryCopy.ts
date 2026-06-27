@@ -17,15 +17,15 @@ export function inquiryCtaLabel(context: InquiryCtaContext): string {
     case 'property_no_dates':
       return 'Check availability';
     case 'property_with_dates':
-      return 'Send inquiry';
+      return 'Request to book';
     case 'host_card':
-      return 'Ask about this stay';
+      return 'Request to book';
     case 'form_submit':
-      return 'Send inquiry';
+      return 'Request to book';
     case 'offer_submit':
       return 'Send offer to host';
     case 'modal_entry':
-      return 'Send inquiry';
+      return 'Request to book';
     case 'artist_whatsapp':
       return 'Request via WhatsApp';
     default:
@@ -33,7 +33,7 @@ export function inquiryCtaLabel(context: InquiryCtaContext): string {
   }
 }
 
-export const INQUIRY_SENDING_LABEL = 'Sending inquiry…';
+export const INQUIRY_SENDING_LABEL = 'Sending request…';
 
 export const INQUIRY_HOST_TAGLINE =
   'We bring genuine travel inquiries directly to hosts.';

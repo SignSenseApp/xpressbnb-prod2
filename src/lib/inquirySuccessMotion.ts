@@ -7,13 +7,12 @@ export const INQUIRY_TRANSITION_STEP_MS = 650;
 export const INQUIRY_TRANSITION_MIN_TOTAL_MS = 2200;
 
 export const INQUIRY_TRANSITION_LINES = [
-  'Submitting your travel request...',
-  'Preparing your Guest ID...',
-  'Introducing you to the host...',
+  'Submitting your booking request...',
+  'Connecting you with your host...',
   'Almost ready...',
 ] as const;
 
-export type InquiryTransitionStep = 0 | 1 | 2 | 3;
+export type InquiryTransitionStep = 0 | 1 | 2;
 
 export function guestInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);

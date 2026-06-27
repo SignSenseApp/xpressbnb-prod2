@@ -52,7 +52,7 @@ export function buildInquirySuccessWhatsAppLink(
   hostPhoneDigits: string,
   propertyTitle?: string,
 ): string {
-  const base = 'Hi, I submitted an inquiry through XpressBnB for your property.';
+  const base = 'Hi, I sent a booking request through XpressBnB for your property.';
   const message = propertyTitle?.trim()
     ? `${base} (${propertyTitle.trim()})`
     : base;

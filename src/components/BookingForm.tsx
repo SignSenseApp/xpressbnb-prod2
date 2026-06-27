@@ -33,12 +33,13 @@ import InquirySubmitTransition, {
 import InquiryConfidenceStrip from './inquiry/InquiryConfidenceStrip';
 import { submitBookingInquiry, type MarketplaceInquiryResult } from '../lib/inquirySubmit';
 import {
-  inquirySuccessPath,
   saveInquirySuccessSnapshot,
   type InquirySuccessSnapshot,
 } from '../lib/inquirySuccessStorage';
-import { navigateTo } from '../lib/navigation';
 import type { InquiryTransitionStep } from '../lib/inquirySuccessMotion';
+import RequestBookSuccess from './inquiry/success/RequestBookSuccess';
+import { fetchPublicHost } from '../lib/hostPublicCache';
+import { safeHostDisplayName } from '../lib/host';
 import { getDeviceFingerprint } from '../lib/deviceFingerprint';
 import {
   buildInquiryAbusePayload,
@@ -153,6 +154,8 @@ export default function BookingForm({
   const [honeypot, setHoneypot] = useState('');
   const formOpenedAtRef = useRef(createInquiryFormOpenedAt());
   const [transitionStep, setTransitionStep] = useState<InquiryTransitionStep | null>(null);
+  const [successSnapshot, setSuccessSnapshot] = useState<InquirySuccessSnapshot | null>(null);
+  const [successHostName, setSuccessHostName] = useState<string | null>(null);
   const pendingSuccessRef = useRef<InquirySuccessSnapshot | null>(null);
   const transitionCancelRef = useRef<(() => void) | null>(null);
 
@@ -343,8 +346,26 @@ export default function BookingForm({
     transitionCancelRef.current = null;
     setTransitionStep(null);
     setLoading(false);
-    if (snap) navigateTo(inquirySuccessPath(snap));
+    if (snap) {
+      setSuccessSnapshot(snap);
+      setSuccessHostName(snap.hostContactName);
+    }
   };
+
+  useEffect(() => {
+    if (!successSnapshot?.hostId) return;
+    if (successSnapshot.hostContactName) {
+      setSuccessHostName(successSnapshot.hostContactName);
+      return;
+    }
+    let cancelled = false;
+    void fetchPublicHost(successSnapshot.hostId).then((row) => {
+      if (!cancelled && row) setSuccessHostName(safeHostDisplayName(row.name, 'Your host'));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [successSnapshot?.hostId, successSnapshot?.hostContactName]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -482,7 +503,7 @@ export default function BookingForm({
 
   useEffect(() => {
     const onAbandon = () => {
-      if (inquirySubmittedRef.current || loading || transitionStep !== null) return;
+      if (inquirySubmittedRef.current || loading || transitionStep !== null || successSnapshot) return;
       if (!hasDates && !hasDetails) return;
       const step = !hasDates ? 'dates' : !hasDetails ? 'contact' : 'send';
       trackXpressEvent('booking_abandonment', {
@@ -492,9 +513,19 @@ export default function BookingForm({
     };
     window.addEventListener('pagehide', onAbandon);
     return () => window.removeEventListener('pagehide', onAbandon);
-  }, [analyticsScope, hasDates, hasDetails, loading, transitionStep]);
+  }, [analyticsScope, hasDates, hasDetails, loading, transitionStep, successSnapshot]);
 
   const bookingStep = hasDetails ? 4 : hasDates ? 3 : 1;
+
+  if (successSnapshot) {
+    return (
+      <RequestBookSuccess
+        snapshot={successSnapshot}
+        hostName={successHostName}
+        onDone={() => setSuccessSnapshot(null)}
+      />
+    );
+  }
 
   return (
     <>

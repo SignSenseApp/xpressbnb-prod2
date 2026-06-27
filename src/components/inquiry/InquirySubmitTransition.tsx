@@ -7,7 +7,7 @@ import {
 } from '../../lib/inquirySuccessMotion';
 
 type InquirySubmitTransitionProps = {
-  /** 0 = submitting, 1 = guest id ready, 2 = host intro, 3 = almost ready */
+  /** 0 = submitting, 1 = connecting host, 2 = almost ready */
   step: InquiryTransitionStep;
   onComplete: () => void;
 };
@@ -23,7 +23,7 @@ export default function InquirySubmitTransition({ step, onComplete }: InquirySub
   }, [step]);
 
   useEffect(() => {
-    if (step < 3) return;
+    if (step < 2) return;
 
     const reducedMotion =
       typeof window !== 'undefined' &&
@@ -72,7 +72,7 @@ export default function InquirySubmitTransition({ step, onComplete }: InquirySub
           }}
         >
           <img
-            src="/images/inquiry/guest-id-preparing.svg"
+            src="/images/inquiry/host-introduction.svg"
             alt=""
             width={112}
             height={112}
@@ -119,7 +119,6 @@ export function scheduleInquiryTransitionSteps(
 
   onStep(1);
   timers.push(window.setTimeout(() => onStep(2), delay));
-  timers.push(window.setTimeout(() => onStep(3), delay * 2));
 
   return () => timers.forEach((t) => window.clearTimeout(t));
 }

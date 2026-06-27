@@ -12,12 +12,13 @@ import { normalizePhoneDigits } from '../lib/guestValidation';
 import { guestEmailError } from '../lib/guestValidation';
 import { submitBookingInquiry } from '../lib/inquirySubmit';
 import {
-  inquirySuccessPath,
   saveInquirySuccessSnapshot,
   type InquirySuccessSnapshot,
 } from '../lib/inquirySuccessStorage';
-import { navigateTo } from '../lib/navigation';
 import type { InquiryTransitionStep } from '../lib/inquirySuccessMotion';
+import RequestBookSuccess from './inquiry/success/RequestBookSuccess';
+import { fetchPublicHost } from '../lib/hostPublicCache';
+import { safeHostDisplayName } from '../lib/host';
 import { getDeviceFingerprint } from '../lib/deviceFingerprint';
 import {
   isPushSupported,
@@ -87,6 +88,8 @@ export default function OfferModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [transitionStep, setTransitionStep] = useState<InquiryTransitionStep | null>(null);
+  const [successSnapshot, setSuccessSnapshot] = useState<InquirySuccessSnapshot | null>(null);
+  const [successHostName, setSuccessHostName] = useState<string | null>(null);
   const pendingSuccessRef = useRef<InquirySuccessSnapshot | null>(null);
   const transitionCancelRef = useRef<(() => void) | null>(null);
 
@@ -108,6 +111,8 @@ export default function OfferModal({
       setError(null);
       setTransitionStep(null);
       pendingSuccessRef.current = null;
+      setSuccessSnapshot(null);
+      setSuccessHostName(null);
       transitionCancelRef.current?.();
       transitionCancelRef.current = null;
       setHoneypot('');
@@ -118,6 +123,21 @@ export default function OfferModal({
       });
     }
   }, [open, defaultOffer, analyticsScope]);
+
+  useEffect(() => {
+    if (!successSnapshot?.hostId) return;
+    if (successSnapshot.hostContactName) {
+      setSuccessHostName(successSnapshot.hostContactName);
+      return;
+    }
+    let cancelled = false;
+    void fetchPublicHost(successSnapshot.hostId).then((row) => {
+      if (!cancelled && row) setSuccessHostName(safeHostDisplayName(row.name, 'Your host'));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [successSnapshot?.hostId, successSnapshot?.hostContactName]);
 
   if (!open) return null;
 
@@ -330,8 +350,10 @@ export default function OfferModal({
     transitionCancelRef.current = null;
     setTransitionStep(null);
     setSubmitting(false);
-    onClose();
-    if (snap) navigateTo(inquirySuccessPath(snap));
+    if (snap) {
+      setSuccessSnapshot(snap);
+      setSuccessHostName(snap.hostContactName);
+    }
   };
 
 
@@ -388,6 +410,16 @@ export default function OfferModal({
             submit button — the form scrolls inside the sheet. */}
         <div className="overflow-y-auto overscroll-contain flex-1" style={{ WebkitOverflowScrolling: 'touch' }}>
 
+        {successSnapshot ? (
+          <div className="px-5 sm:px-6 pb-6 pt-2">
+            <RequestBookSuccess
+              snapshot={successSnapshot}
+              hostName={successHostName}
+              onDone={onClose}
+              doneLabel="Close"
+            />
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="relative px-5 sm:px-6 pb-6 pt-2 space-y-5">
             <InquiryHoneypotField value={honeypot} onChange={setHoneypot} />
             {/* Listed vs Your offer comparison.
@@ -602,6 +634,7 @@ export default function OfferModal({
               Hosts see your offer with the dates and message. No payment is taken yet.
             </p>
           </form>
+        )}
         </div>
       </div>
       {transitionStep !== null && (

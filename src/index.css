@@ -779,10 +779,15 @@ html.lenis body {
   animation: inquiryReveal 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.inquiry-host-reveal {
+  animation: inquiryReveal 220ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .inquiry-reveal,
   .inquiry-line-crossfade,
-  .inquiry-transition-enter {
+  .inquiry-transition-enter,
+  .inquiry-host-reveal {
     animation: none;
   }
 }
