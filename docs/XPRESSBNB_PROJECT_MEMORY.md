@@ -22,6 +22,7 @@
 - **Payments:** Host subscription Razorpay checkout (edge functions)
 - **Backend:** Supabase Postgres (40+ migrations), RLS, storage, OTP + WhatsApp edge functions
 - **Polish:** PWA, cookie consent, Vercel analytics, SEO meta, mobile bottom nav, promo codes
+- **Inquiry security:** Cloudflare Turnstile on guest submit (kept); IP rate limits via Supabase edge functions
 
 ---
 
@@ -34,7 +35,6 @@
 - Calendar ICS export API (`/api/calendar/*.ics` is a dead link)
 - Real listing import or support tickets (mock `setTimeout` UIs)
 - Model-backed AI pricing/coach (synthetic data only)
-- `.env.example` for onboarding
 
 ---
 
@@ -51,11 +51,12 @@ Create `project/.env` (gitignored) with at minimum:
 ```
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
+VITE_TURNSTILE_SITE_KEY=         # required for inquiry submit in production
 VITE_GOOGLE_MAPS_API_KEY=      # optional — map views degrade without it
 VITE_RAZORPAY_KEY_ID_HOST=     # optional — host subscription checkout only
 ```
 
-Supabase edge functions need server secrets configured in the Supabase dashboard (Twilio, WhatsApp, Razorpay server keys, etc.).
+See `.env.example` and `README.md` for the full list. Supabase edge functions need server secrets in the Supabase dashboard (Turnstile secret, MSG91/Twilio, Razorpay, WhatsApp, etc.).
 
 ---
 
@@ -75,7 +76,8 @@ Supabase edge functions need server secrets configured in the Supabase dashboard
 ## Important accounts / env notes (safe)
 
 - **Supabase project** — URL pattern `*.supabase.co`; anon key is public by design; service role **never** in frontend
-- **Vercel** — `vercel.json` configures SPA rewrites; framework preset Vite
+- **Vercel** — `vercel.json` configures SPA rewrites; framework preset Vite; **production frontend host** (not Cloudflare Pages)
+- **Turnstile** — Guest inquiry CAPTCHA; `VITE_TURNSTILE_SITE_KEY` (browser) + `TURNSTILE_SECRET_KEY` (edge function). Security product only — not CDN/hosting.
 - **Razorpay** — Host subscriptions only; public key in `VITE_RAZORPAY_KEY_ID_HOST`; secrets in edge functions
 - **Twilio** — Booking OTP via Verify service
 - **WhatsApp Business API** — Inquiry notifications via `send-inquiry-notification`

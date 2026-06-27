@@ -1,6 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeadersFor } from '../_shared/cors.ts';
+import { clientIp } from '../_shared/client-ip.ts';
 
 /**
  * submit-booking-inquiry — secured guest inquiry submission (OTP-free launch).
@@ -71,15 +72,6 @@ async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
   if (!res.ok) return false;
   const data = (await res.json()) as { success?: boolean };
   return data.success === true;
-}
-
-function clientIp(req: Request): string {
-  return (
-    req.headers.get('cf-connecting-ip') ??
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    req.headers.get('x-real-ip') ??
-    ''
-  );
 }
 
 function json(req: Request, body: unknown, status = 200) {

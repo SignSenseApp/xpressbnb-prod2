@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { corsHeadersFor } from '../_shared/cors.ts';
+import { clientIp } from '../_shared/client-ip.ts';
 import {
   MAX_OTP_SENDS_PER_IP,
   MAX_OTP_SENDS_PER_PHONE,
@@ -14,12 +15,6 @@ type SendBody = {
   phone?: string;
   purpose?: string;
 };
-
-function clientIp(req: Request): string {
-  const xff = req.headers.get('x-forwarded-for');
-  if (xff) return xff.split(',')[0]?.trim() ?? 'unknown';
-  return req.headers.get('cf-connecting-ip') ?? 'unknown';
-}
 
 Deno.serve(async (req: Request) => {
   const cors = corsHeadersFor(req);
@@ -65,7 +60,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const ip = clientIp(req);
+    const ip = clientIp(req) || 'unknown';
     const phoneIds = await listRecentOtpRequestIds(
       supabaseUrl,
       serviceKey,

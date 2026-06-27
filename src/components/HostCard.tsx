@@ -3,6 +3,7 @@ import { CheckCircle, MapPin, Shield, Sparkles, Headphones } from 'lucide-react'
 import { fetchPublicHost } from '../lib/hostPublicCache';
 import { theme } from '../lib/theme';
 import { safeHostDisplayName, safeHostInitial, stripPhoneLike } from '../lib/host';
+import { TRUST_BADGE_COPY } from '../lib/trustBadgeCopy';
 import { buildTeamWhatsAppLink, TEAM_BRAND_NAME } from '../lib/team';
 import { scrollToId } from '../lib/smoothScroll';
 import PropertyTrustNotes from './property/PropertyTrustNotes';
@@ -142,7 +143,7 @@ export default function HostCard({
           </div>
           {isVerified && (
             <span
-              title="ID verified host"
+              title={TRUST_BADGE_COPY.hostKyc.title}
               className="absolute -bottom-1 -right-1 inline-flex items-center justify-center w-6 h-6 rounded-full text-white"
               style={{ background: theme.accent, border: `2px solid ${theme.surfaceLight}` }}
             >
@@ -162,9 +163,10 @@ export default function HostCard({
                   color: theme.accentDark,
                   border: '1px solid rgba(80,200,120,0.3)',
                 }}
+                title={TRUST_BADGE_COPY.hostKyc.title}
               >
                 <Shield className="w-3 h-3" />
-                ID verified
+                {TRUST_BADGE_COPY.hostKyc.short}
               </span>
             )}
           </div>

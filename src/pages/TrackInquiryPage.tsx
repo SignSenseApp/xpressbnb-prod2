@@ -84,7 +84,7 @@ export default function TrackInquiryPage() {
         onHostLoginClick={() => navigateTo('/auth/login')}
       />
 
-      <main className="max-w-lg mx-auto px-4 py-8 sm:py-12">
+      <main className="max-w-lg mx-auto px-4 py-8 sm:py-12 pb-[max(2rem,env(safe-area-inset-bottom))]">
         <div className="text-center mb-8">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-xpx-text tracking-tight">
             Track inquiry

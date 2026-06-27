@@ -19,7 +19,7 @@ export type PropertyTrustDisplay =
     }
   | {
       kind: 'trust_chip';
-      label: 'Quality reviewed' | 'New on XpressBNB' | 'Direct host booking';
+      label: 'Premium listing' | 'New on XpressBNB' | 'Direct host booking';
     };
 
 export const TRUST_RATING_MAX_AGE_DAYS = 90;
@@ -196,8 +196,8 @@ function isNewListing(createdAt?: string | null): boolean {
 
 function resolveFallbackChip(
   input: PropertyTrustInput,
-): 'Quality reviewed' | 'New on XpressBNB' | 'Direct host booking' {
-  if (input.is_verified === true) return 'Quality reviewed';
+): 'Premium listing' | 'New on XpressBNB' | 'Direct host booking' {
+  if (input.is_verified === true) return 'Premium listing';
   if (isNewListing(input.created_at)) return 'New on XpressBNB';
   return 'Direct host booking';
 }
@@ -221,6 +221,6 @@ export function getPropertyTrustDisplay(input: PropertyTrustInput): PropertyTrus
 /** Truthful fallback chip label — shown alongside Stay Score even when external rating exists. */
 export function getPropertyTrustChipLabel(
   input: PropertyTrustInput,
-): 'Quality reviewed' | 'New on XpressBNB' | 'Direct host booking' {
+): 'Premium listing' | 'New on XpressBNB' | 'Direct host booking' {
   return resolveFallbackChip(input);
 }

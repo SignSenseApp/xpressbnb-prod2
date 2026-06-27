@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Check, Copy } from 'lucide-react';
+import { TRUST_BADGE_COPY } from '../../lib/trustBadgeCopy';
 
 type CustomerReferenceFieldProps = {
   reference: string;
@@ -9,8 +10,8 @@ type CustomerReferenceFieldProps = {
 
 export default function CustomerReferenceField({
   reference,
-  label = 'Your Guest ID',
-  description = 'Private to you — use it to track inquiries and future stays.',
+  label = TRUST_BADGE_COPY.guestId.short,
+  description = 'Private reference issued with your inquiry — use it to track status.',
 }: CustomerReferenceFieldProps) {
   const [copied, setCopied] = useState(false);
 
@@ -37,8 +38,13 @@ export default function CustomerReferenceField({
     <div
       className="rounded-2xl p-4 text-left"
       style={{ background: 'var(--xpx-surface-light)', border: '1px solid var(--xpx-border)' }}
+      aria-labelledby="guest-reference-heading"
     >
-      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-xpx-subtle mb-2">
+      <p
+        id="guest-reference-heading"
+        className="text-[11px] font-bold uppercase tracking-[0.14em] text-xpx-subtle mb-2"
+        title={TRUST_BADGE_COPY.guestId.title}
+      >
         {label}
       </p>
       <div className="flex items-center gap-2">

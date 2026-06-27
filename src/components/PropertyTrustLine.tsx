@@ -4,6 +4,7 @@ import {
   getPropertyTrustDisplay,
   type PropertyTrustInput,
 } from '../lib/propertyTrustDisplay';
+import { TRUST_BADGE_COPY } from '../lib/trustBadgeCopy';
 import { openStayScoreInfo } from '../lib/stayScoreEducation';
 import {
   computeXpressbnbStayScore,
@@ -20,9 +21,9 @@ interface PropertyTrustLineProps {
   className?: string;
 }
 
-function TrustChip({ label }: { label: string }) {
+function TrustChip({ label, title }: { label: string; title?: string }) {
   return (
-    <span className="xpx-trust-micro shrink-0">
+    <span className="xpx-trust-micro shrink-0 max-w-full truncate" title={title}>
       {label}
     </span>
   );
@@ -89,6 +90,12 @@ export default function PropertyTrustLine({
   const trust = getPropertyTrustDisplay(property);
   const stayScore = computeXpressbnbStayScore(property);
   const chipLabel = getPropertyTrustChipLabel(property);
+  const chipTitle =
+    chipLabel === 'Premium listing'
+      ? TRUST_BADGE_COPY.premiumListing.title
+      : chipLabel === 'Direct host booking'
+        ? TRUST_BADGE_COPY.directHostListing.title
+        : undefined;
 
   const externalClass =
     variant === 'page' ? 'text-sm sm:text-[15px]' : 'text-[10px] sm:text-xs';
@@ -104,6 +111,7 @@ export default function PropertyTrustLine({
         {trust.kind === 'verified_external_rating' && (
           <span
             className={`inline-flex items-center max-w-full font-semibold text-xpx-text tabular-nums truncate shrink-0 ${externalClass}`}
+            title={TRUST_BADGE_COPY.externalRating.title}
           >
             {trust.label}
           </span>
@@ -111,7 +119,7 @@ export default function PropertyTrustLine({
         {!omitStayScore && (
           <StayScoreBadge label={stayScore.label} variant={variant} onOpenInfo={openInfo} />
         )}
-        <TrustChip label={chipLabel} />
+        <TrustChip label={chipLabel} title={chipTitle} />
       </div>
       {variant === 'page' && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

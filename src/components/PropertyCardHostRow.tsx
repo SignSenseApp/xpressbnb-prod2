@@ -2,21 +2,20 @@ import { useEffect, useState } from 'react';
 import { fetchPublicHost } from '../lib/hostPublicCache';
 import { safeHostDisplayName, safeHostInitial } from '../lib/host';
 import { VerifiedShieldIcon } from './icons/PropertyCardIcons';
+import { TRUST_BADGE_COPY } from '../lib/trustBadgeCopy';
 
 type PropertyCardHostRowProps = {
   hostId: string | null;
+  /** @deprecated Listing badge is on the card trust line — host row shows KYC only */
   propertyVerified?: boolean | null;
 };
 
 /**
  * Fixed-height host row for property cards — truncates long names; badge never wraps.
  */
-export default function PropertyCardHostRow({
-  hostId,
-  propertyVerified,
-}: PropertyCardHostRowProps) {
+export default function PropertyCardHostRow({ hostId }: PropertyCardHostRowProps) {
   const [hostName, setHostName] = useState<string | null>(null);
-  const [hostVerified, setHostVerified] = useState(false);
+  const [hostKycVerified, setHostKycVerified] = useState(false);
   const [loading, setLoading] = useState(Boolean(hostId));
 
   useEffect(() => {
@@ -30,10 +29,10 @@ export default function PropertyCardHostRow({
       if (cancelled) return;
       if (!row) {
         setHostName(null);
-        setHostVerified(Boolean(propertyVerified));
+        setHostKycVerified(false);
       } else {
         setHostName(safeHostDisplayName(row.name));
-        setHostVerified(row.kyc_status === 'verified' || Boolean(propertyVerified));
+        setHostKycVerified(row.kyc_status === 'verified');
       }
       setLoading(false);
     });
@@ -41,7 +40,7 @@ export default function PropertyCardHostRow({
     return () => {
       cancelled = true;
     };
-  }, [hostId, propertyVerified]);
+  }, [hostId]);
 
   if (loading) {
     return (
@@ -76,10 +75,13 @@ export default function PropertyCardHostRow({
           <span className="font-normal text-[#6B7280]">Hosted by </span>
           <span className="font-medium">{displayName}</span>
         </p>
-        {hostVerified && (
-          <span className="xpx-trust-micro shrink-0">
+        {hostKycVerified && (
+          <span
+            className="xpx-trust-micro shrink-0"
+            title={TRUST_BADGE_COPY.hostKyc.title}
+          >
             <VerifiedShieldIcon className="h-2.5 w-2.5 shrink-0" aria-hidden />
-            <span className="whitespace-nowrap">ID verified</span>
+            <span className="whitespace-nowrap">{TRUST_BADGE_COPY.hostKyc.short}</span>
           </span>
         )}
       </div>

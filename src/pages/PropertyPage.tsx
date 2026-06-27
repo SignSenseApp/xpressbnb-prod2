@@ -762,9 +762,10 @@ export default function PropertyPage() {
                         color: 'var(--xpx-verified)',
                         border: '1px solid rgba(80, 200, 120, 0.28)',
                       }}
+                      title="Host has an active paid plan on XpressBnB — badge on this listing."
                     >
                       <CheckCircle className="w-3.5 h-3.5" fill="currentColor" />
-                      Quality reviewed
+                      Premium listing
                     </span>
                   )}
                 </div>

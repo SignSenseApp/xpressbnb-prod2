@@ -229,7 +229,11 @@ export interface TrustPill {
 }
 
 export const TRUST_PILLS: TrustPill[] = [
-  { title: 'Quality reviewed', subtitle: 'When the verified badge is shown', tone: 'verified' },
+  {
+    title: 'Premium listing',
+    subtitle: 'Host has an active paid plan on XpressBnB',
+    tone: 'verified',
+  },
   { title: 'Pay at property or secure booking', subtitle: 'Flexible booking', tone: 'trust' },
   { title: 'Transparent pricing', subtitle: 'Total shown before you inquire', tone: 'trust' },
   { title: 'Reviewed inquiry', subtitle: 'Checked before host contact', tone: 'trust' },
@@ -237,7 +241,7 @@ export const TRUST_PILLS: TrustPill[] = [
 
 export function getTrustPillsForProperty(property: Property): TrustPill[] {
   return TRUST_PILLS.map((pill) => {
-    if (pill.title === 'Quality reviewed') {
+    if (pill.title === 'Premium listing') {
       return property.is_verified
         ? pill
         : {
