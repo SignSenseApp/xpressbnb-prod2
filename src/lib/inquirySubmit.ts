@@ -20,7 +20,8 @@ export type SubmitBookingInquiryPayload = {
   check_in: string;
   check_out: string;
   num_guests: number;
-  turnstile_token: string;
+  form_opened_at: number;
+  company_website: string;
   device_fingerprint: string;
   amount_total?: number;
   total_price?: number;

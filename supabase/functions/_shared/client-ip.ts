@@ -8,7 +8,7 @@
  * 4. cf-connecting-ip (legacy Cloudflare proxy only — not hosting assumption)
  * 5. empty string
  *
- * Used for rate limits and Turnstile siteverify remoteip. Never log raw headers in production.
+ * Used for inquiry rate limits. Never log raw headers in production.
  */
 
 const IPV4_RE = /^(?:\d{1,3}\.){3}\d{1,3}$/;

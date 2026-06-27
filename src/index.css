@@ -68,7 +68,7 @@ html.lenis body {
   --xpx-warm: #059669;
   --xpx-warm-dark: #047857;
 
-  /** Reserve / Book Now — urgency coral */
+  /** Primary inquiry CTA — coral accent on property pages */
   --xpx-cta: #ff385c;
   --xpx-cta-dark: #e11d48;
 
@@ -609,7 +609,7 @@ html.lenis body {
     background: var(--accent-dark);
     box-shadow: var(--xpx-shadow-hover);
   }
-  /** Reserve / Book Now — coral */
+  /** Primary inquiry CTA — coral */
   .xpx-btn-cta-red {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-bold text-sm transition-all hover:scale-[1.02] active:scale-[0.97];
     background: var(--cta-red);
@@ -733,4 +733,13 @@ html.lenis body {
   .parallax-properties {
     touch-action: pan-y;
   }
+}
+
+/* Inquiry honeypot — off-screen (not display:none) so bots may fill it */
+.xpx-inquiry-honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
 }

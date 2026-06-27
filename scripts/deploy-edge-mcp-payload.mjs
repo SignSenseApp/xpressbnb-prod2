@@ -12,7 +12,9 @@ const shared = ['cors.ts', 'client-ip.ts'];
 const extra =
   fn === 'send-inquiry-notification'
     ? ['inquiry-messages.ts', 'whatsapp-meta.ts']
-    : [];
+    : fn === 'submit-booking-inquiry'
+      ? ['inquiry-abuse.ts']
+      : [];
 
 const files = [
   {

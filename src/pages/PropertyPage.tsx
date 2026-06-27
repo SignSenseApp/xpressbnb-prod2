@@ -44,6 +44,7 @@ import {
   getMapLinkUrl,
 } from '../config/propertyDefaults';
 import { calculateBookingTotal } from '../lib/pricingUtils';
+import { inquiryCtaLabel } from '../lib/inquiryCopy';
 import { safeHostDisplayName } from '../lib/host';
 import { parseTripFromSearch } from '../lib/tripSearch';
 import { navigateTo } from '../lib/navigation';
@@ -468,7 +469,7 @@ export default function PropertyPage() {
                 boxShadow: '0 18px 56px rgba(15,23,42,0.10)',
               }}
             >
-              <p className="xpx-eyebrow mb-3">Request to book</p>
+              <p className="xpx-eyebrow mb-3">Send inquiry</p>
               <Suspense
                 fallback={
                   <div className="flex justify-center py-12" aria-hidden>
@@ -602,7 +603,7 @@ export default function PropertyPage() {
       <SEOHead
         config={{
           title: `${propertyTitle} - Couple Friendly Stay in ${propertyLocation} | XpressBnB`,
-          description: `Book ${propertyTitle} in ${propertyLocation}. ${property.description.substring(0, 150)}. Couple-friendly, safe, and private. Flexible hourly booking available.`,
+          description: `Inquire about ${propertyTitle} in ${propertyLocation}. ${property.description.substring(0, 150)}. Couple-friendly, private stays — send an inquiry and hear from the host directly.`,
           keywords: `${propertyTitle}, couple friendly stay ${property.city}, hourly booking ${property.city}, couple safe hotel ${property.city}, private stay ${property.city}`,
           canonical: `https://xpressbnb.com/property/${property.id}`,
           ogTitle: `${propertyTitle} - ${propertyLocation}`,
@@ -1215,13 +1216,15 @@ export default function PropertyPage() {
             <button
               type="button"
               onClick={handlePrimaryBookingCta}
-              className="shrink-0 px-5 py-3 rounded-full font-bold text-sm text-white transition-transform motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.97] min-h-[48px] min-w-[44px]"
+              className="shrink-0 px-5 py-3 rounded-full font-bold text-sm text-white transition-transform motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.97] min-h-[48px] min-w-[44px] touch-manipulation"
               style={{
                 background: 'var(--xpx-cta)',
                 boxShadow: '0 4px 16px rgba(255,56,92,0.28)',
               }}
             >
-              {hasValidDates ? 'Request to book' : 'Check availability'}
+              {hasValidDates
+                ? inquiryCtaLabel('property_with_dates')
+                : inquiryCtaLabel('property_no_dates')}
             </button>
           </div>
         </div>

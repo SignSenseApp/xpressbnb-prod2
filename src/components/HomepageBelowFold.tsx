@@ -16,6 +16,7 @@ import { OnboardingListingsEngagement } from './onboarding/OnboardingListingsEng
 import { firstImageUrl } from '../lib/savedListingsStorage';
 import { getPublicListings, invalidatePublicListingsCache } from '../lib/publicListings';
 import { warmPublicHostCache } from '../lib/hostPublicCache';
+import { INQUIRY_HOST_TAGLINE } from '../lib/inquiryCopy';
 import HowItWorksWalkthrough from './HowItWorksWalkthrough';
 
 const ACCENT = '#059669';
@@ -232,7 +233,7 @@ export default function HomepageBelowFold({
               Direct stays. Real hosts. Zero commission.
             </p>
             <p className="mt-3 text-sm md:text-base leading-relaxed" style={{ color: TEXT_MUTED }}>
-              Book directly with hosts — no platform markup, no invented review scores.
+              Inquire when you are ready — transparent host pricing, no invented review scores.
             </p>
           </div>
         </div>
@@ -261,7 +262,7 @@ export default function HomepageBelowFold({
                   Turn your empty space into income
                 </h2>
                 <p className="mt-4 max-w-[48ch] text-sm sm:text-[15px] md:text-base leading-relaxed" style={{ color: 'rgba(236,253,245,0.78)' }}>
-                  List in minutes. Reach guests directly. Earn more with zero platform fees.
+                  {INQUIRY_HOST_TAGLINE} List in minutes, zero platform fees on guest bookings.
                 </p>
 
                 <div className="mt-6 flex flex-col sm:flex-row gap-2.5 sm:gap-3">

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { X, Tag, MessageCircle, Mail, User, ArrowDown, Sparkles } from 'lucide-react';
 import { theme } from '../lib/theme';
 import type { Property } from '../lib/database.types';
@@ -6,7 +6,7 @@ import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStora
 import type { FrequentAmigoStatus } from '../lib/inquiryHostContact';
 import InquiryReceivedSuccess from './inquiry/InquiryReceivedSuccess';
 import InquiryConfidenceStrip from './inquiry/InquiryConfidenceStrip';
-import TurnstileWidget from './inquiry/TurnstileWidget';
+import InquiryHoneypotField from './inquiry/InquiryHoneypotField';
 import { normalizePhoneDigits } from '../lib/guestValidation';
 import { guestEmailError } from '../lib/guestValidation';
 import { submitBookingInquiry } from '../lib/inquirySubmit';
@@ -21,6 +21,16 @@ import {
   trackXpressEvent,
   type AnalyticsScope,
 } from '../lib/analytics';
+import { inquiryCtaLabel } from '../lib/inquiryCopy';
+import {
+  buildInquiryAbusePayload,
+  createInquiryFormOpenedAt,
+  getInquiryCooldownRemainingMs,
+  inquiryCooldownMessage,
+  inquiryTooFastMessage,
+  isInquiryInteractionTooFast,
+  markInquirySubmitCooldown,
+} from '../lib/inquiryAbuseProtection';
 
 interface OfferModalProps {
   open: boolean;
@@ -63,7 +73,8 @@ export default function OfferModal({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState('');
+  const formOpenedAtRef = useRef(createInquiryFormOpenedAt());
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +100,8 @@ export default function OfferModal({
       setError(null);
       setSuccess(false);
       setCustomerReference(null);
-      setTurnstileToken(null);
+      setHoneypot('');
+      formOpenedAtRef.current = createInquiryFormOpenedAt();
       trackXpressEvent('booking_form_started', {
         ...analyticsScope,
         booking_step: 'details',
@@ -135,8 +147,17 @@ export default function OfferModal({
       setError('Please enter a valid 10-digit mobile number.');
       return;
     }
-    if (!turnstileToken) {
-      setError('Please complete the security check below.');
+    const cooldownRemaining = getInquiryCooldownRemainingMs();
+    if (cooldownRemaining > 0) {
+      setError(inquiryCooldownMessage(cooldownRemaining));
+      return;
+    }
+    if (isInquiryInteractionTooFast(formOpenedAtRef.current)) {
+      setError(inquiryTooFastMessage());
+      return;
+    }
+    if (honeypot.trim()) {
+      setError('Could not submit your inquiry. Please try again.');
       return;
     }
 
@@ -163,6 +184,7 @@ export default function OfferModal({
     }
 
     const fingerprint = await getDeviceFingerprint();
+    const abuse = buildInquiryAbusePayload(formOpenedAtRef.current, honeypot);
 
     const submitRes = await submitBookingInquiry({
       inquiry_type: 'make_offer',
@@ -176,7 +198,8 @@ export default function OfferModal({
       num_guests: 1,
       offer_amount: offer,
       offer_message: message.trim() || undefined,
-      turnstile_token: turnstileToken,
+      form_opened_at: abuse.form_opened_at,
+      company_website: abuse.company_website,
       device_fingerprint: fingerprint,
     });
 
@@ -200,6 +223,8 @@ export default function OfferModal({
       booking_step: 'send',
       response_time_bucket: bucketResponseMs(performance.now() - submitStarted),
     });
+
+    markInquirySubmitCooldown();
 
     saveBookingConfirmationSnapshot({
       v: 1,
@@ -337,7 +362,8 @@ export default function OfferModal({
             />
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="px-5 sm:px-6 pb-6 pt-2 space-y-5">
+          <form onSubmit={handleSubmit} className="relative px-5 sm:px-6 pb-6 pt-2 space-y-5">
+            <InquiryHoneypotField value={honeypot} onChange={setHoneypot} />
             {/* Listed vs Your offer comparison.
                 On the smallest widths the labels could collide — switch to a
                 single column stack below 360px (custom Tailwind class via min-w). */}
@@ -456,8 +482,6 @@ export default function OfferModal({
               />
             </label>
 
-            <TurnstileWidget onToken={setTurnstileToken} disabled={submitting} />
-
             <InquiryConfidenceStrip className="mb-1" />
 
             {/* Contact details */}
@@ -541,7 +565,7 @@ export default function OfferModal({
                 {submitting ? 'Sending…' : (
                   <>
                     <Sparkles className="w-4 h-4" />
-                    Send offer to host
+                    {inquiryCtaLabel('offer_submit')}
                   </>
                 )}
               </span>

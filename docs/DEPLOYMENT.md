@@ -1,15 +1,12 @@
 # Deployment guide
 
-Production stack: **Vercel** (SPA) + **Supabase** (Postgres, Auth, Edge Functions) + **Turnstile** (inquiry bot protection).
-
-Hosting does **not** run on Cloudflare. Turnstile is a separate security product.
+Production stack: **Vercel** (SPA) + **Supabase** (Postgres, Auth, Edge Functions).
 
 ## Prerequisites
 
 - GitHub repo connected to Vercel
 - Supabase project with migrations applied
-- Turnstile site + secret keys
-- Domain `xpressbnb.com` pointed to Vercel (DNS at your registrar — not Cloudflare-specific)
+- Domain `xpressbnb.com` pointed to Vercel (DNS at your registrar)
 
 ## 1. Deploy frontend (Vercel)
 
@@ -20,7 +17,6 @@ Hosting does **not** run on Cloudflare. Turnstile is a separate security product
 3. Set environment variables (Production):
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
-   - `VITE_TURNSTILE_SITE_KEY`
    - Optional: maps, Razorpay public key, VAPID public key
 4. Deploy. Redeploy after any `VITE_*` change.
 
@@ -39,7 +35,7 @@ Or apply `supabase/migrations/*.sql` in order via SQL editor.
 
 Deploy critical functions:
 
-- `submit-booking-inquiry` — guest inquiries (Turnstile + rate limits)
+- `submit-booking-inquiry` — guest inquiries (honeypot, timing, IP rate limits)
 - `send-inquiry-notification` — host/guest notifications
 - `ops-console` — inquiry review queue
 
@@ -53,7 +49,6 @@ Or use Supabase Dashboard → Edge Functions.
 
 Dashboard → Edge Functions → Secrets:
 
-- `TURNSTILE_SECRET_KEY` (required for production inquiries)
 - Razorpay, MSG91/Twilio, WhatsApp per `docs/ENVIRONMENT.md`
 
 ## 3. Post-deploy verification
@@ -67,7 +62,7 @@ npm test
 Manual smoke test:
 
 1. Homepage loads (no layout shift on sticky search)
-2. Property page → inquiry form → Turnstile widget → submit
+2. Property page → inquiry form → submit (no CAPTCHA step)
 3. Guest ID on success screen
 4. `/track-inquiry` with reference + email
 5. Mobile PWA safe areas (bottom nav, modals)

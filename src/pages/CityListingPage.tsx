@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { ArrowLeft, SlidersHorizontal, X, MapPin, CheckCircle, Clock, Zap, Shield, Star, MessageCircle, Calendar } from 'lucide-react';
+import { ArrowLeft, SlidersHorizontal, X, MapPin, CheckCircle, Clock, Shield, Star, MessageCircle, Calendar } from 'lucide-react';
 import { logSupabaseError } from '../lib/supabase';
 import ConversionPropertyCard from '../components/ConversionPropertyCard';
 import SEOHead from '../components/SEOHead';
@@ -37,7 +37,6 @@ const QUICK_FILTERS = [
   { key: 'coupleFriendly', label: 'Couple Friendly', icon: Shield },
   { key: 'hourlyStay', label: 'Hourly Stay', icon: Clock },
   { key: 'verified', label: 'Verified', icon: CheckCircle },
-  { key: 'instantBooking', label: 'Instant Book', icon: Zap },
   { key: 'privateSpace', label: 'Private Space', icon: Star },
 ] as const;
 
@@ -47,7 +46,6 @@ interface Filters {
   coupleFriendly: boolean;
   hourlyStay: boolean;
   verified: boolean;
-  instantBooking: boolean;
   privateSpace: boolean;
   minPrice: number;
   maxPrice: number;
@@ -57,7 +55,6 @@ const DEFAULT_FILTERS: Filters = {
   coupleFriendly: false,
   hourlyStay: false,
   verified: false,
-  instantBooking: false,
   privateSpace: false,
   minPrice: 0,
   maxPrice: 50000,
@@ -149,7 +146,6 @@ export default function CityListingPage({ city }: CityListingPageProps) {
     if (filters.coupleFriendly) filtered = filtered.filter(p => p.is_couple_friendly);
     if (filters.hourlyStay) filtered = filtered.filter(p => p.hourly_stay_available);
     if (filters.verified) filtered = filtered.filter(p => p.is_verified);
-    if (filters.instantBooking) filtered = filtered.filter(p => p.instant_booking);
     if (filters.privateSpace) filtered = filtered.filter(p => p.is_private_space);
 
     filtered = filtered.filter(p => {
@@ -181,7 +177,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
       <SEOHead
         config={{
           title: `Verified Stays in ${cityName} | Couple Friendly, No Brokerage | XpressBnB`,
-          description: `Book verified homes and apartments in ${cityName}. Couple-friendly, hourly stays available. No commission, pay at property. Best prices guaranteed.`,
+          description: `Browse and inquire about homes and apartments in ${cityName}. Couple-friendly options, transparent host pricing. No guest commission.`,
           keywords: `stays in ${cityName}, couple friendly ${cityName}, verified properties ${cityName}, no brokerage ${cityName}, apartments ${cityName}`,
           canonical: `https://xpressbnb.com/stays/${city}`,
         }}

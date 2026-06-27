@@ -4,6 +4,7 @@ import { fetchPublicHost } from '../lib/hostPublicCache';
 import { theme } from '../lib/theme';
 import { safeHostDisplayName, safeHostInitial, stripPhoneLike } from '../lib/host';
 import { TRUST_BADGE_COPY } from '../lib/trustBadgeCopy';
+import { inquiryCtaLabel } from '../lib/inquiryCopy';
 import { buildTeamWhatsAppLink, TEAM_BRAND_NAME } from '../lib/team';
 import { scrollToId } from '../lib/smoothScroll';
 import PropertyTrustNotes from './property/PropertyTrustNotes';
@@ -206,7 +207,7 @@ export default function HostCard({
           }}
         >
           <Sparkles className="w-4 h-4" />
-          Request to book
+          {inquiryCtaLabel('host_card')}
         </button>
         <button
           type="button"

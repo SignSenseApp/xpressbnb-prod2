@@ -7,7 +7,6 @@ describe('validateClientEnv', () => {
   beforeEach(() => {
     vi.stubEnv('VITE_SUPABASE_URL', 'https://abc.supabase.co');
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'anon-key');
-    vi.stubEnv('VITE_TURNSTILE_SITE_KEY', 'site-key');
     vi.stubEnv('VITE_GOOGLE_MAPS_API_KEY', 'maps-key');
     vi.stubEnv('PROD', false);
   });
@@ -29,9 +28,4 @@ describe('validateClientEnv', () => {
     );
   });
 
-  it('warns on missing Turnstile in dev', () => {
-    vi.stubEnv('VITE_TURNSTILE_SITE_KEY', '');
-    const issue = validateClientEnv().find((i) => i.key === 'VITE_TURNSTILE_SITE_KEY');
-    expect(issue?.severity).toBe('warn');
-  });
 });

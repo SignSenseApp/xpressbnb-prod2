@@ -81,6 +81,8 @@ const HERO_SLIDES = HERO_SLIDE_META.map(({ city, tagline, photoId }) => ({
 
 const CITIES = ['Delhi', 'Gurgaon', 'Noida', 'Greater Noida', 'Ghaziabad', 'Rishikesh'];
 
+import { INQUIRY_GUEST_TAGLINE } from '../lib/inquiryCopy';
+
 const BELOW_FOLD_ANCHOR_IDS = new Set(['listings', 'host', 'why', 'how-it-works']);
 const PERSONALIZED_CROSSFADE_MS = 220;
 
@@ -275,7 +277,7 @@ export default function NewHomepage() {
           title:
             'XpressBnB - Direct Stays in Delhi NCR | Zero Guest Commission',
           description:
-            'Book homes and apartments directly from hosts. Stays in Delhi, Gurgaon, Noida and Rishikesh. No brokerage, zero guest commission.',
+            'Send inquiries for direct host stays in Delhi, Gurgaon, Noida and Rishikesh. No brokerage, zero guest commission.',
           keywords:
             'direct stays delhi, no brokerage apartments, premium stays noida, gurgaon serviced apartments, rishikesh retreats',
           canonical: 'https://xpressbnb.com',
@@ -456,7 +458,7 @@ export default function NewHomepage() {
       {/* ──── Hero ──── */}
       <section
         className="relative w-full overflow-hidden"
-        style={{ height: 'clamp(430px, 70svh, 520px)', minHeight: 430 }}
+        style={{ height: 'clamp(380px, 65svh, 520px)', minHeight: 380 }}
       >
         {HERO_SLIDES.map((slide, i) => (
           <div
@@ -515,7 +517,7 @@ export default function NewHomepage() {
                 className="mt-4 max-w-2xl text-sm sm:text-base md:text-lg font-medium"
                 style={{ color: 'rgba(248,250,252,0.95)', textShadow: '0 2px 10px rgba(2,6,23,0.45)' }}
               >
-                Direct bookings. Trusted hosts. Zero guest commission.
+                {INQUIRY_GUEST_TAGLINE}
               </p>
             </div>
 

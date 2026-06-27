@@ -1,10 +1,10 @@
 import { Check } from 'lucide-react';
 
 const POINTS = [
-  'No payment required now',
+  'No payment until the host confirms',
   'No account required',
-  'Your Guest ID is issued with this inquiry',
-  'Track everything anytime',
+  'Ops reviews before the host sees your details',
+  'Track anytime with your Guest ID',
 ] as const;
 
 /** Pre-submit reassurance — reduces inquiry anxiety without fake urgency. */

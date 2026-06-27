@@ -1,0 +1,42 @@
+/**
+ * Inquiry-first product language — single source for guest CTAs.
+ * Avoid OTA terms (Book Now, Reserve, Instant Book) on the guest path.
+ */
+
+export type InquiryCtaContext =
+  | 'property_no_dates'
+  | 'property_with_dates'
+  | 'host_card'
+  | 'form_submit'
+  | 'offer_submit'
+  | 'modal_entry'
+  | 'artist_whatsapp';
+
+export function inquiryCtaLabel(context: InquiryCtaContext): string {
+  switch (context) {
+    case 'property_no_dates':
+      return 'Check availability';
+    case 'property_with_dates':
+      return 'Send inquiry';
+    case 'host_card':
+      return 'Ask about this stay';
+    case 'form_submit':
+      return 'Send inquiry';
+    case 'offer_submit':
+      return 'Send offer to host';
+    case 'modal_entry':
+      return 'Send inquiry';
+    case 'artist_whatsapp':
+      return 'Request via WhatsApp';
+    default:
+      return 'Send inquiry';
+  }
+}
+
+export const INQUIRY_SENDING_LABEL = 'Sending inquiry…';
+
+export const INQUIRY_HOST_TAGLINE =
+  'We bring genuine travel inquiries directly to hosts.';
+
+export const INQUIRY_GUEST_TAGLINE =
+  'Inquire when you are ready. Hear directly from the host. Zero guest commission.';

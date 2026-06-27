@@ -27,11 +27,21 @@ import {
   type AnalyticsScope,
 } from '../lib/analytics';
 import { orchestratedScrollTo } from '../lib/scrollOrchestrator';
-import TurnstileWidget from './inquiry/TurnstileWidget';
+import InquiryHoneypotField from './inquiry/InquiryHoneypotField';
 import InquiryReceivedSuccess from './inquiry/InquiryReceivedSuccess';
 import InquiryConfidenceStrip from './inquiry/InquiryConfidenceStrip';
 import { submitBookingInquiry } from '../lib/inquirySubmit';
 import { getDeviceFingerprint } from '../lib/deviceFingerprint';
+import {
+  buildInquiryAbusePayload,
+  createInquiryFormOpenedAt,
+  getInquiryCooldownRemainingMs,
+  inquiryCooldownMessage,
+  inquiryTooFastMessage,
+  isInquiryInteractionTooFast,
+  markInquirySubmitCooldown,
+} from '../lib/inquiryAbuseProtection';
+import { INQUIRY_SENDING_LABEL, inquiryCtaLabel } from '../lib/inquiryCopy';
 import {
   subscribeToInquiryPushNotifications,
   isPushSupported,
@@ -132,7 +142,8 @@ export default function BookingForm({
   const [promoInput, setPromoInput] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<PromoCodeDef | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState('');
+  const formOpenedAtRef = useRef(createInquiryFormOpenedAt());
   const [submitSuccess, setSubmitSuccess] = useState<{
     customerReference: string;
     bookingId: string;
@@ -210,8 +221,15 @@ export default function BookingForm({
     if (totalPrice <= 0) {
       return 'Invalid booking total. Please reselect your dates.';
     }
-    if (!turnstileToken) {
-      return 'Please complete the security check below';
+    const cooldownRemaining = getInquiryCooldownRemainingMs();
+    if (cooldownRemaining > 0) {
+      return inquiryCooldownMessage(cooldownRemaining);
+    }
+    if (isInquiryInteractionTooFast(formOpenedAtRef.current)) {
+      return inquiryTooFastMessage();
+    }
+    if (honeypot.trim()) {
+      return 'Could not submit your inquiry. Please try again.';
     }
     return null;
   };
@@ -236,6 +254,7 @@ export default function BookingForm({
     amigo?: FrequentAmigoStatus,
   ) => {
     inquirySubmittedRef.current = true;
+    markInquirySubmitCooldown();
 
     saveBookingConfirmationSnapshot({
       v: 1,
@@ -328,19 +347,14 @@ export default function BookingForm({
         return;
       }
 
-      const verified = turnstileToken;
-      if (!verified) {
-        setLoading(false);
-        return;
-      }
+      const fingerprint = await getDeviceFingerprint();
+      const abuse = buildInquiryAbusePayload(formOpenedAtRef.current, honeypot);
 
       if (!property.host_id) {
         setErrorMessage('This listing is missing host details. Please try again later.');
         setLoading(false);
         return;
       }
-
-      const fingerprint = await getDeviceFingerprint();
 
       const submitRes = await submitBookingInquiry({
         inquiry_type: 'book_pay_later',
@@ -357,7 +371,8 @@ export default function BookingForm({
         nights: numberOfDays,
         special_requests: formData.special_requests.trim() || undefined,
         include_decoration: includeDecoration,
-        turnstile_token: verified,
+        form_opened_at: abuse.form_opened_at,
+        company_website: abuse.company_website,
         device_fingerprint: fingerprint,
       });
 
@@ -462,8 +477,9 @@ export default function BookingForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-5 max-w-full overflow-x-hidden pb-[max(1rem,env(safe-area-inset-bottom))]"
+      className="relative space-y-5 max-w-full overflow-x-hidden pb-[max(1rem,env(safe-area-inset-bottom))]"
     >
+      <InquiryHoneypotField value={honeypot} onChange={setHoneypot} />
       {numberOfDays > 0 && (
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-xl -mt-1">
           <span className="text-sm text-gray-500">Total</span>
@@ -564,10 +580,6 @@ export default function BookingForm({
             Used so we can reach you about your inquiry.
           </p>
         </div>
-      </div>
-
-      <div className="flex justify-center py-1">
-        <TurnstileWidget onToken={setTurnstileToken} disabled={loading} />
       </div>
 
       <div
@@ -747,10 +759,10 @@ export default function BookingForm({
           {loading ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" aria-hidden />
-              Sending inquiry…
+              {INQUIRY_SENDING_LABEL}
             </>
           ) : (
-            'Send booking inquiry'
+            inquiryCtaLabel('form_submit')
           )}
         </button>
         <p className="text-[11px] text-xpx-subtle text-center mt-2 leading-relaxed">

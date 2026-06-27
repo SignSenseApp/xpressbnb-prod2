@@ -18,7 +18,6 @@ function isNonEmpty(value: unknown): value is string {
 /** Validate Vite `import.meta.env` for guest marketplace runtime. */
 export function validateClientEnv(): EnvIssue[] {
   const issues: EnvIssue[] = [];
-  const isProd = import.meta.env.PROD;
 
   if (!isNonEmpty(import.meta.env.VITE_SUPABASE_URL)) {
     issues.push({
@@ -39,16 +38,6 @@ export function validateClientEnv(): EnvIssue[] {
       key: 'VITE_SUPABASE_ANON_KEY',
       severity: 'error',
       message: 'Missing Supabase anon key. Set in Vercel or .env.local.',
-    });
-  }
-
-  if (!isNonEmpty(import.meta.env.VITE_TURNSTILE_SITE_KEY)) {
-    issues.push({
-      key: 'VITE_TURNSTILE_SITE_KEY',
-      severity: isProd ? 'error' : 'warn',
-      message: isProd
-        ? 'Turnstile site key required in production — guest inquiries will fail the security check.'
-        : 'Turnstile site key unset — dev uses bypass when widget loads; set key to test real flow.',
     });
   }
 

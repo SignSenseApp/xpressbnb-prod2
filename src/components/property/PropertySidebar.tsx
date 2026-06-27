@@ -4,6 +4,7 @@ import type { Property } from '../../lib/database.types';
 import BookingCalendar from '../BookingCalendar';
 import { computeOffer } from '../../lib/offers';
 import { calculateBookingTotal } from '../../lib/pricingUtils';
+import { inquiryCtaLabel } from '../../lib/inquiryCopy';
 import PropertyTrustNotes from './PropertyTrustNotes';
 
 interface PropertySidebarProps {
@@ -40,7 +41,7 @@ interface PropertySidebarProps {
  * Booking sidebar.
  *
  * Renders the price card, promo pill, calendar, guests dropdown, an
- * itemised price breakdown and the two CTAs ("Book Now & Pay Later" +
+ * itemised price breakdown and inquiry CTAs (Check availability / Send inquiry +
  * "Make an Offer"). On desktop it lives in a sticky column to the right
  * of the main content; on mobile it stacks at the bottom of the content
  * flow and the page also surfaces a fixed bottom action bar that scrolls
@@ -134,7 +135,7 @@ export default function PropertySidebar({
               {promoCode}
             </span>{' '}
             <span className="text-xpx-text font-semibold">— {promoLabel}.</span>
-            <span className="text-xpx-muted"> Apply at checkout.</span>
+            <span className="text-xpx-muted"> Apply when you send your inquiry.</span>
           </div>
         </div>
       )}
@@ -224,7 +225,7 @@ export default function PropertySidebar({
           <button
             type="button"
             onClick={hasValidDates ? onRequestToBook : onCheckAvailability}
-            className="mt-5 w-full py-3.5 rounded-2xl font-bold text-[15px] text-white transition-transform motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.98]"
+            className="mt-5 w-full py-3.5 rounded-2xl font-bold text-[15px] text-white transition-transform motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.98] touch-manipulation"
             style={{
               background: 'var(--xpx-cta)',
               boxShadow: '0 10px 32px rgba(255,56,92,0.32)',
@@ -233,7 +234,9 @@ export default function PropertySidebar({
           >
             <span className="inline-flex items-center justify-center gap-2">
               <Sparkles className="w-4 h-4" />
-              {hasValidDates ? 'Request to book' : 'Check availability'}
+              {hasValidDates
+                ? inquiryCtaLabel('property_with_dates')
+                : inquiryCtaLabel('property_no_dates')}
             </span>
           </button>
 
@@ -255,7 +258,8 @@ export default function PropertySidebar({
       <p
         className="mt-3 text-[11px] text-xpx-subtle text-center leading-snug px-1"
       >
-        Verify your details and complete the security check to send your inquiry. Host contact is shared after quality review — no online payment on this step.
+        Share your dates and contact details to send an inquiry. Host contact is shared after
+        Ops review — no online payment on this step.
       </p>
       <PropertyTrustNotes className="mt-3 px-1" />
 

@@ -1,6 +1,6 @@
 /**
  * Brand accent — emerald (`#50C878`, Canva “Emerald green”) for UI links, chips, brand mark.
- * `cta` stays coral for property booking CTAs only (Reserve / Book Now) where used explicitly.
+ * `cta` stays coral for primary inquiry CTAs on property pages.
  */
 
 export const theme = {

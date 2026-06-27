@@ -2,14 +2,18 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeadersFor } from '../_shared/cors.ts';
 import { clientIp } from '../_shared/client-ip.ts';
+import {
+  IP_INQUIRIES_PER_HOUR,
+  validateInquiryAbuse,
+} from '../_shared/inquiry-abuse.ts';
 
 /**
- * submit-booking-inquiry — secured guest inquiry submission (OTP-free launch).
+ * submit-booking-inquiry — guest inquiry submission with lightweight abuse protection.
  *
- * Verifies Cloudflare Turnstile, applies IP rate limits, then calls create_pending_booking
- * or create_make_offer_inquiry via service role.
+ * Layers: honeypot, min interaction time, IP rate limit, field validation.
+ * Ops review gate unchanged. p_turnstile_passed=true when abuse checks pass (legacy RPC flag).
  *
- * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, TURNSTILE_SECRET_KEY (optional in dev)
+ * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  */
 
 type InquiryType = 'book_pay_later' | 'make_offer';
@@ -31,11 +35,10 @@ type SubmitBody = {
   include_decoration?: boolean;
   offer_amount?: number;
   offer_message?: string;
-  turnstile_token?: string;
   device_fingerprint?: string;
+  form_opened_at?: number;
+  company_website?: string;
 };
-
-const IP_LIMIT_PER_HOUR = 12;
 
 const EMAIL_RE = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
 
@@ -47,31 +50,6 @@ function normalizePhone10(raw: string): string {
 function isValidEmail(raw: string): boolean {
   const email = raw.trim().toLowerCase();
   return email.length >= 5 && email.length <= 254 && EMAIL_RE.test(email);
-}
-
-async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
-  const secret = Deno.env.get('TURNSTILE_SECRET_KEY')?.trim();
-  if (!secret) {
-    const isDev = Deno.env.get('ENVIRONMENT') === 'development' ||
-      Deno.env.get('SUPABASE_URL')?.includes('localhost');
-    if (isDev && token === 'dev-bypass') return true;
-    return false;
-  }
-
-  const form = new URLSearchParams();
-  form.set('secret', secret);
-  form.set('response', token);
-  if (ip) form.set('remoteip', ip);
-
-  const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: form.toString(),
-  });
-
-  if (!res.ok) return false;
-  const data = (await res.json()) as { success?: boolean };
-  return data.success === true;
 }
 
 function json(req: Request, body: unknown, status = 200) {
@@ -107,10 +85,15 @@ Deno.serve(async (req) => {
 
   const ip = clientIp(req);
   const inquiryType: InquiryType = body.inquiry_type === 'make_offer' ? 'make_offer' : 'book_pay_later';
-  const turnstileToken = String(body.turnstile_token ?? '').trim();
 
-  if (!turnstileToken) {
-    return json(req, { error: 'Security check required' }, 400);
+  const abuse = validateInquiryAbuse({
+    honeypot: body.company_website,
+    form_opened_at: body.form_opened_at,
+    check_in: body.check_in,
+    check_out: body.check_out,
+  });
+  if (!abuse.ok) {
+    return json(req, { error: abuse.message }, abuse.status);
   }
 
   const guestEmail = String(body.guest_email ?? '').trim();
@@ -130,11 +113,6 @@ Deno.serve(async (req) => {
     return json(req, { error: 'Missing booking details' }, 400);
   }
 
-  const turnstileOk = await verifyTurnstile(turnstileToken, ip);
-  if (!turnstileOk) {
-    return json(req, { error: 'Security check failed. Please try again.' }, 403);
-  }
-
   const admin = createClient(supabaseUrl, serviceKey);
 
   if (ip) {
@@ -145,8 +123,12 @@ Deno.serve(async (req) => {
       .eq('submission_ip', ip)
       .gte('created_at', since);
 
-    if ((count ?? 0) >= IP_LIMIT_PER_HOUR) {
-      return json(req, { error: 'Too many inquiries from this connection. Please wait and try again.' }, 429);
+    if ((count ?? 0) >= IP_INQUIRIES_PER_HOUR) {
+      return json(
+        req,
+        { error: 'Too many inquiries from this connection. Please wait and try again.' },
+        429,
+      );
     }
   }
 

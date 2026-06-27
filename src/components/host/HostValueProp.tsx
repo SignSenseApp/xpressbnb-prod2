@@ -22,9 +22,9 @@ export interface HostValuePropProps {
 }
 
 const SOCIAL_PROOF = [
-  { label: 'Homestays in Uttarakhand', detail: 'Host since 2024' },
-  { label: 'Villa · Goa', detail: '12 direct bookings' },
-  { label: 'Boutique stay · Jaipur', detail: 'Verified host' },
+  { label: 'Inquiry-first', detail: 'Guests reach you after Ops review' },
+  { label: 'Zero commission', detail: 'No platform fee on the stay' },
+  { label: 'You stay in control', detail: 'Accept, counter, or decline' },
 ] as const;
 
 export default function HostValueProp({
@@ -113,7 +113,7 @@ export default function HostValueProp({
       {showSocialProof && (
         <div className={isFull ? 'mt-6 pt-6' : 'mt-4 pt-4'} style={{ borderTop: '1px solid var(--xpx-border)' }}>
           <p className="text-[11px] uppercase tracking-wider font-bold text-xpx-subtle mb-3">
-            Hosts like you (sample)
+            Why hosts list here
           </p>
           <div
             className={

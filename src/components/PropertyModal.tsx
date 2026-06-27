@@ -5,6 +5,7 @@ import PropertyMapView from './PropertyMapView';
 import { useMemo, useState } from 'react';
 import { getAmenityIcon, listPropertyAmenities } from '../lib/amenities';
 import { listPropertyImages } from '../lib/propertyImages';
+import { inquiryCtaLabel } from '../lib/inquiryCopy';
 
 interface PropertyModalProps {
   property: Property;
@@ -304,11 +305,11 @@ export default function PropertyModal({ property, onClose }: PropertyModalProps)
                     onClick={() => setShowBooking(true)}
                     className="w-full py-4 bg-gradient-to-r from-[#FF385C] to-[#E11D48] text-white font-bold rounded-xl hover:from-[#f43f5e] hover:to-[#be123c] transition-all shadow-lg hover:shadow-xl"
                   >
-                    Book Now
+                    {inquiryCtaLabel('modal_entry')}
                   </button>
                 ) : (
                   <div>
-                    <h3 className="font-bold text-xl mb-4 text-gray-900">Complete Your Booking</h3>
+                    <h3 className="font-bold text-xl mb-4 text-gray-900">Send your inquiry</h3>
                     <BookingForm
                       property={property}
                       onSuccess={() => {

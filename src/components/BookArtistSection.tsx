@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Heart, Sparkles } from 'lucide-react';
 import { RISHIKESH_ARTISTS, type RishikeshArtist } from '../config/rishikeshArtists';
 import { buildTeamWhatsAppLink } from '../lib/team';
+import { inquiryCtaLabel } from '../lib/inquiryCopy';
 
 const EXPLORE_ALL_ARTISTS_PREFILL =
   'Hi — I want to see the full list of artists available for my Rishikesh stay (musicians, yoga instructors, storytellers, etc). Please share the catalog and availability.';
@@ -111,7 +112,7 @@ function ArtistCard({ artist, index }: { artist: RishikeshArtist; index: number 
               boxShadow: '0 4px 14px rgba(80,200,120,0.36)',
             }}
           >
-            Book Now
+            {inquiryCtaLabel('artist_whatsapp')}
           </a>
         </div>
       </div>

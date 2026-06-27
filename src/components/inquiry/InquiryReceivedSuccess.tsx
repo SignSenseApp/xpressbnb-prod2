@@ -5,6 +5,7 @@ import CustomerReferenceField from './CustomerReferenceField';
 import GuestIdProfileCard from './GuestIdProfileCard';
 import GuestTrustJourney from './GuestTrustJourney';
 import InquiryStatusTimeline from './InquiryStatusTimeline';
+import InquiryWhatHappensNext from './InquiryWhatHappensNext';
 import FrequentAmigoProgress from '../FrequentAmigoProgress';
 import { recordGuestInquiry } from '../../lib/guestTrustStorage';
 import type { FrequentAmigoStatus } from '../../lib/inquiryHostContact';
@@ -58,9 +59,12 @@ export default function InquiryReceivedSuccess({
     navigateTo(`/track-inquiry?${params.toString()}`);
   };
 
+  const headline =
+    variant === 'offer' ? 'Your offer is in — we are on it.' : 'Inquiry received — you are all set.';
+
   return (
     <div
-      className="space-y-5 text-center px-0.5 max-h-[min(85svh,720px)] overflow-y-auto"
+      className="space-y-5 text-center px-0.5 max-h-[min(85svh,720px)] overflow-y-auto animate-fade-in-up motion-reduce:animate-none"
       style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
       role="status"
       aria-live="polite"
@@ -83,14 +87,18 @@ export default function InquiryReceivedSuccess({
 
       <div>
         <h3 className="text-xl sm:text-2xl font-extrabold text-xpx-text tracking-tight">
-          Welcome — your inquiry is in.
+          {headline}
         </h3>
         <p className="text-sm text-xpx-muted mt-2 leading-relaxed max-w-md mx-auto">
-          We&apos;re reviewing it now. Your Guest ID is ready so you can track everything later.
+          {variant === 'offer'
+            ? 'We review every offer before the host sees it. Save your Guest ID below to track progress.'
+            : 'No payment taken. Ops reviews your details first, then the host can respond directly.'}
         </p>
       </div>
 
       <CustomerReferenceField reference={customerReference} />
+
+      <InquiryWhatHappensNext />
 
       <GuestIdProfileCard />
 
@@ -116,7 +124,7 @@ export default function InquiryReceivedSuccess({
           id="inquiry-timeline-heading"
           className="text-[11px] font-bold uppercase tracking-wide text-xpx-subtle mb-4"
         >
-          Progress
+          Live status
         </h4>
         <InquiryStatusTimeline variant="submit" />
       </section>
@@ -145,7 +153,9 @@ export default function InquiryReceivedSuccess({
           {checkInLabel} → {checkOutLabel}
         </p>
         <div className="flex justify-between items-baseline mt-2.5 pt-2.5 border-t border-slate-200/80">
-          <span className="text-sm font-semibold text-xpx-text">Estimated total</span>
+          <span className="text-sm font-semibold text-xpx-text">
+            {variant === 'offer' ? 'Your offer total' : 'Estimated total'}
+          </span>
           <span className="text-base font-extrabold tabular-nums" style={{ color: theme.accentDark }}>
             ₹{estimatedTotal.toLocaleString('en-IN')}
           </span>
@@ -155,7 +165,7 @@ export default function InquiryReceivedSuccess({
       <button
         type="button"
         onClick={handleTrack}
-        className="w-full py-3.5 rounded-2xl font-bold text-white transition-opacity hover:opacity-95 text-sm min-h-[52px]"
+        className="w-full py-3.5 rounded-2xl font-bold text-white transition-opacity hover:opacity-95 text-sm min-h-[52px] touch-manipulation"
         style={{
           background: theme.accent,
           boxShadow: '0 6px 20px rgba(5,150,105,0.24)',
@@ -165,8 +175,8 @@ export default function InquiryReceivedSuccess({
       </button>
 
       <p className="text-[11px] text-xpx-subtle leading-relaxed pb-1">
-        No payment taken. Your details stay private until the inquiry is reviewed. We&apos;ll email
-        you when it moves forward.
+        We email you when your inquiry moves forward. Your contact stays private until Ops review
+        is complete.
       </p>
     </div>
   );

@@ -143,7 +143,7 @@ export default function ExploreCitiesPage({ onNavigate }: ExploreCitiesPageProps
       </section>
 
       <section className="xpx-container pb-10">
-        <p className="xpx-eyebrow mb-4">Book now</p>
+        <p className="xpx-eyebrow mb-4">Explore stays</p>
         <div className="flex flex-col gap-5">
           {LIVE_EXPLORE_CITIES.map((city, i) => (
             <LiveCityCard key={city.id} city={city} index={i} onSelect={() => goCity(city)} />

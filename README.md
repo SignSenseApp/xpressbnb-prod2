@@ -10,7 +10,7 @@ Production marketplace for direct host stays in Delhi NCR and Rishikesh.
 |--------|-----------|
 | Frontend SPA | **Vercel** (`vercel.json`, Vite build → `dist/`) |
 | Database, Auth, Storage | **Supabase** |
-| Guest inquiry bot protection | **Cloudflare Turnstile** (CAPTCHA service — not hosting) |
+| Guest inquiry abuse protection | Honeypot + timing + IP rate limits (edge function) |
 | Host subscriptions | Razorpay |
 | Guest OTP (legacy paths) | MSG91 / Twilio via edge functions |
 
@@ -25,7 +25,7 @@ cp .env.example .env.local   # fill VITE_* values
 npm run dev                    # http://localhost:5173
 ```
 
-Required browser env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_TURNSTILE_SITE_KEY` (use Turnstile test keys or dev bypass — see `.env.example`).
+Required browser env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
 
 ## Production deployment
 
@@ -37,7 +37,6 @@ Required browser env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_
 4. Set **Environment Variables** (Production + Preview):
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
-   - `VITE_TURNSTILE_SITE_KEY` — Turnstile **site** key (public)
    - Optional: `VITE_GOOGLE_MAPS_API_KEY`, `VITE_RAZORPAY_KEY_ID_HOST`, `VITE_VAPID_PUBLIC_KEY`
 
 Redeploy after changing any `VITE_*` variable.
@@ -49,16 +48,9 @@ Redeploy after changing any `VITE_*` variable.
    - `submit-booking-inquiry`
 3. Set **Edge Function secrets** (Dashboard → Edge Functions → Secrets):
    - `SUPABASE_SERVICE_ROLE_KEY` (auto-injected in hosted Supabase)
-   - `TURNSTILE_SECRET_KEY` — Turnstile **secret** key (required for production inquiries)
    - OTP, Razorpay, WhatsApp secrets per `.env.example` comments
 
-### 3. Turnstile (keep in production)
-
-Guest booking inquiries require Turnstile. Do **not** remove `TurnstileWidget`, `VITE_TURNSTILE_SITE_KEY`, or `TURNSTILE_SECRET_KEY` unless replacing bot protection with an explicit alternative.
-
-Create keys at [Cloudflare Turnstile dashboard](https://dash.cloudflare.com/?to=/:account/turnstile) — this is independent of where the SPA is hosted.
-
-### 4. Verify
+### 3. Verify
 
 ```bash
 npm run typecheck
