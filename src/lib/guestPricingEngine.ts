@@ -59,6 +59,13 @@ export function formatInr(amount: number): string {
   return `₹${Math.max(0, Math.round(amount)).toLocaleString('en-IN')}`;
 }
 
+/** Amount sent to create_pending_booking — allows 0 after discounts when stay subtotal exists. */
+export function getInquirySubmitAmount(quote: GuestPricingQuote): number {
+  if (quote.guestTotal > 0) return quote.guestTotal;
+  if (quote.accommodationSubtotal > 0) return quote.accommodationSubtotal;
+  return 0;
+}
+
 /**
  * Authoritative guest quote for discovery → inquiry → success → tracking.
  * Never adds platform, service, convenience, or guest commission fees.

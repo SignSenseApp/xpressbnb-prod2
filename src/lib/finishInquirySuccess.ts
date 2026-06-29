@@ -11,12 +11,31 @@ import type { InquiryTransitionPhase } from './inquirySuccessMotion';
 import { runPostSubmitTransitionPhases } from './inquirySubmitTransition';
 
 const HOST_LOOKUP_TIMEOUT_MS = 4000;
+/** Hard ceiling — navigate even if transition pipeline stalls (production P0 guard). */
+const NAVIGATION_FALLBACK_MS = 3000;
+const WELCOME_DWELL_MS = 320;
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
   return Promise.race([
     promise,
     new Promise<null>((resolve) => window.setTimeout(() => resolve(null), ms)),
   ]);
+}
+
+function syncGuestIdentity(snapshot: InquirySuccessSnapshot): void {
+  upsertGuestIdentityFromInquiry({
+    guestName: snapshot.guestName,
+    guestEmail: snapshot.guestEmail,
+    customerReference: snapshot.customerReference,
+  });
+  recordGuestInquiry(snapshot.customerReference);
+  trackXpressEvent('inquiry_success', {
+    property_id: snapshot.propertyId,
+    property_slug: snapshot.propertySlug ?? undefined,
+    city: snapshot.propertyCity,
+    inquiry_type: snapshot.variant === 'offer' ? 'make_offer' : 'book_pay_later',
+    booking_step: 'complete',
+  });
 }
 
 export async function runInquirySuccessPipeline(input: {
@@ -35,55 +54,70 @@ export async function runInquirySuccessPipeline(input: {
       snap = { ...snap, hostContactName };
       saveInquirySuccessSnapshot(snap);
     },
-    prepareGuestId: () => {
-      upsertGuestIdentityFromInquiry({
-        guestName: snap.guestName,
-        guestEmail: snap.guestEmail,
-        customerReference: snap.customerReference,
-      });
-      recordGuestInquiry(snap.customerReference);
-    },
-    finalizeDashboard: () => {
-      trackXpressEvent('inquiry_success', {
-        property_id: snap.propertyId,
-        property_slug: snap.propertySlug ?? undefined,
-        city: snap.propertyCity,
-        inquiry_type: snap.variant === 'offer' ? 'make_offer' : 'book_pay_later',
-        booking_step: 'complete',
-      });
+    prepareGuestId: async () => {
+      /* Guest identity synced in completeInquiryAfterSubmit before pipeline runs */
     },
   });
 
   return snap;
 }
 
+type CompleteInquiryAfterSubmitInput = {
+  snapshot: InquirySuccessSnapshot;
+  onPhase: (phase: InquiryTransitionPhase) => void;
+  onNavigate: (snapshot: InquirySuccessSnapshot) => void;
+  navigatedRef: { current: boolean };
+};
+
 /**
- * Runs the post-submit pipeline then signals when welcome navigation should occur.
+ * Post-submit handler — identity sync is immediate; welcome navigation always fires
+ * (pipeline success, pipeline error, or hard fallback timeout).
  */
+export function completeInquiryAfterSubmit(input: CompleteInquiryAfterSubmitInput): void {
+  syncGuestIdentity(input.snapshot);
+
+  const go = (snap: InquirySuccessSnapshot) => {
+    if (input.navigatedRef.current) return;
+    input.onPhase(4);
+    window.setTimeout(() => input.onNavigate(snap), WELCOME_DWELL_MS);
+  };
+
+  const fallbackTimer = window.setTimeout(() => {
+    go(input.snapshot);
+  }, NAVIGATION_FALLBACK_MS);
+
+  void runInquirySuccessPipeline({
+    snapshot: input.snapshot,
+    onPhase: input.onPhase,
+  })
+    .then((finalSnap) => {
+      window.clearTimeout(fallbackTimer);
+      go(finalSnap);
+    })
+    .catch((error) => {
+      if (import.meta.env.DEV) {
+        console.error('Inquiry success pipeline failed — using fallback navigation:', error);
+      }
+      window.clearTimeout(fallbackTimer);
+      go(input.snapshot);
+    });
+}
+
+/** @deprecated Use completeInquiryAfterSubmit */
 export async function completeInquirySubmission(input: {
   snapshot: InquirySuccessSnapshot;
   onPhase: (phase: InquiryTransitionPhase) => void;
   onReadyToNavigate: (snapshot: InquirySuccessSnapshot) => void;
 }): Promise<void> {
-  const finish = (snap: InquirySuccessSnapshot) => {
-    input.onPhase(4);
-    const reducedMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const delay = reducedMotion ? 80 : 400;
-    window.setTimeout(() => input.onReadyToNavigate(snap), delay);
-  };
-
-  try {
-    const finalSnap = await runInquirySuccessPipeline({
-      snapshot: input.snapshot,
-      onPhase: input.onPhase,
-    });
-    finish(finalSnap);
-  } catch (error) {
-    if (import.meta.env.DEV) {
-      console.error('Inquiry success pipeline failed — navigating with snapshot:', error);
-    }
-    finish(input.snapshot);
-  }
+  const navigatedRef = { current: false };
+  completeInquiryAfterSubmit({
+    snapshot: input.snapshot,
+    onPhase: input.onPhase,
+    navigatedRef,
+    onNavigate: (snap) => {
+      if (navigatedRef.current) return;
+      navigatedRef.current = true;
+      input.onReadyToNavigate(snap);
+    },
+  });
 }

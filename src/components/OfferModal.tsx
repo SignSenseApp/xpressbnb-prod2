@@ -15,7 +15,7 @@ import {
   type InquirySuccessSnapshot,
 } from '../lib/inquirySuccessStorage';
 import type { InquiryTransitionPhase } from '../lib/inquirySuccessMotion';
-import { completeInquirySubmission } from '../lib/finishInquirySuccess';
+import { completeInquiryAfterSubmit } from '../lib/finishInquirySuccess';
 import { navigateTo } from '../lib/navigation';
 import { getDeviceFingerprint } from '../lib/deviceFingerprint';
 import {
@@ -326,10 +326,12 @@ export default function OfferModal({
       );
     }
 
-    void completeInquirySubmission({
+    navigatedRef.current = false;
+    completeInquiryAfterSubmit({
       snapshot: successSnapshot,
       onPhase: setTransitionPhase,
-      onReadyToNavigate: finishWelcome,
+      onNavigate: finishWelcome,
+      navigatedRef,
     });
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Could not send your offer. Please try again.';

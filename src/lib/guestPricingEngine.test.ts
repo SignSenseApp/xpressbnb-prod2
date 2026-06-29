@@ -3,6 +3,7 @@ import {
   buildGuestPricingQuote,
   DECORATION_ADDON_INR,
   formatInr,
+  getInquirySubmitAmount,
 } from './guestPricingEngine';
 import type { Property } from './database.types';
 
@@ -62,6 +63,15 @@ describe('buildGuestPricingQuote', () => {
 
   it('formatInr uses Indian grouping', () => {
     expect(formatInr(5120)).toBe('₹5,120');
+  });
+
+  it('getInquirySubmitAmount falls back to accommodation subtotal when guest total is zero', () => {
+    const quote = buildGuestPricingQuote({
+      property: baseProperty,
+      accommodationSubtotal: 4800,
+      nights: 2,
+    });
+    expect(getInquirySubmitAmount({ ...quote, guestTotal: 0 })).toBe(4800);
   });
 });
 

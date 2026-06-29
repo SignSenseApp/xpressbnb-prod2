@@ -13,7 +13,7 @@ import {
 import type { Property } from '../lib/database.types';
 import { supabase } from '../lib/supabase';
 import { findPromoCode, type PromoCodeDef } from '../lib/offers';
-import { buildGuestPricingQuote } from '../lib/guestPricingEngine';
+import { buildGuestPricingQuote, getInquirySubmitAmount } from '../lib/guestPricingEngine';
 import { GUEST_PRICING_INQUIRY_TOTAL_NOTE, GUEST_PRICING_NO_COMMISSION } from '../lib/guestPricingCopy';
 import GuestPricingBreakdown from './pricing/GuestPricingBreakdown';
 import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
@@ -38,7 +38,7 @@ import {
   type InquirySuccessSnapshot,
 } from '../lib/inquirySuccessStorage';
 import type { InquiryTransitionPhase } from '../lib/inquirySuccessMotion';
-import { completeInquirySubmission } from '../lib/finishInquirySuccess';
+import { completeInquiryAfterSubmit } from '../lib/finishInquirySuccess';
 import { navigateTo } from '../lib/navigation';
 import { getDeviceFingerprint } from '../lib/deviceFingerprint';
 import {
@@ -153,6 +153,10 @@ export default function BookingForm({
   const [promoError, setPromoError] = useState<string | null>(null);
   const [honeypot, setHoneypot] = useState('');
   const formOpenedAtRef = useRef(createInquiryFormOpenedAt());
+
+  useEffect(() => {
+    formOpenedAtRef.current = createInquiryFormOpenedAt();
+  }, [property.id]);
   const [transitionPhase, setTransitionPhase] = useState<InquiryTransitionPhase | null>(null);
   const pendingSuccessRef = useRef<InquirySuccessSnapshot | null>(null);
   const navigatedRef = useRef(false);
@@ -196,6 +200,7 @@ export default function BookingForm({
     [calculatedPrice, numberOfDays, numGuests, property, appliedPromo, includeDecoration],
   );
   const totalPrice = pricingQuote.guestTotal;
+  const inquiryAmount = getInquirySubmitAmount(pricingQuote);
   const totalSaved =
     pricingQuote.lines
       .filter((line) => line.kind === 'discount')
@@ -250,7 +255,13 @@ export default function BookingForm({
     if (phoneDigits.length !== 10) {
       return 'Please enter a valid 10-digit phone number';
     }
-    if (totalPrice <= 0) {
+    if (numberOfDays <= 0) {
+      return 'Please select check-in and check-out dates from the calendar above.';
+    }
+    if (calculatedPrice <= 0) {
+      return 'Invalid booking total. Please reselect your dates.';
+    }
+    if (inquiryAmount <= 0) {
       return 'Invalid booking total. Please reselect your dates.';
     }
     const cooldownRemaining = getInquiryCooldownRemainingMs();
@@ -301,7 +312,7 @@ export default function BookingForm({
       checkIn,
       checkOut,
       numGuests: numGuests,
-      estimatedTotal: totalPrice,
+      estimatedTotal: inquiryAmount,
       guestEmail: formData.guest_email,
       hostContactName,
       hostContactPhone,
@@ -337,7 +348,7 @@ export default function BookingForm({
       checkIn,
       checkOut,
       numGuests,
-      estimatedTotal: totalPrice,
+      estimatedTotal: inquiryAmount,
       ...(inquiry.frequentAmigo ? { frequentAmigo: inquiry.frequentAmigo } : {}),
     };
     saveInquirySuccessSnapshot(successSnapshot);
@@ -358,10 +369,11 @@ export default function BookingForm({
     onSuccess({ bookingId: inquiry.bookingId, customerReference: inquiry.customerReference });
 
     navigatedRef.current = false;
-    void completeInquirySubmission({
+    completeInquiryAfterSubmit({
       snapshot: successSnapshot,
       onPhase: setTransitionPhase,
-      onReadyToNavigate: finishWelcome,
+      onNavigate: finishWelcome,
+      navigatedRef,
     });
   };
 
@@ -427,8 +439,8 @@ export default function BookingForm({
         check_in: checkIn,
         check_out: checkOut,
         num_guests: numGuests,
-        amount_total: totalPrice,
-        total_price: totalPrice,
+        amount_total: inquiryAmount,
+        total_price: inquiryAmount,
         nights: numberOfDays,
         special_requests: formData.special_requests.trim() || undefined,
         include_decoration: includeDecoration,
