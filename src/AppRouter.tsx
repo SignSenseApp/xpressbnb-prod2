@@ -13,7 +13,7 @@ import { loadPropertyPageModule } from './lib/propertyRouteChunk';
 const PropertyPage = lazy(() => loadPropertyPageModule());
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'));
 const TrackInquiryPage = lazy(() => import('./pages/TrackInquiryPage'));
-const InquirySuccessPage = lazy(() => import('./pages/InquirySuccessPage'));
+const GuestWelcomePage = lazy(() => import('./pages/GuestWelcomePage'));
 const CityListingPage = lazy(() => import('./pages/CityListingPage'));
 const RishikeshStaysPage = lazy(() => import('./pages/RishikeshStaysPage'));
 const ExploreCitiesPage = lazy(() => import('./pages/ExploreCitiesPage'));
@@ -112,8 +112,12 @@ export default function AppRouter() {
       return <TrackInquiryPage />;
     }
 
+    if (currentPath.startsWith('/guest/welcome/')) {
+      return <GuestWelcomePage />;
+    }
+
     if (currentPath.startsWith('/inquiry/success/')) {
-      return <InquirySuccessPage />;
+      return <GuestWelcomePage />;
     }
 
     if (currentPath.startsWith('/property/')) {
@@ -205,7 +209,9 @@ export default function AppRouter() {
         </Suspense>
         <GuestOnboardingOrchestrator
           hidden={
-            currentPath.startsWith('/booking/') || currentPath.startsWith('/inquiry/success/')
+            currentPath.startsWith('/booking/') ||
+            currentPath.startsWith('/inquiry/success/') ||
+            currentPath.startsWith('/guest/welcome/')
           }
         />
         <MobileBottomNav currentPath={currentPath} onNavigate={handleNavigate} />

@@ -69,3 +69,14 @@ export function loadBookingConfirmationSnapshot(bookingId: string): BookingConfi
   if (!row || row.v !== 1 || row.bookingId !== bookingId) return null;
   return row;
 }
+
+export function loadBookingConfirmationByReference(
+  customerReference: string,
+): BookingConfirmationSnapshot | null {
+  const key = customerReference.trim().toUpperCase();
+  const map = readMap();
+  for (const row of Object.values(map)) {
+    if (row.customerReference?.toUpperCase() === key) return row;
+  }
+  return null;
+}

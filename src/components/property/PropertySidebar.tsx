@@ -3,7 +3,13 @@ import { Tag, Users, Sparkles } from 'lucide-react';
 import type { Property } from '../../lib/database.types';
 import BookingCalendar from '../BookingCalendar';
 import { computeOffer } from '../../lib/offers';
-import { calculateBookingTotal } from '../../lib/pricingUtils';
+import { buildGuestPricingQuote } from '../../lib/guestPricingEngine';
+import {
+  GUEST_PRICING_INQUIRY_TOTAL_NOTE,
+  GUEST_PRICING_NIGHTLY_HINT,
+  GUEST_PRICING_TRIP_HINT,
+} from '../../lib/guestPricingCopy';
+import GuestPricingBreakdown from '../pricing/GuestPricingBreakdown';
 import { inquiryCtaLabel } from '../../lib/inquiryCopy';
 import PropertyTrustNotes from './PropertyTrustNotes';
 
@@ -80,8 +86,14 @@ export default function PropertySidebar({
     );
   }, [checkIn, checkOut]);
 
-  const breakdown = useMemo(
-    () => calculateBookingTotal(nightlyTotal, nights, numGuests, property),
+  const quote = useMemo(
+    () =>
+      buildGuestPricingQuote({
+        property,
+        accommodationSubtotal: nightlyTotal,
+        nights,
+        numGuests,
+      }),
     [nightlyTotal, nights, numGuests, property],
   );
 
@@ -108,9 +120,7 @@ export default function PropertySidebar({
           <span className="text-sm text-xpx-muted">/ night</span>
         </div>
         <p className="text-[11px] text-xpx-subtle mt-1">
-          {nights > 0
-            ? 'Trip total below — host price + fees (no GST added by us)'
-            : 'Nightly rate — select dates to see full total'}
+          {nights > 0 ? GUEST_PRICING_TRIP_HINT(nights) : GUEST_PRICING_NIGHTLY_HINT}
         </p>
       </div>
 
@@ -182,42 +192,10 @@ export default function PropertySidebar({
 
       {/* Price breakdown — only renders once the user has selected dates so
           we never display a blank itemised list. */}
-      {nights > 0 && (
-        <dl
-          className="mt-5 pt-5 space-y-2 text-sm"
-          style={{ borderTop: '1px solid var(--xpx-border)' }}
-        >
-          <div className="flex justify-between">
-            <dt className="text-xpx-muted">
-              ₹{Math.round(nightlyTotal / nights).toLocaleString('en-IN')} × {nights}{' '}
-              {nights === 1 ? 'night' : 'nights'}
-            </dt>
-            <dd className="text-xpx-text font-medium tabular-nums">
-              ₹{breakdown.baseTotal.toLocaleString('en-IN')}
-            </dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-xpx-muted">Cleaning fee</dt>
-            <dd className="text-xpx-text font-medium tabular-nums">
-              ₹{breakdown.cleaningFee.toLocaleString('en-IN')}
-            </dd>
-          </div>
-          <div className="flex justify-between">
-            <dt className="text-xpx-muted">Service fee</dt>
-            <dd className="text-xpx-text font-medium tabular-nums">
-              ₹{breakdown.serviceFee.toLocaleString('en-IN')}
-            </dd>
-          </div>
-          <div
-            className="pt-3 mt-3 flex justify-between text-base"
-            style={{ borderTop: '1px solid var(--xpx-border)' }}
-          >
-            <dt className="text-xpx-text font-bold">Total</dt>
-            <dd className="text-xpx-text font-extrabold tabular-nums">
-              ₹{breakdown.grandTotal.toLocaleString('en-IN')}
-            </dd>
-          </div>
-        </dl>
+      {nights > 0 && quote.guestTotal > 0 && (
+        <div className="mt-5 pt-5" style={{ borderTop: '1px solid var(--xpx-border)' }}>
+          <GuestPricingBreakdown lines={quote.lines} guestTotal={quote.guestTotal} />
+        </div>
       )}
 
       {!hideBookingCtas && (
@@ -258,8 +236,7 @@ export default function PropertySidebar({
       <p
         className="mt-3 text-[11px] text-xpx-subtle text-center leading-snug px-1"
       >
-        Share your dates and contact details to send an inquiry. Host contact is shared after
-        Ops review — no online payment on this step.
+        Share your dates and contact details to send a request. {GUEST_PRICING_INQUIRY_TOTAL_NOTE}
       </p>
       <PropertyTrustNotes className="mt-3 px-1" />
 

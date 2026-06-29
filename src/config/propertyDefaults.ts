@@ -291,9 +291,8 @@ export function getMapLinkUrl(property: Property): string {
 }
 
 /**
- * Standard fee breakdown. Schema doesn't expose per-property cleaning /
- * service / tax fields yet, so we derive sane defaults from the nightly
- * total. Numbers are integer-rounded so the breakdown reads cleanly.
+ * Standard fee breakdown — @deprecated Use buildGuestPricingQuote from guestPricingEngine.
+ * Legacy OTA fee derivation removed; kept only for type compatibility if referenced.
  */
 export interface FeeBreakdown {
   nightlyTotal: number;
@@ -303,21 +302,16 @@ export interface FeeBreakdown {
   total: number;
 }
 
+/** @deprecated Use buildGuestPricingQuote — no fake cleaning/service fees. */
 export function computeFeeBreakdown(nightlyTotal: number, nights: number): FeeBreakdown {
   if (nightlyTotal <= 0 || nights <= 0) {
     return { nightlyTotal: 0, cleaningFee: 0, serviceFee: 0, taxes: 0, total: 0 };
   }
-  // Cleaning fee is a flat one-time charge, not nightly.
-  const cleaningFee = 500;
-  // Service & taxes scale with the nightly total so longer stays don't
-  // suffer disproportionate fees.
-  const serviceFee = Math.round(nightlyTotal * 0.1);
-  const taxes = 0;
   return {
     nightlyTotal,
-    cleaningFee,
-    serviceFee,
-    taxes,
-    total: nightlyTotal + cleaningFee + serviceFee,
+    cleaningFee: 0,
+    serviceFee: 0,
+    taxes: 0,
+    total: nightlyTotal,
   };
 }

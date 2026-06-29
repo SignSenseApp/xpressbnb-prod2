@@ -70,6 +70,7 @@ export function upsertGuestIdentityFromInquiry(input: {
         updatedAt: now,
       };
       localStorage.setItem(GUEST_IDENTITY_STORAGE_KEY, JSON.stringify(next));
+      dispatchGuestIdentityUpdated();
       return;
     }
 
@@ -84,9 +85,49 @@ export function upsertGuestIdentityFromInquiry(input: {
       updatedAt: now,
     };
     localStorage.setItem(GUEST_IDENTITY_STORAGE_KEY, JSON.stringify(record));
+    dispatchGuestIdentityUpdated();
   } catch {
     // quota / private mode
   }
+}
+
+export const GUEST_IDENTITY_UPDATED_EVENT = 'xpx-guest-identity-updated';
+
+export function dispatchGuestIdentityUpdated(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(GUEST_IDENTITY_UPDATED_EVENT));
+}
+
+/** Call when inquiry reaches verified / booked / completed — enables future password UI. */
+export function markGuestEligibleForPassword(): void {
+  const existing = readIdentity();
+  if (!existing || existing.phase === 'authenticated') return;
+  try {
+    const next: GuestIdentityRecord = {
+      ...existing,
+      phase: 'eligible_for_password',
+      updatedAt: Date.now(),
+    };
+    localStorage.setItem(GUEST_IDENTITY_STORAGE_KEY, JSON.stringify(next));
+    dispatchGuestIdentityUpdated();
+  } catch {
+    /* ignore */
+  }
+}
+
+export type SecureAccountCopy = {
+  title: string;
+  body: string;
+  cta: string;
+};
+
+/** Copy for password setup — render only when phase is eligible_for_password. */
+export function getSecureAccountCopy(): SecureAccountCopy {
+  return {
+    title: 'Secure your Guest Account',
+    body: 'Create a password to access your inquiries across devices. Optional — only when you are ready.',
+    cta: 'Create password',
+  };
 }
 
 export function loadGuestIdentity(): GuestIdentityRecord | null {

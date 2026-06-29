@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import {
   Calendar,
   Mail,
@@ -12,8 +12,10 @@ import {
 } from 'lucide-react';
 import type { Property } from '../lib/database.types';
 import { supabase } from '../lib/supabase';
-import { applyDiscounts, findPromoCode, type PromoCodeDef } from '../lib/offers';
-import { calculateBookingTotal } from '../lib/pricingUtils';
+import { findPromoCode, type PromoCodeDef } from '../lib/offers';
+import { buildGuestPricingQuote } from '../lib/guestPricingEngine';
+import { GUEST_PRICING_INQUIRY_TOTAL_NOTE, GUEST_PRICING_NO_COMMISSION } from '../lib/guestPricingCopy';
+import GuestPricingBreakdown from './pricing/GuestPricingBreakdown';
 import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
 import BookingProgressBar from './booking/BookingProgressBar';
 import { BOOKING_STEP_LABELS } from './booking/bookingStepLabels';
@@ -27,19 +29,17 @@ import {
 } from '../lib/analytics';
 import { orchestratedScrollTo } from '../lib/scrollOrchestrator';
 import InquiryHoneypotField from './inquiry/InquiryHoneypotField';
-import InquirySubmitTransition, {
-  scheduleInquiryTransitionSteps,
-} from './inquiry/InquirySubmitTransition';
+import InquirySubmitTransition from './inquiry/InquirySubmitTransition';
 import InquiryConfidenceStrip from './inquiry/InquiryConfidenceStrip';
 import { submitBookingInquiry, type MarketplaceInquiryResult } from '../lib/inquirySubmit';
 import {
+  inquirySuccessPath,
   saveInquirySuccessSnapshot,
   type InquirySuccessSnapshot,
 } from '../lib/inquirySuccessStorage';
-import type { InquiryTransitionStep } from '../lib/inquirySuccessMotion';
-import RequestBookSuccess from './inquiry/success/RequestBookSuccess';
-import { fetchPublicHost } from '../lib/hostPublicCache';
-import { safeHostDisplayName } from '../lib/host';
+import type { InquiryTransitionPhase } from '../lib/inquirySuccessMotion';
+import { completeInquirySubmission } from '../lib/finishInquirySuccess';
+import { navigateTo } from '../lib/navigation';
 import { getDeviceFingerprint } from '../lib/deviceFingerprint';
 import {
   buildInquiryAbusePayload,
@@ -153,30 +153,53 @@ export default function BookingForm({
   const [promoError, setPromoError] = useState<string | null>(null);
   const [honeypot, setHoneypot] = useState('');
   const formOpenedAtRef = useRef(createInquiryFormOpenedAt());
-  const [transitionStep, setTransitionStep] = useState<InquiryTransitionStep | null>(null);
-  const [successSnapshot, setSuccessSnapshot] = useState<InquirySuccessSnapshot | null>(null);
-  const [successHostName, setSuccessHostName] = useState<string | null>(null);
+  const [transitionPhase, setTransitionPhase] = useState<InquiryTransitionPhase | null>(null);
   const pendingSuccessRef = useRef<InquirySuccessSnapshot | null>(null);
-  const transitionCancelRef = useRef<(() => void) | null>(null);
+  const navigatedRef = useRef(false);
+
+  const settleSubmission = useCallback(() => {
+    setTransitionPhase(null);
+    setLoading(false);
+  }, []);
+
+  const finishWelcome = useCallback(
+    (snap: InquirySuccessSnapshot) => {
+      if (navigatedRef.current) return;
+      navigatedRef.current = true;
+      settleSubmission();
+      navigateTo(inquirySuccessPath(snap));
+    },
+    [settleSubmission],
+  );
+
+  const handleTransitionComplete = useCallback(() => {
+    const snap = pendingSuccessRef.current;
+    if (snap) finishWelcome(snap);
+    else settleSubmission();
+  }, [finishWelcome, settleSubmission]);
 
   const numberOfDays = useMemo(() => {
     if (!checkInDate || !checkOutDate) return 0;
     const diffTime = Math.abs(checkOutDate.getTime() - checkInDate.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
   }, [checkInDate, checkOutDate]);
-  const decorationPrice = includeDecoration ? 2000 : 0;
-
-  const discountResult = useMemo(
-    () => applyDiscounts(calculatedPrice, property, appliedPromo),
-    [calculatedPrice, property, appliedPromo],
+  const pricingQuote = useMemo(
+    () =>
+      buildGuestPricingQuote({
+        property,
+        accommodationSubtotal: calculatedPrice,
+        nights: numberOfDays,
+        numGuests,
+        promo: appliedPromo,
+        includeDecoration,
+      }),
+    [calculatedPrice, numberOfDays, numGuests, property, appliedPromo, includeDecoration],
   );
-  const feePricing = useMemo(
-    () => calculateBookingTotal(calculatedPrice, numberOfDays, numGuests, property),
-    [calculatedPrice, numberOfDays, numGuests, property],
-  );
-  const totalDiscounts = discountResult.propertyDiscount + discountResult.promoDiscount;
-  const totalPrice = feePricing.grandTotal - totalDiscounts + decorationPrice;
-  const totalSaved = discountResult.propertyDiscount + discountResult.promoDiscount;
+  const totalPrice = pricingQuote.guestTotal;
+  const totalSaved =
+    pricingQuote.lines
+      .filter((line) => line.kind === 'discount')
+      .reduce((sum, line) => sum + Math.abs(line.amount), 0);
 
   const analyticsScope: AnalyticsScope = useMemo(
     () => ({
@@ -334,38 +357,13 @@ export default function BookingForm({
 
     onSuccess({ bookingId: inquiry.bookingId, customerReference: inquiry.customerReference });
 
-    transitionCancelRef.current?.();
-    transitionCancelRef.current = scheduleInquiryTransitionSteps((step) => {
-      setTransitionStep(step);
+    navigatedRef.current = false;
+    void completeInquirySubmission({
+      snapshot: successSnapshot,
+      onPhase: setTransitionPhase,
+      onReadyToNavigate: finishWelcome,
     });
   };
-
-  const handleTransitionComplete = () => {
-    const snap = pendingSuccessRef.current;
-    transitionCancelRef.current?.();
-    transitionCancelRef.current = null;
-    setTransitionStep(null);
-    setLoading(false);
-    if (snap) {
-      setSuccessSnapshot(snap);
-      setSuccessHostName(snap.hostContactName);
-    }
-  };
-
-  useEffect(() => {
-    if (!successSnapshot?.hostId) return;
-    if (successSnapshot.hostContactName) {
-      setSuccessHostName(successSnapshot.hostContactName);
-      return;
-    }
-    let cancelled = false;
-    void fetchPublicHost(successSnapshot.hostId).then((row) => {
-      if (!cancelled && row) setSuccessHostName(safeHostDisplayName(row.name, 'Your host'));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [successSnapshot?.hostId, successSnapshot?.hostContactName]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -385,7 +383,7 @@ export default function BookingForm({
     if (!checkInDate || !checkOutDate) return;
 
     setLoading(true);
-    setTransitionStep(0);
+    setTransitionPhase(0);
     const submitStarted = performance.now();
     trackXpressEvent('inquiry_submit_started', {
       ...analyticsScope,
@@ -405,7 +403,7 @@ export default function BookingForm({
           response_time_bucket: bucketResponseMs(performance.now() - submitStarted),
         });
         setLoading(false);
-        setTransitionStep(null);
+        setTransitionPhase(null);
         return;
       }
 
@@ -415,7 +413,7 @@ export default function BookingForm({
       if (!property.host_id) {
         setErrorMessage('This listing is missing host details. Please try again later.');
         setLoading(false);
-        setTransitionStep(null);
+        setTransitionPhase(null);
         return;
       }
 
@@ -449,7 +447,7 @@ export default function BookingForm({
           response_time_bucket: bucketResponseMs(performance.now() - submitStarted),
         });
         setLoading(false);
-        setTransitionStep(null);
+        setTransitionPhase(null);
         return;
       }
 
@@ -482,7 +480,7 @@ export default function BookingForm({
         booking_step: 'send',
       });
       setLoading(false);
-      setTransitionStep(null);
+      setTransitionPhase(null);
     }
   };
 
@@ -503,7 +501,7 @@ export default function BookingForm({
 
   useEffect(() => {
     const onAbandon = () => {
-      if (inquirySubmittedRef.current || loading || transitionStep !== null || successSnapshot) return;
+      if (inquirySubmittedRef.current || loading || transitionPhase !== null) return;
       if (!hasDates && !hasDetails) return;
       const step = !hasDates ? 'dates' : !hasDetails ? 'contact' : 'send';
       trackXpressEvent('booking_abandonment', {
@@ -513,19 +511,9 @@ export default function BookingForm({
     };
     window.addEventListener('pagehide', onAbandon);
     return () => window.removeEventListener('pagehide', onAbandon);
-  }, [analyticsScope, hasDates, hasDetails, loading, transitionStep, successSnapshot]);
+  }, [analyticsScope, hasDates, hasDetails, loading, transitionPhase]);
 
   const bookingStep = hasDetails ? 4 : hasDates ? 3 : 1;
-
-  if (successSnapshot) {
-    return (
-      <RequestBookSuccess
-        snapshot={successSnapshot}
-        hostName={successHostName}
-        onDone={() => setSuccessSnapshot(null)}
-      />
-    );
-  }
 
   return (
     <>
@@ -733,67 +721,20 @@ export default function BookingForm({
         style={{ background: 'var(--xpx-surface-light)', border: '1px solid var(--xpx-border)' }}
       >
         <h4 className="font-bold text-xpx-text text-sm mb-3">Price summary</h4>
-        <div className="space-y-2.5 text-sm">
-          {numberOfDays > 0 && (
-            <div className="flex justify-between items-center gap-3">
-              <span className="text-xpx-muted">
-                Stay ({numberOfDays} {numberOfDays === 1 ? 'night' : 'nights'})
-              </span>
-              <span className="font-semibold text-xpx-text tabular-nums shrink-0">
-                ₹{calculatedPrice.toLocaleString('en-IN')}
-              </span>
-            </div>
-          )}
-          {discountResult.propertyDiscount > 0 && (
-            <div className="flex justify-between items-center text-emerald-700 gap-3">
-              <span className="flex items-center gap-1.5 min-w-0">
-                <Tag className="w-3.5 h-3.5 shrink-0" aria-hidden />
-                Property offer
-              </span>
-              <span className="font-semibold tabular-nums shrink-0">
-                −₹{discountResult.propertyDiscount.toLocaleString('en-IN')}
-              </span>
-            </div>
-          )}
-          {discountResult.promoDiscount > 0 && (
-            <div className="flex justify-between items-center text-emerald-700 gap-3">
-              <span className="flex items-center gap-1.5 min-w-0">
-                <Tag className="w-3.5 h-3.5 shrink-0" aria-hidden />
-                Promo {discountResult.promoCodeApplied}
-              </span>
-              <span className="font-semibold tabular-nums shrink-0">
-                −₹{discountResult.promoDiscount.toLocaleString('en-IN')}
-              </span>
-            </div>
-          )}
-          {includeDecoration && (
-            <div className="flex justify-between items-center gap-3">
-              <span className="text-xpx-muted flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" aria-hidden />
-                Decoration
-              </span>
-              <span className="font-semibold text-xpx-text tabular-nums shrink-0">
-                ₹{decorationPrice.toLocaleString('en-IN')}
-              </span>
-            </div>
-          )}
-          <div
-            className="pt-3 flex justify-between items-baseline gap-3"
-            style={{ borderTop: '1px solid var(--xpx-border)' }}
-          >
-            <span className="text-xpx-text font-bold">Total</span>
-            <span className="text-2xl font-extrabold text-xpx-text tabular-nums shrink-0">
-              ₹{totalPrice.toLocaleString('en-IN')}
-            </span>
-          </div>
-          {totalSaved > 0 && numberOfDays > 0 && (
-            <p className="text-xs font-semibold text-emerald-700 text-right">
-              You save ₹{totalSaved.toLocaleString('en-IN')}
-            </p>
-          )}
-        </div>
-        {numberOfDays === 0 && (
-          <p className="text-xs text-xpx-muted mt-3 flex items-center gap-2">
+        {numberOfDays > 0 && pricingQuote.guestTotal > 0 ? (
+          <>
+            <GuestPricingBreakdown
+              lines={pricingQuote.lines}
+              guestTotal={pricingQuote.guestTotal}
+            />
+            {totalSaved > 0 && (
+              <p className="text-xs font-semibold text-emerald-700 text-right mt-2">
+                You save ₹{totalSaved.toLocaleString('en-IN')}
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-xs text-xpx-muted flex items-center gap-2">
             <Calendar className="w-3.5 h-3.5 shrink-0" aria-hidden />
             Select dates above to see pricing
           </p>
@@ -820,13 +761,12 @@ export default function BookingForm({
           )}
         </button>
         <p className="text-[11px] text-xpx-subtle text-center mt-2 leading-relaxed">
-          No online payment on this step. Host confirms availability and coordinates payment
-          directly.
+          {GUEST_PRICING_NO_COMMISSION} {GUEST_PRICING_INQUIRY_TOTAL_NOTE}
         </p>
       </div>
     </form>
-    {transitionStep !== null && (
-      <InquirySubmitTransition step={transitionStep} onComplete={handleTransitionComplete} />
+    {transitionPhase !== null && (
+      <InquirySubmitTransition phase={transitionPhase} onComplete={handleTransitionComplete} />
     )}
     </>
   );

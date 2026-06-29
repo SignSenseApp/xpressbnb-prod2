@@ -24,6 +24,7 @@ export default function MobileBottomNav({ currentPath, onNavigate }: MobileBotto
     currentPath.startsWith('/ops') ||
     currentPath.startsWith('/track-inquiry') ||
     currentPath.startsWith('/inquiry/success/') ||
+    currentPath.startsWith('/guest/welcome/') ||
     currentPath.includes('/property/') ||
     currentPath.startsWith('/booking/');
 

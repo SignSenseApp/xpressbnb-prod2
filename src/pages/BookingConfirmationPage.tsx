@@ -10,6 +10,7 @@ import {
   type BookingConfirmationSnapshot,
 } from '../lib/bookingConfirmationStorage';
 import { navigateTo, XPX_NAVIGATE_EVENT } from '../lib/navigation';
+import { markGuestEligibleForPassword } from '../lib/guestIdentityFuture';
 
 type LoadState =
   | { status: 'loading' }
@@ -28,6 +29,14 @@ function parseBookingIdFromPath(): string | null {
   const m = path.match(/^\/booking\/([^/]+)\/?$/);
   return m ? decodeURIComponent(m[1]) : null;
 }
+
+const PASSWORD_ELIGIBLE_STATUSES = new Set([
+  'verified',
+  'booked',
+  'completed',
+  'confirmed',
+  'host_accepted',
+]);
 
 export default function BookingConfirmationPage() {
   const [bookingId, setBookingId] = useState(() => parseBookingIdFromPath());
@@ -231,6 +240,14 @@ export default function BookingConfirmationPage() {
       cancelled = true;
     };
   }, [bookingId]);
+
+  useEffect(() => {
+    if (state.status !== 'ready') return;
+    const status = state.snapshot.bookingStatus.trim().toLowerCase();
+    if (PASSWORD_ELIGIBLE_STATUSES.has(status)) {
+      markGuestEligibleForPassword();
+    }
+  }, [state]);
 
   useEffect(() => {
     if (state.status !== 'ready') return;

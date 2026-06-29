@@ -1,50 +1,50 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  INQUIRY_TRANSITION_LINES,
-  INQUIRY_TRANSITION_MIN_TOTAL_MS,
-  INQUIRY_TRANSITION_STEP_MS,
-  type InquiryTransitionStep,
+  INQUIRY_TRANSITION_PHASES,
+  type InquiryTransitionPhase,
 } from '../../lib/inquirySuccessMotion';
 
 type InquirySubmitTransitionProps = {
-  /** 0 = submitting, 1 = connecting host, 2 = almost ready */
-  step: InquiryTransitionStep;
+  phase: InquiryTransitionPhase;
   onComplete: () => void;
 };
 
-export default function InquirySubmitTransition({ step, onComplete }: InquirySubmitTransitionProps) {
-  const [displayStep, setDisplayStep] = useState(step);
+export default function InquirySubmitTransition({ phase, onComplete }: InquirySubmitTransitionProps) {
+  const [displayPhase, setDisplayPhase] = useState(phase);
   const [visible, setVisible] = useState(true);
-  const startedAt = useRef(Date.now());
   const completedRef = useRef(false);
+  const onCompleteRef = useRef(onComplete);
 
   useEffect(() => {
-    setDisplayStep(step);
-  }, [step]);
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
-    if (step < 2) return;
+    setDisplayPhase(phase);
+    if (phase < 4) {
+      completedRef.current = false;
+      setVisible(true);
+    }
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase < 4) return;
 
     const reducedMotion =
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    const elapsed = Date.now() - startedAt.current;
-    const remaining = reducedMotion
-      ? 120
-      : Math.max(0, INQUIRY_TRANSITION_MIN_TOTAL_MS - elapsed);
-
     const timer = window.setTimeout(() => {
       if (completedRef.current) return;
       completedRef.current = true;
       setVisible(false);
-      window.setTimeout(onComplete, reducedMotion ? 0 : 180);
-    }, remaining);
+      window.setTimeout(() => onCompleteRef.current(), reducedMotion ? 0 : 180);
+    }, reducedMotion ? 60 : 200);
 
     return () => window.clearTimeout(timer);
-  }, [step, onComplete]);
+  }, [phase]);
 
-  const line = INQUIRY_TRANSITION_LINES[displayStep] ?? INQUIRY_TRANSITION_LINES[0];
+  const line = INQUIRY_TRANSITION_PHASES[displayPhase] ?? INQUIRY_TRANSITION_PHASES[0];
 
   return (
     <div
@@ -62,10 +62,13 @@ export default function InquirySubmitTransition({ step, onComplete }: InquirySub
     >
       <div
         className="w-full max-w-sm text-center inquiry-transition-enter motion-reduce:animate-none"
-        style={{ opacity: visible ? 1 : 0, transition: 'opacity 200ms cubic-bezier(0.22, 1, 0.36, 1)' }}
+        style={{
+          opacity: visible ? 1 : 0,
+          transition: 'opacity 200ms cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
       >
         <div
-          className="mx-auto mb-8 h-28 w-28 rounded-3xl overflow-hidden shadow-lg"
+          className="mx-auto mb-8 h-28 w-28 rounded-3xl overflow-hidden"
           style={{
             border: '1px solid rgba(5,150,105,0.18)',
             boxShadow: '0 20px 48px rgba(5,150,105,0.12)',
@@ -82,21 +85,21 @@ export default function InquirySubmitTransition({ step, onComplete }: InquirySub
         </div>
 
         <p
-          key={displayStep}
+          key={displayPhase}
           className="text-lg sm:text-xl font-semibold text-xpx-text tracking-tight inquiry-line-crossfade motion-reduce:animate-none"
         >
           {line}
         </p>
 
         <div className="mt-8 flex justify-center gap-2" aria-hidden>
-          {INQUIRY_TRANSITION_LINES.map((_, index) => (
+          {INQUIRY_TRANSITION_PHASES.map((_, index) => (
             <span
               key={index}
               className="h-1.5 rounded-full transition-all duration-200"
               style={{
-                width: index === displayStep ? '1.75rem' : '0.375rem',
+                width: index === displayPhase ? '1.75rem' : '0.375rem',
                 background:
-                  index <= displayStep ? 'var(--xpx-verified, #059669)' : 'rgba(148,163,184,0.45)',
+                  index <= displayPhase ? 'var(--xpx-verified, #059669)' : 'rgba(148,163,184,0.45)',
               }}
             />
           ))}
@@ -104,21 +107,4 @@ export default function InquirySubmitTransition({ step, onComplete }: InquirySub
       </div>
     </div>
   );
-}
-
-/** Advance transition steps after API success — respects reduced motion. */
-export function scheduleInquiryTransitionSteps(
-  onStep: (step: InquiryTransitionStep) => void,
-): () => void {
-  const reducedMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  const delay = reducedMotion ? 80 : INQUIRY_TRANSITION_STEP_MS;
-  const timers: number[] = [];
-
-  onStep(1);
-  timers.push(window.setTimeout(() => onStep(2), delay));
-
-  return () => timers.forEach((t) => window.clearTimeout(t));
 }

@@ -4,6 +4,7 @@ import { XPRESSBNB_LOGO_NAV_IMG_CLASS, XPRESSBNB_LOGO_PATH } from '../lib/brandi
 import { theme } from '../lib/theme';
 import LocationIdentityChip from './nearby/LocationIdentityChip';
 import XpModeSwitch from './XpModeSwitch';
+import GuestSessionChip from './guest/GuestSessionChip';
 
 interface HeaderProps {
   onAboutClick: () => void;
@@ -16,6 +17,8 @@ interface HeaderProps {
    * shadow while transparent so it stays legible on busy photos.
    */
   transparentOnTop?: boolean;
+  /** Show soft guest welcome strip when local guest identity exists */
+  showGuestSession?: boolean;
 }
 
 /**
@@ -32,6 +35,7 @@ export default function Header({
   onBlogClick,
   onHostLoginClick,
   transparentOnTop = false,
+  showGuestSession = false,
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(!transparentOnTop);
@@ -143,6 +147,7 @@ export default function Header({
         </nav>
 
         <div className="flex items-center gap-2 shrink-0">
+          {showGuestSession && <GuestSessionChip scrolled={scrolled} />}
           {onHostLoginClick && (
             <button
               onClick={onHostLoginClick}

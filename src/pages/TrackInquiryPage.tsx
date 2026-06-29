@@ -7,6 +7,10 @@ import GuestTrustJourney from '../components/inquiry/GuestTrustJourney';
 import InquiryStatusTimeline from '../components/inquiry/InquiryStatusTimeline';
 import { inquiryTrackStatusLabel, trackInquiryByReference, type InquiryTrackResult, type InquiryTrackStatus } from '../lib/inquirySubmit';
 import { markGuestTrackPageVisited, updateGuestInquiryFromTrack } from '../lib/guestTrustStorage';
+import { loadInquirySuccessSnapshot } from '../lib/inquirySuccessStorage';
+import { loadBookingConfirmationByReference } from '../lib/bookingConfirmationStorage';
+import { formatInr } from '../lib/guestPricingEngine';
+import { GUEST_PRICING_INQUIRY_TOTAL_NOTE } from '../lib/guestPricingCopy';
 import { navigateTo } from '../lib/navigation';
 
 function statusBadgeClass(status: InquiryTrackStatus): string {
@@ -159,6 +163,29 @@ export default function TrackInquiryPage() {
         {result && (
           <div className="mt-6 space-y-4">
             <CustomerReferenceField reference={result.customerReference} />
+
+            {(() => {
+              const amount =
+                loadInquirySuccessSnapshot(result.customerReference)?.estimatedTotal ??
+                loadBookingConfirmationByReference(result.customerReference)?.estimatedTotal;
+              if (!amount || amount <= 0) return null;
+              return (
+                <div
+                  className="rounded-2xl p-5"
+                  style={{ background: 'var(--xpx-surface)', border: '1px solid var(--xpx-border)' }}
+                >
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-xpx-subtle">
+                    Request amount
+                  </p>
+                  <p className="mt-1 text-2xl font-extrabold text-xpx-text tabular-nums">
+                    {formatInr(amount)}
+                  </p>
+                  <p className="mt-2 text-xs text-xpx-muted leading-relaxed">
+                    {GUEST_PRICING_INQUIRY_TOTAL_NOTE}
+                  </p>
+                </div>
+              );
+            })()}
 
             <div
               className="rounded-2xl p-5"

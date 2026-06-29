@@ -3,16 +3,30 @@
 export const INQUIRY_MOTION_MS = 200;
 export const INQUIRY_MOTION_EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
 
-export const INQUIRY_TRANSITION_STEP_MS = 650;
-export const INQUIRY_TRANSITION_MIN_TOTAL_MS = 2200;
+/** Minimum readable dwell per phase when async work finishes instantly (not fake progress). */
+export const INQUIRY_PHASE_MIN_DWELL_MS = 320;
 
-export const INQUIRY_TRANSITION_LINES = [
-  'Submitting your booking request...',
-  'Connecting you with your host...',
-  'Almost ready...',
+export const INQUIRY_TRANSITION_PHASES = [
+  'Submitting inquiry...',
+  'Finding your host...',
+  'Creating Guest ID...',
+  'Preparing your travel dashboard...',
+  'Welcome.',
 ] as const;
 
-export type InquiryTransitionStep = 0 | 1 | 2;
+export type InquiryTransitionPhase = 0 | 1 | 2 | 3 | 4;
+
+/** @deprecated Use InquiryTransitionPhase */
+export type InquiryTransitionStep = InquiryTransitionPhase;
+
+/** @deprecated */
+export const INQUIRY_TRANSITION_LINES = INQUIRY_TRANSITION_PHASES;
+
+/** @deprecated */
+export const INQUIRY_TRANSITION_STEP_MS = INQUIRY_PHASE_MIN_DWELL_MS;
+
+/** @deprecated */
+export const INQUIRY_TRANSITION_MIN_TOTAL_MS = 1500;
 
 export function guestInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -31,6 +45,22 @@ export function formatCreatedTodayLabel(date = new Date()): string {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+export function formatMemberSinceLabel(date = new Date()): string {
+  return date.toLocaleDateString('en-IN', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+export function formatIssueDateLabel(date = new Date()): string {
+  return date.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
     year: 'numeric',
   });
 }

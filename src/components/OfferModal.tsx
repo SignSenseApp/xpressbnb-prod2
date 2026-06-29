@@ -1,24 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { X, Tag, MessageCircle, Mail, User, ArrowDown, Sparkles } from 'lucide-react';
 import { theme } from '../lib/theme';
 import type { Property } from '../lib/database.types';
 import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
 import InquiryConfidenceStrip from './inquiry/InquiryConfidenceStrip';
 import InquiryHoneypotField from './inquiry/InquiryHoneypotField';
-import InquirySubmitTransition, {
-  scheduleInquiryTransitionSteps,
-} from './inquiry/InquirySubmitTransition';
+import InquirySubmitTransition from './inquiry/InquirySubmitTransition';
 import { normalizePhoneDigits } from '../lib/guestValidation';
 import { guestEmailError } from '../lib/guestValidation';
 import { submitBookingInquiry } from '../lib/inquirySubmit';
 import {
+  inquirySuccessPath,
   saveInquirySuccessSnapshot,
   type InquirySuccessSnapshot,
 } from '../lib/inquirySuccessStorage';
-import type { InquiryTransitionStep } from '../lib/inquirySuccessMotion';
-import RequestBookSuccess from './inquiry/success/RequestBookSuccess';
-import { fetchPublicHost } from '../lib/hostPublicCache';
-import { safeHostDisplayName } from '../lib/host';
+import type { InquiryTransitionPhase } from '../lib/inquirySuccessMotion';
+import { completeInquirySubmission } from '../lib/finishInquirySuccess';
+import { navigateTo } from '../lib/navigation';
 import { getDeviceFingerprint } from '../lib/deviceFingerprint';
 import {
   isPushSupported,
@@ -87,11 +85,30 @@ export default function OfferModal({
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [transitionStep, setTransitionStep] = useState<InquiryTransitionStep | null>(null);
-  const [successSnapshot, setSuccessSnapshot] = useState<InquirySuccessSnapshot | null>(null);
-  const [successHostName, setSuccessHostName] = useState<string | null>(null);
+  const [transitionPhase, setTransitionPhase] = useState<InquiryTransitionPhase | null>(null);
   const pendingSuccessRef = useRef<InquirySuccessSnapshot | null>(null);
-  const transitionCancelRef = useRef<(() => void) | null>(null);
+  const navigatedRef = useRef(false);
+
+  const finishWelcome = useCallback(
+    (snap: InquirySuccessSnapshot) => {
+      if (navigatedRef.current) return;
+      navigatedRef.current = true;
+      setTransitionPhase(null);
+      setSubmitting(false);
+      onClose();
+      navigateTo(inquirySuccessPath(snap));
+    },
+    [onClose],
+  );
+
+  const handleTransitionComplete = useCallback(() => {
+    const snap = pendingSuccessRef.current;
+    if (snap) finishWelcome(snap);
+    else {
+      setTransitionPhase(null);
+      setSubmitting(false);
+    }
+  }, [finishWelcome]);
 
   const analyticsScope: AnalyticsScope = useMemo(
     () => ({
@@ -109,12 +126,9 @@ export default function OfferModal({
     if (open) {
       setOffer(defaultOffer);
       setError(null);
-      setTransitionStep(null);
+      setTransitionPhase(null);
       pendingSuccessRef.current = null;
-      setSuccessSnapshot(null);
-      setSuccessHostName(null);
-      transitionCancelRef.current?.();
-      transitionCancelRef.current = null;
+      navigatedRef.current = false;
       setHoneypot('');
       formOpenedAtRef.current = createInquiryFormOpenedAt();
       trackXpressEvent('booking_form_started', {
@@ -123,21 +137,6 @@ export default function OfferModal({
       });
     }
   }, [open, defaultOffer, analyticsScope]);
-
-  useEffect(() => {
-    if (!successSnapshot?.hostId) return;
-    if (successSnapshot.hostContactName) {
-      setSuccessHostName(successSnapshot.hostContactName);
-      return;
-    }
-    let cancelled = false;
-    void fetchPublicHost(successSnapshot.hostId).then((row) => {
-      if (!cancelled && row) setSuccessHostName(safeHostDisplayName(row.name, 'Your host'));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [successSnapshot?.hostId, successSnapshot?.hostContactName]);
 
   if (!open) return null;
 
@@ -192,7 +191,7 @@ export default function OfferModal({
     }
 
     setSubmitting(true);
-    setTransitionStep(0);
+    setTransitionPhase(0);
     const submitStarted = performance.now();
     trackXpressEvent('inquiry_submit_started', {
       ...analyticsScope,
@@ -211,7 +210,7 @@ export default function OfferModal({
     if (!property.host_id) {
       setError('This listing is missing host details. Please try again later.');
       setSubmitting(false);
-      setTransitionStep(null);
+      setTransitionPhase(null);
       return;
     }
 
@@ -245,7 +244,7 @@ export default function OfferModal({
         response_time_bucket: bucketResponseMs(performance.now() - submitStarted),
       });
       setSubmitting(false);
-      setTransitionStep(null);
+      setTransitionPhase(null);
       return;
     }
 
@@ -327,9 +326,10 @@ export default function OfferModal({
       );
     }
 
-    transitionCancelRef.current?.();
-    transitionCancelRef.current = scheduleInquiryTransitionSteps((step) => {
-      setTransitionStep(step);
+    void completeInquirySubmission({
+      snapshot: successSnapshot,
+      onPhase: setTransitionPhase,
+      onReadyToNavigate: finishWelcome,
     });
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Could not send your offer. Please try again.';
@@ -340,19 +340,7 @@ export default function OfferModal({
         booking_step: 'send',
       });
       setSubmitting(false);
-      setTransitionStep(null);
-    }
-  };
-
-  const handleTransitionComplete = () => {
-    const snap = pendingSuccessRef.current;
-    transitionCancelRef.current?.();
-    transitionCancelRef.current = null;
-    setTransitionStep(null);
-    setSubmitting(false);
-    if (snap) {
-      setSuccessSnapshot(snap);
-      setSuccessHostName(snap.hostContactName);
+      setTransitionPhase(null);
     }
   };
 
@@ -410,16 +398,6 @@ export default function OfferModal({
             submit button — the form scrolls inside the sheet. */}
         <div className="overflow-y-auto overscroll-contain flex-1" style={{ WebkitOverflowScrolling: 'touch' }}>
 
-        {successSnapshot ? (
-          <div className="px-5 sm:px-6 pb-6 pt-2">
-            <RequestBookSuccess
-              snapshot={successSnapshot}
-              hostName={successHostName}
-              onDone={onClose}
-              doneLabel="Close"
-            />
-          </div>
-        ) : (
         <form onSubmit={handleSubmit} className="relative px-5 sm:px-6 pb-6 pt-2 space-y-5">
             <InquiryHoneypotField value={honeypot} onChange={setHoneypot} />
             {/* Listed vs Your offer comparison.
@@ -634,11 +612,10 @@ export default function OfferModal({
               Hosts see your offer with the dates and message. No payment is taken yet.
             </p>
           </form>
-        )}
         </div>
       </div>
-      {transitionStep !== null && (
-        <InquirySubmitTransition step={transitionStep} onComplete={handleTransitionComplete} />
+      {transitionPhase !== null && (
+        <InquirySubmitTransition phase={transitionPhase} onComplete={handleTransitionComplete} />
       )}
     </div>
   );

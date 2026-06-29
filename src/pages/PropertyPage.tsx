@@ -43,7 +43,8 @@ import {
   getMapEmbedUrl,
   getMapLinkUrl,
 } from '../config/propertyDefaults';
-import { calculateBookingTotal } from '../lib/pricingUtils';
+import { buildGuestPricingQuote, formatInr } from '../lib/guestPricingEngine';
+import { GUEST_PRICING_TRIP_HINT } from '../lib/guestPricingCopy';
 import { inquiryCtaLabel } from '../lib/inquiryCopy';
 import { safeHostDisplayName } from '../lib/host';
 import { parseTripFromSearch } from '../lib/tripSearch';
@@ -132,18 +133,16 @@ export default function PropertyPage() {
     );
   }, [hasValidDates, selectedCheckIn, selectedCheckOut]);
 
-  const tripBreakdown = useMemo(
+  const tripQuote = useMemo(
     () =>
       property
-        ? calculateBookingTotal(totalPrice, bookingNights, numGuests, property)
-        : {
-            baseTotal: 0,
-            fees: 0,
-            taxes: 0,
-            grandTotal: 0,
-            cleaningFee: 0,
-            serviceFee: 0,
-          },
+        ? buildGuestPricingQuote({
+            property,
+            accommodationSubtotal: totalPrice,
+            nights: bookingNights,
+            numGuests,
+          })
+        : null,
     [totalPrice, bookingNights, numGuests, property],
   );
 
@@ -1191,12 +1190,12 @@ export default function PropertyPage() {
                 <>
                   <div className="flex items-baseline gap-1 flex-wrap">
                     <span className="text-lg font-extrabold text-xpx-text tabular-nums">
-                      ₹{tripBreakdown.grandTotal.toLocaleString('en-IN')}
+                      {formatInr(tripQuote?.guestTotal ?? 0)}
                     </span>
                     <span className="text-xs text-xpx-muted">total</span>
                   </div>
                   <p className="text-xs text-xpx-subtle leading-snug">
-                    {bookingNights} {bookingNights === 1 ? 'night' : 'nights'} · incl. fees · no GST from us
+                    {GUEST_PRICING_TRIP_HINT(bookingNights)}
                   </p>
                 </>
               ) : (

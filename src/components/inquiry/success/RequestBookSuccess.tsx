@@ -2,6 +2,8 @@ import { Check, Copy } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import InquiryHostContactCard from './InquiryHostContactCard';
 import type { InquirySuccessSnapshot } from '../../../lib/inquirySuccessStorage';
+import { formatInr } from '../../../lib/guestPricingEngine';
+import { guestRequestSentCopy } from '../../../lib/guestPricingCopy';
 
 type RequestBookSuccessProps = {
   snapshot: InquirySuccessSnapshot;
@@ -57,6 +59,9 @@ export default function RequestBookSuccess({
           Talk to your host now
         </h2>
         <p className="mt-2 text-sm text-xpx-muted leading-relaxed">
+          {guestRequestSentCopy(formatInr(snapshot.estimatedTotal))}
+        </p>
+        <p className="mt-1 text-xs text-xpx-subtle">
           {snapshot.propertyTitle} · {formatTripDate(snapshot.checkIn)} →{' '}
           {formatTripDate(snapshot.checkOut)}
         </p>
