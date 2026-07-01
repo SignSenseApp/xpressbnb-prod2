@@ -26,24 +26,9 @@ async function runWithMinDwell(task: () => void | Promise<void>): Promise<void> 
 export async function runPostSubmitTransitionPhases(input: {
   onPhase: (phase: InquiryTransitionPhase) => void;
   resolveHost?: () => Promise<void>;
-  prepareGuestId?: () => void | Promise<void>;
-  finalizeDashboard?: () => void | Promise<void>;
 }): Promise<void> {
   input.onPhase(1);
   await runWithMinDwell(async () => {
     if (input.resolveHost) await input.resolveHost();
   });
-
-  input.onPhase(2);
-  await runWithMinDwell(async () => {
-    if (input.prepareGuestId) await input.prepareGuestId();
-  });
-
-  input.onPhase(3);
-  await runWithMinDwell(async () => {
-    if (input.finalizeDashboard) await input.finalizeDashboard();
-  });
-
-  input.onPhase(4);
-  await minDwell(prefersReducedMotion() ? 80 : INQUIRY_PHASE_MIN_DWELL_MS);
 }

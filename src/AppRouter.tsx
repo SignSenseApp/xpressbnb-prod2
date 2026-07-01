@@ -9,13 +9,14 @@ import RouteFallback from './components/RouteFallback';
 import { closeHomeOverlay, getHomeOverlayPage, navigateTo, XPX_NAVIGATE_EVENT } from './lib/navigation';
 import { markIntroPreloaderSeen } from './lib/pwa';
 import { loadPropertyPageModule } from './lib/propertyRouteChunk';
+import { loadCityListingPageModule, loadRishikeshStaysPageModule } from './lib/listingRouteChunk';
 
 const PropertyPage = lazy(() => loadPropertyPageModule());
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'));
 const TrackInquiryPage = lazy(() => import('./pages/TrackInquiryPage'));
 const GuestWelcomePage = lazy(() => import('./pages/GuestWelcomePage'));
-const CityListingPage = lazy(() => import('./pages/CityListingPage'));
-const RishikeshStaysPage = lazy(() => import('./pages/RishikeshStaysPage'));
+const CityListingPage = lazy(() => loadCityListingPageModule());
+const RishikeshStaysPage = lazy(() => loadRishikeshStaysPageModule());
 const ExploreCitiesPage = lazy(() => import('./pages/ExploreCitiesPage'));
 const SavedListingsPage = lazy(() => import('./pages/SavedListingsPage'));
 const AuthRouter = lazy(() => import('./pages/auth/AuthRouter'));
@@ -201,7 +202,9 @@ export default function AppRouter() {
     <NearbyLocationShell autoPrompt={false}>
       <GuestOnboardingProvider enabled={isGuestMarketplace}>
         <Suspense fallback={<RouteFallback />}>
-          <div key={locationKey}>{renderContent()}</div>
+          <div key={locationKey} className={isGuestMarketplace ? 'xpx-route-enter' : undefined}>
+            {renderContent()}
+          </div>
         </Suspense>
         <Suspense fallback={null}>
           <StayScoreInfoSheet />

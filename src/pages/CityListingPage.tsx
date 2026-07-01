@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { ArrowLeft, SlidersHorizontal, X, MapPin, CheckCircle, Clock, Shield, Star, MessageCircle, Calendar } from 'lucide-react';
 import { logSupabaseError } from '../lib/supabase';
 import ConversionPropertyCard from '../components/ConversionPropertyCard';
+import { CityListingGridSkeleton } from '../components/listing/CityListingPageSkeleton';
 import SEOHead from '../components/SEOHead';
 import type { Property } from '../lib/database.types';
 import { theme } from '../lib/theme';
@@ -314,16 +315,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
       {/* Grid */}
       <div className="xpx-container pt-6 sm:pt-8 pb-28">
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 items-stretch">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="space-y-2">
-                <div className="xpx-card-media rounded-2xl animate-pulse" style={{ background: 'rgba(15,23,42,0.06)' }} />
-                <div className="h-3.5 w-3/4 rounded animate-pulse" style={{ background: 'rgba(15,23,42,0.06)' }} />
-                <div className="h-3 w-1/2 rounded animate-pulse" style={{ background: 'rgba(15,23,42,0.06)' }} />
-                <div className="h-3.5 w-1/3 rounded animate-pulse" style={{ background: 'rgba(15,23,42,0.06)' }} />
-              </div>
-            ))}
-          </div>
+          <CityListingGridSkeleton count={8} />
         ) : listingsError ? (
           <div className="flex flex-col items-center justify-center py-24 text-center px-4">
             <h3 className="text-lg font-bold text-xpx-text mb-2">We couldn't load stays right now</h3>

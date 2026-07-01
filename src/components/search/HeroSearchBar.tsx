@@ -280,7 +280,7 @@ export default function HeroSearchBar({
                   setMobileOpen(false);
                   onSearch();
                 }}
-                className="mt-1 inline-flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-semibold text-white transition-opacity duration-200 hover:opacity-95 active:scale-[0.99]"
+                className="mt-1 inline-flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-semibold text-white transition-opacity duration-200 hover:opacity-95 xpx-press"
                 style={{ background: ACCENT }}
               >
                 <Search className="h-4 w-4" />
@@ -411,7 +411,7 @@ export default function HeroSearchBar({
         <button
           type="button"
           onClick={onSearch}
-          className="flex items-center justify-center gap-2 shrink-0 rounded-2xl px-5 transition-opacity duration-200 hover:opacity-95 active:scale-[0.99]"
+          className="flex items-center justify-center gap-2 shrink-0 rounded-2xl px-5 transition-opacity duration-200 hover:opacity-95 xpx-press"
           style={{
             background: ACCENT,
             height: 58,

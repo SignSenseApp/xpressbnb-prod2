@@ -59,6 +59,10 @@ import SaveListingButton from '../components/SaveListingButton';
 import PropertyTrustLine from '../components/PropertyTrustLine';
 import { snapshotFromProperty } from '../lib/savedListingsStorage';
 import { useInViewport } from '../hooks/useGalleryMotion';
+import {
+  PropertyPageSkeletonBody,
+  PropertySidebarSkeleton,
+} from '../components/property/PropertyPageSkeleton';
 
 /** Preload sidebar chunk + calendar when the booking column nears the viewport. */
 const SIDEBAR_MOUNT_ROOT_MARGIN = '400px 0px';
@@ -73,13 +77,7 @@ const NearbyPropertiesSection = lazy(
 const PropertySidebar = lazy(() => import('../components/property/PropertySidebar'));
 
 function SidebarFallback() {
-  return (
-    <div
-      className="rounded-3xl min-h-[480px] lg:min-h-[520px]"
-      style={{ background: 'var(--xpx-surface-light)', border: '1px solid var(--xpx-border)' }}
-      aria-hidden
-    />
-  );
+  return <PropertySidebarSkeleton className="min-h-[480px] lg:min-h-[520px]" />;
 }
 
 /**
@@ -499,15 +497,14 @@ export default function PropertyPage() {
 
   if (loading) {
     return (
-      <div className="xpx-page">
+      <div className="xpx-page min-h-screen" role="status" aria-busy="true" aria-live="polite">
+        <span className="sr-only">Loading property</span>
         <Header
           onAboutClick={() => navigateToPage('/?page=about')}
           onBlogClick={() => navigateToPage('/?page=blog')}
           onHostLoginClick={() => navigateToPage('/auth/login')}
         />
-        <div className="flex items-center justify-center h-96">
-          <div className="w-12 h-12 border-4 border-xpx-warm border-t-transparent rounded-full animate-spin" />
-        </div>
+        <PropertyPageSkeletonBody />
       </div>
     );
   }
@@ -1215,10 +1212,10 @@ export default function PropertyPage() {
             <button
               type="button"
               onClick={handlePrimaryBookingCta}
-              className="shrink-0 px-5 py-3 rounded-full font-bold text-sm text-white transition-transform motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.97] min-h-[48px] min-w-[44px] touch-manipulation"
+              className="shrink-0 px-5 py-3 rounded-full font-bold text-sm text-white xpx-press min-h-[48px] min-w-[44px] touch-manipulation"
               style={{
                 background: 'var(--xpx-cta)',
-                boxShadow: '0 4px 16px rgba(255,56,92,0.28)',
+                boxShadow: 'var(--xpx-cta-glow)',
               }}
             >
               {hasValidDates

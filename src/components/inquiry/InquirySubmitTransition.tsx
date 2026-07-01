@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  INQUIRY_MOTION_EASE,
+  INQUIRY_MOTION_MS,
   INQUIRY_TRANSITION_PHASES,
   type InquiryTransitionPhase,
 } from '../../lib/inquirySuccessMotion';
+
+const TERMINAL_PHASE = (INQUIRY_TRANSITION_PHASES.length - 1) as InquiryTransitionPhase;
 
 type InquirySubmitTransitionProps = {
   phase: InquiryTransitionPhase;
@@ -21,25 +25,28 @@ export default function InquirySubmitTransition({ phase, onComplete }: InquirySu
 
   useEffect(() => {
     setDisplayPhase(phase);
-    if (phase < 4) {
+    if (phase < TERMINAL_PHASE) {
       completedRef.current = false;
       setVisible(true);
     }
   }, [phase]);
 
   useEffect(() => {
-    if (phase < 4) return;
+    if (phase < TERMINAL_PHASE) return;
 
     const reducedMotion =
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    const exitMs = reducedMotion ? 60 : INQUIRY_MOTION_MS;
+    const fadeMs = reducedMotion ? 0 : INQUIRY_MOTION_MS - 20;
+
     const timer = window.setTimeout(() => {
       if (completedRef.current) return;
       completedRef.current = true;
       setVisible(false);
-      window.setTimeout(() => onCompleteRef.current(), reducedMotion ? 0 : 180);
-    }, reducedMotion ? 60 : 200);
+      window.setTimeout(() => onCompleteRef.current(), fadeMs);
+    }, exitMs);
 
     return () => window.clearTimeout(timer);
   }, [phase]);
@@ -59,12 +66,14 @@ export default function InquirySubmitTransition({ phase, onComplete }: InquirySu
       role="status"
       aria-live="polite"
       aria-busy={visible}
+      aria-label={line}
     >
       <div
         className="w-full max-w-sm text-center inquiry-transition-enter motion-reduce:animate-none"
         style={{
           opacity: visible ? 1 : 0,
-          transition: 'opacity 200ms cubic-bezier(0.22, 1, 0.36, 1)',
+          transform: visible ? 'scale(1)' : 'scale(0.98)',
+          transition: `opacity ${INQUIRY_MOTION_MS - 20}ms ${INQUIRY_MOTION_EASE}, transform ${INQUIRY_MOTION_MS - 20}ms ${INQUIRY_MOTION_EASE}`,
         }}
       >
         <div

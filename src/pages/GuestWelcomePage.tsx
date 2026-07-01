@@ -101,7 +101,7 @@ export default function GuestWelcomePage() {
       <SEOHead
         config={{
           title: `Welcome, ${snapshot.guestName.trim() || 'Guest'} | XpressBnB`,
-          description: 'Your inquiry was received. Your Guest ID and host contact are ready.',
+          description: 'Your inquiry was received. WhatsApp your host to confirm your stay.',
           robots: 'noindex, nofollow',
         }}
       />
@@ -111,7 +111,7 @@ export default function GuestWelcomePage() {
         onHostLoginClick={() => navigateTo('/auth/login')}
         showGuestSession
       />
-      <main className="mx-auto w-full max-w-3xl px-4 sm:px-6 md:px-8 pt-8 sm:pt-12 pb-16 sm:pb-20">
+      <main className="mx-auto w-full max-w-3xl px-4 sm:px-6 md:px-8 pt-5 sm:pt-10 pb-20 sm:pb-16">
         <GuestWelcomeExperience snapshot={snapshot} hostName={hostName} />
       </main>
     </div>

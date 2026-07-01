@@ -203,10 +203,10 @@ export default function PropertySidebar({
           <button
             type="button"
             onClick={hasValidDates ? onRequestToBook : onCheckAvailability}
-            className="mt-5 w-full py-3.5 rounded-2xl font-bold text-[15px] text-white transition-transform motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.98] touch-manipulation"
+            className="mt-5 w-full py-3.5 rounded-2xl font-bold text-[15px] text-white xpx-press touch-manipulation"
             style={{
               background: 'var(--xpx-cta)',
-              boxShadow: '0 10px 32px rgba(255,56,92,0.32)',
+              boxShadow: 'var(--xpx-cta-glow)',
               minHeight: 52,
             }}
           >

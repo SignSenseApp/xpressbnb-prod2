@@ -13,7 +13,7 @@ import { runPostSubmitTransitionPhases } from './inquirySubmitTransition';
 const HOST_LOOKUP_TIMEOUT_MS = 4000;
 /** Hard ceiling — navigate even if transition pipeline stalls (production P0 guard). */
 const NAVIGATION_FALLBACK_MS = 3000;
-const WELCOME_DWELL_MS = 320;
+const WELCOME_DWELL_MS = 200;
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
   return Promise.race([
@@ -54,9 +54,6 @@ export async function runInquirySuccessPipeline(input: {
       snap = { ...snap, hostContactName };
       saveInquirySuccessSnapshot(snap);
     },
-    prepareGuestId: async () => {
-      /* Guest identity synced in completeInquiryAfterSubmit before pipeline runs */
-    },
   });
 
   return snap;
@@ -78,7 +75,7 @@ export function completeInquiryAfterSubmit(input: CompleteInquiryAfterSubmitInpu
 
   const go = (snap: InquirySuccessSnapshot) => {
     if (input.navigatedRef.current) return;
-    input.onPhase(4);
+    input.onPhase(2);
     window.setTimeout(() => input.onNavigate(snap), WELCOME_DWELL_MS);
   };
 

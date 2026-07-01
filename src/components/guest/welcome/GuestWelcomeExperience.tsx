@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
+import { MessageCircle } from 'lucide-react';
 import InquiryHostContactCard from '../../inquiry/success/InquiryHostContactCard';
-import GuestDigitalPassport from './GuestDigitalPassport';
-import GuestIdentityBenefits from './GuestIdentityBenefits';
+import CustomerReferenceField from '../../inquiry/CustomerReferenceField';
 import GuestMemberTimeline from './GuestMemberTimeline';
-import GuestSecureAccountTeaser from './GuestSecureAccountTeaser';
 import type { InquirySuccessSnapshot } from '../../../lib/inquirySuccessStorage';
 import { formatInr } from '../../../lib/guestPricingEngine';
 import { guestRequestSentCopy } from '../../../lib/guestPricingCopy';
+import { buildInquirySuccessWhatsAppLink } from '../../../lib/inquiryHostContact';
 import { navigateTo } from '../../../lib/navigation';
 import { GuestWelcomeContinueLater } from './GuestSecureAccountTeaser';
 
@@ -23,25 +23,35 @@ function formatTripDate(iso: string): string {
 }
 
 export default function GuestWelcomeExperience({ snapshot, hostName }: GuestWelcomeExperienceProps) {
-  const createdAt = useMemo(() => new Date(snapshot.savedAt), [snapshot.savedAt]);
   const propertyPath = snapshot.propertySlug
     ? `/property/${snapshot.propertySlug}`
     : `/property/${snapshot.propertyId}`;
 
+  const hostPhoneDigits = useMemo(
+    () => snapshot.hostContactPhone?.replace(/\D/g, '') ?? '',
+    [snapshot.hostContactPhone],
+  );
+  const hasHostPhone = hostPhoneDigits.length >= 10;
+  const whatsappHref = hasHostPhone
+    ? buildInquirySuccessWhatsAppLink(hostPhoneDigits, snapshot.propertyTitle)
+    : null;
+
+  const trackPath = `/track-inquiry?ref=${encodeURIComponent(snapshot.customerReference)}&email=${encodeURIComponent(snapshot.guestEmail)}`;
+
   return (
     <div className="mx-auto w-full max-w-2xl">
-      <header className="flex items-start justify-between gap-4 mb-10 sm:mb-12 inquiry-reveal motion-reduce:animate-none">
+      <header className="flex items-start justify-between gap-3 mb-6 sm:mb-8 inquiry-reveal motion-reduce:animate-none">
         <div className="min-w-0">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-800">
-            Welcome
+            Request sent
           </p>
-          <h1 className="mt-2 text-3xl sm:text-4xl md:text-[2.75rem] font-extrabold text-xpx-text tracking-tight leading-[1.08] text-balance">
-            You&apos;re an XpressBnB member now
+          <h1 className="mt-1.5 text-2xl sm:text-3xl font-extrabold text-xpx-text tracking-tight leading-[1.12] text-balance">
+            {hasHostPhone ? 'Introduce yourself to your host' : 'Your inquiry is in'}
           </h1>
-          <p className="mt-3 text-base sm:text-lg text-xpx-muted leading-relaxed max-w-prose">
+          <p className="mt-2 text-sm sm:text-base text-xpx-muted leading-relaxed max-w-prose">
             {guestRequestSentCopy(formatInr(snapshot.estimatedTotal))}
           </p>
-          <p className="mt-2 text-sm text-xpx-subtle">
+          <p className="mt-1.5 text-sm text-xpx-subtle leading-snug">
             {snapshot.propertyTitle} · {formatTripDate(snapshot.checkIn)} →{' '}
             {formatTripDate(snapshot.checkOut)}
           </p>
@@ -49,63 +59,72 @@ export default function GuestWelcomeExperience({ snapshot, hostName }: GuestWelc
         <GuestWelcomeContinueLater className="md:hidden shrink-0" />
       </header>
 
-      <GuestDigitalPassport
-        guestName={snapshot.guestName}
-        customerReference={snapshot.customerReference}
-        createdAt={createdAt}
-        className="mb-10 sm:mb-12"
+      <InquiryHostContactCard
+        hostName={hostName}
+        propertyTitle={snapshot.propertyTitle}
+        hostPhoneDigits={snapshot.hostContactPhone}
+        prominent
+        className="mb-6 sm:mb-8 inquiry-host-reveal motion-reduce:animate-none"
       />
 
-      <div className="mb-10 sm:mb-12 space-y-3 inquiry-host-reveal motion-reduce:animate-none">
-        <p className="text-sm text-xpx-muted leading-relaxed">
-          Your inquiry has also been shared with the host.
-        </p>
-        <p className="text-sm text-xpx-muted leading-relaxed">
-          We recommend introducing yourself before travelling.
-        </p>
-        <InquiryHostContactCard
-          hostName={hostName}
-          propertyTitle={snapshot.propertyTitle}
-          hostPhoneDigits={snapshot.hostContactPhone}
-          prominent
+      <div className="mb-6 sm:mb-8">
+        <CustomerReferenceField
+          reference={snapshot.customerReference}
+          description="Save this ID — use it with your email to track your inquiry anytime."
         />
       </div>
 
-      <GuestMemberTimeline className="mb-10 sm:mb-12" />
-
-      <GuestIdentityBenefits className="mb-10 sm:mb-12" />
-
-      <GuestSecureAccountTeaser className="mb-10" />
+      <GuestMemberTimeline className="mb-8 sm:mb-10" />
 
       <div
-        className="sticky bottom-0 z-10 -mx-4 px-4 py-4 sm:static sm:mx-0 sm:px-0 sm:py-0 inquiry-reveal motion-reduce:animate-none"
+        className="sticky bottom-0 z-10 -mx-4 px-4 pt-3 pb-4 sm:static sm:mx-0 sm:px-0 sm:pt-0 sm:pb-0 inquiry-reveal motion-reduce:animate-none"
         style={{
           paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
-          background: 'var(--xpx-page, #f8fafc)',
+          background:
+            'linear-gradient(to top, var(--xpx-page, #f8fafc) 72%, rgba(248,250,252,0))',
         }}
       >
+        {hasHostPhone && whatsappHref ? (
+          <a
+            href={whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="sm:hidden flex w-full min-h-[52px] items-center justify-center gap-2.5 rounded-2xl px-5 text-base font-bold text-white transition-transform active:scale-[0.98] motion-reduce:transition-none mb-3"
+            style={{ background: '#25D366', boxShadow: '0 10px 32px rgba(37,211,102,0.32)' }}
+          >
+            <MessageCircle className="h-5 w-5" aria-hidden />
+            WhatsApp host
+          </a>
+        ) : null}
+
         <div className="flex flex-col sm:flex-row gap-3">
+          {!hasHostPhone ? (
+            <button
+              type="button"
+              onClick={() => navigateTo(trackPath)}
+              className="w-full min-h-[52px] rounded-2xl px-5 text-base font-bold text-white transition-transform active:scale-[0.98] motion-reduce:transition-none"
+              style={{
+                background: 'var(--xpx-warm, #059669)',
+                boxShadow: '0 10px 32px rgba(5,150,105,0.28)',
+              }}
+            >
+              Track inquiry
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigateTo(trackPath)}
+              className="w-full min-h-[52px] rounded-2xl px-5 text-base font-semibold text-xpx-text border border-xpx-border-strong bg-white"
+            >
+              Track inquiry
+            </button>
+          )}
           <button
             type="button"
             onClick={() => navigateTo(propertyPath)}
-            className="w-full min-h-[52px] rounded-2xl px-5 text-base font-bold text-white transition-transform active:scale-[0.98] motion-reduce:transition-none"
-            style={{
-              background: 'var(--xpx-warm, #50C878)',
-              boxShadow: '0 10px 32px rgba(80,200,120,0.28)',
-            }}
+            className="w-full min-h-[52px] rounded-2xl px-5 text-base font-semibold text-xpx-text border border-xpx-border-strong bg-white sm:order-first sm:flex-1"
           >
             Continue browsing
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              navigateTo(
-                `/track-inquiry?ref=${encodeURIComponent(snapshot.customerReference)}&email=${encodeURIComponent(snapshot.guestEmail)}`,
-              )
-            }
-            className="w-full min-h-[52px] rounded-2xl px-5 text-base font-semibold text-xpx-text border border-xpx-border-strong bg-white"
-          >
-            Track inquiry
           </button>
         </div>
       </div>

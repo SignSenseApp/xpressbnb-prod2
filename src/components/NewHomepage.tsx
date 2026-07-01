@@ -21,6 +21,7 @@ import { useNearbyLocationOptional } from '../contexts/NearbyLocationContext';
 import { useGuestOnboardingOptional } from '../contexts/GuestOnboardingContext';
 import { usePrefersReducedMotion } from '../hooks/useGalleryMotion';
 import { useStickySearchMorph } from '../hooks/useStickySearchMorph';
+import { prefetchStaysListingRouteChunk } from '../lib/listingRouteChunk';
 import { readLocationPreference } from '../lib/locationPreferences';
 
 const PersonalizedHomeFeed = lazy(() => import('./nearby/PersonalizedHomeFeed'));
@@ -168,7 +169,9 @@ export default function NewHomepage() {
   };
 
   const handleCityClick = (city: string) => {
-    navigate(`/stays/${city.toLowerCase().replace(/\s+/g, '-')}`);
+    const slug = city.toLowerCase().replace(/\s+/g, '-');
+    prefetchStaysListingRouteChunk(slug);
+    navigate(`/stays/${slug}`);
   };
 
   // Hero search state — city + dates + guests, all serializable into the URL
@@ -222,6 +225,7 @@ export default function NewHomepage() {
     if (cout) params.set('checkout', cout);
     if (searchGuests) params.set('guests', String(searchGuests));
     const qs = params.toString();
+    prefetchStaysListingRouteChunk(slug);
     navigate(`/stays/${slug}${qs ? `?${qs}` : ''}`);
   };
 

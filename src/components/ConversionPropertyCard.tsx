@@ -190,7 +190,7 @@ export default memo(function ConversionPropertyCard({
       onKeyDown={(e) => {
         if (e.key === 'Enter') handleClick();
       }}
-      className={`xpx-property-card group flex h-full w-full max-w-[380px] cursor-pointer flex-col overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#059669] motion-reduce:transition-none motion-reduce:active:scale-100 active:opacity-[0.98] md:mx-auto md:active:opacity-100 ${className}`}
+      className={`xpx-property-card group flex h-full w-full max-w-[380px] cursor-pointer flex-col overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#059669] motion-reduce:transition-none ${className}`}
     >
       {/* Hero image gallery */}
       <PropertyCardGallery

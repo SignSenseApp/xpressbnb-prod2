@@ -68,9 +68,10 @@ html.lenis body {
   --xpx-warm: #059669;
   --xpx-warm-dark: #047857;
 
-  /** Primary inquiry CTA — coral accent on property pages */
-  --xpx-cta: #ff385c;
-  --xpx-cta-dark: #e11d48;
+  /** Primary inquiry CTA — brand emerald (aligned with --accent) */
+  --xpx-cta: #059669;
+  --xpx-cta-dark: #047857;
+  --xpx-cta-glow: 0 10px 32px rgba(5, 150, 105, 0.28);
 
   --xpx-verified: #059669;
   --xpx-verified-bg: #ecfdf5;
@@ -382,7 +383,17 @@ html.lenis body {
     border-radius: 20px;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
     border: 1px solid var(--xpx-border);
-    transition: box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    touch-action: manipulation;
+    transition:
+      box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 160ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+  }
+
+  .xpx-property-card:active {
+    transform: scale(0.985);
+    opacity: 0.97;
   }
 
   @media (min-width: 768px) {
@@ -394,6 +405,11 @@ html.lenis body {
   @media (prefers-reduced-motion: reduce) {
     .xpx-property-card {
       transition: none;
+      will-change: auto;
+    }
+    .xpx-property-card:active {
+      transform: none;
+      opacity: 1;
     }
   }
 
@@ -772,7 +788,7 @@ html.lenis body {
 }
 
 .inquiry-line-crossfade {
-  animation: inquiryLineCrossfade 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: inquiryLineCrossfade 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .inquiry-transition-enter {
@@ -790,11 +806,51 @@ html.lenis body {
     0 12px 40px rgba(15, 23, 42, 0.06);
 }
 
+/* Golden-path press feedback — GPU transform, 160ms Apple-style ease */
+.xpx-press {
+  touch-action: manipulation;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.xpx-press:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Subtle page enter on guest marketplace route changes */
+@keyframes xpxRouteEnter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.xpx-route-enter {
+  animation: xpxRouteEnter 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .inquiry-reveal,
   .inquiry-line-crossfade,
   .inquiry-transition-enter,
   .inquiry-host-reveal {
+    animation: none;
+  }
+
+  .xpx-press {
+    transition: none;
+    will-change: auto;
+  }
+
+  .xpx-press:active:not(:disabled) {
+    transform: none;
+  }
+
+  .xpx-route-enter {
     animation: none;
   }
 }

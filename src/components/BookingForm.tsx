@@ -760,8 +760,8 @@ export default function BookingForm({
           type="submit"
           disabled={loading}
           aria-busy={loading}
-          className="w-full py-3.5 rounded-2xl font-bold text-[15px] text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 motion-reduce:transition-none"
-          style={{ background: 'var(--xpx-cta)', minHeight: 52 }}
+          className="w-full py-3.5 rounded-2xl font-bold text-[15px] text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 motion-reduce:transition-none xpx-press"
+          style={{ background: 'var(--xpx-cta)', boxShadow: 'var(--xpx-cta-glow)', minHeight: 52 }}
         >
           {loading ? (
             <>
