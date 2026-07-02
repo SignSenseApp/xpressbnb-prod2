@@ -3,8 +3,17 @@ import type { Property } from '../../lib/database.types';
 import { useNearbyLocationOptional } from '../../contexts/NearbyLocationContext';
 import { getPublicListings } from '../../lib/publicListings';
 import { rankPropertiesForNearby } from '../../lib/nearbyRanking';
-import FeaturedStaysCarousel from '../FeaturedStaysCarousel';
 import { trackXpressEvent } from '../../lib/analytics';
+import {
+  chapterInspiredBy,
+  chapterJournalPause,
+  chapterSlowMornings,
+} from '../../lib/discoveryEditorial';
+import {
+  DiscoveryFeatureChapter,
+  DiscoveryJournalPause,
+  DiscoveryPortraitPair,
+} from './editorial/EditorialDiscoveryModules';
 
 type PropertyGuestsAlsoViewedProps = {
   property: Property;
@@ -12,7 +21,7 @@ type PropertyGuestsAlsoViewedProps = {
 };
 
 /**
- * "Guests also viewed" / area popularity upsell — location-aware.
+ * First movement of the discovery journal — cinematic feature, pause, portrait pair.
  */
 export default function PropertyGuestsAlsoViewed({
   property,
@@ -34,12 +43,12 @@ export default function PropertyGuestsAlsoViewed({
           : null);
 
       if (!coords) {
-        setList(result.listings.filter((p) => p.id !== property.id).slice(0, 6));
+        setList(result.listings.filter((p) => p.id !== property.id).slice(0, 3));
         return;
       }
 
       const ranked = rankPropertiesForNearby(coords.lat, coords.lng, result.listings, {
-        limit: 6,
+        limit: 3,
         maxKm: 80,
         excludeId: property.id,
       });
@@ -57,17 +66,28 @@ export default function PropertyGuestsAlsoViewed({
 
   if (list.length === 0) return null;
 
-  const title =
-    placement === 'booking'
-      ? 'Guests also viewed'
-      : `Popular with travelers from ${nearby?.detectedCity ?? property.city}`;
+  const feature = list[0];
+  const portraits = list.slice(1, 3) as [Property] | [Property, Property];
 
   return (
-    <div className="mt-6">
-      <h3 className="text-lg font-extrabold text-xpx-text mb-3">{title}</h3>
-      <FeaturedStaysCarousel
-        properties={list}
+    <div className="xpx-discovery-journal xpx-discovery-journal--opening">
+      <DiscoveryFeatureChapter
+        property={feature}
+        copy={chapterInspiredBy(property)}
+        id={`discovery-opening-${placement}`}
       />
+
+      {portraits.length > 0 && (
+        <>
+          <DiscoveryJournalPause>{chapterJournalPause(property)}</DiscoveryJournalPause>
+          <DiscoveryPortraitPair
+            properties={portraits.length === 2 ? portraits : [portraits[0]]}
+            copy={chapterSlowMornings()}
+            nearbySource="recommended_journal"
+            id={`discovery-portraits-${placement}`}
+          />
+        </>
+      )}
     </div>
   );
 }

@@ -19,15 +19,12 @@ function Block({
 /** Booking sidebar placeholder — shared with lazy sidebar Suspense fallback. */
 export function PropertySidebarSkeleton({ className = '' }: { className?: string }) {
   return (
-    <div
-      className={`rounded-3xl p-5 sm:p-6 space-y-4 ${className}`}
-      style={{ background: 'var(--xpx-surface-light)', border: '1px solid var(--xpx-border)' }}
-      aria-hidden
-    >
-      <Block className="h-5 w-2/5 rounded-lg" />
-      <Block className="h-12 w-full rounded-xl" />
-      <Block className="h-44 w-full rounded-2xl" />
-      <Block className="h-12 w-full rounded-2xl" />
+    <div className={`xpx-concierge space-y-5 ${className}`} aria-hidden>
+      <Block className="h-3 w-24 rounded-none" />
+      <Block className="h-8 w-2/5 rounded-none" />
+      <Block className="h-6 w-1/3 rounded-none" />
+      <Block className="h-40 w-full rounded-none" />
+      <Block className="h-10 w-full rounded-none" />
     </div>
   );
 }
@@ -50,15 +47,16 @@ export function PropertyPageSkeletonBody({ className = '' }: PropertyPageSkeleto
 
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 xl:gap-10 lg:items-start">
         <div className="min-w-0">
-          <Block className="w-full aspect-[4/3] sm:aspect-[16/10] rounded-2xl sm:rounded-3xl" />
+          <Block className="w-full h-[min(68svh,640px)] min-h-[420px] sm:h-[clamp(440px,58vh,680px)] lg:h-[clamp(480px,62vh,720px)] rounded-none sm:rounded-[24px] lg:rounded-[28px] -mx-4 sm:mx-0" />
 
-          <div className="mt-6 sm:mt-8 space-y-3">
-            <Block className="h-8 sm:h-9 w-[88%] max-w-xl rounded-xl" />
-            <Block className="h-4 w-[55%] max-w-sm rounded-lg" />
-            <div className="flex flex-wrap gap-2 pt-1">
-              <Block className="h-8 w-24 rounded-full" />
-              <Block className="h-8 w-28 rounded-full" />
-              <Block className="h-8 w-20 rounded-full" />
+          <div className="mt-8 sm:mt-10 space-y-4">
+            <Block className="h-10 sm:h-12 w-[88%] max-w-xl rounded-lg" />
+            <Block className="h-5 w-[40%] max-w-xs rounded-md" />
+            <Block className="h-5 w-[72%] max-w-lg rounded-md" />
+            <div className="space-y-2.5 pt-6 border-t border-xpx-border/60">
+              <Block className="h-4 w-[65%] rounded-md" />
+              <Block className="h-4 w-[50%] rounded-md" />
+              <Block className="h-4 w-[58%] rounded-md" />
             </div>
           </div>
 

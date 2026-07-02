@@ -11,6 +11,7 @@ type GuestPricingBreakdownProps = {
   className?: string;
 };
 
+/** Luxury folio — quiet line items, hairline total. */
 export default function GuestPricingBreakdown({
   lines,
   guestTotal,
@@ -20,29 +21,22 @@ export default function GuestPricingBreakdown({
 
   return (
     <div className={className}>
-      <dl className="space-y-2 text-sm">
+      <dl className="xpx-concierge-folio xpx-concierge-folio--spacious">
         {lines.map((line) => (
-          <div key={line.id} className="flex justify-between gap-3">
-            <dt className="text-xpx-muted">{line.label}</dt>
-            <dd
-              className={`font-medium tabular-nums shrink-0 ${
-                line.kind === 'discount' ? 'text-emerald-700' : 'text-xpx-text'
-              }`}
-            >
+          <div key={line.id} className="xpx-concierge-folio-row">
+            <dt>{line.label}</dt>
+            <dd className="shrink-0 tabular-nums" style={{ color: 'var(--lux-ink)' }}>
               {line.kind === 'discount' ? '−' : ''}
               {formatInr(Math.abs(line.amount))}
             </dd>
           </div>
         ))}
-        <div
-          className="pt-3 mt-3 flex justify-between text-base"
-          style={{ borderTop: '1px solid var(--xpx-border)' }}
-        >
-          <dt className="text-xpx-text font-bold">Total</dt>
-          <dd className="text-xpx-text font-extrabold tabular-nums">{formatInr(guestTotal)}</dd>
+        <div className="xpx-concierge-folio-total">
+          <dt>Your stay</dt>
+          <dd>{formatInr(guestTotal)}</dd>
         </div>
       </dl>
-      <p className="mt-3 text-[11px] text-xpx-subtle leading-snug">
+      <p className="xpx-concierge-hint mt-4">
         {GUEST_PRICING_NO_COMMISSION} {GUEST_PRICING_INQUIRY_TOTAL_NOTE}
       </p>
     </div>

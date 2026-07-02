@@ -216,3 +216,95 @@ export function getAmenityIcon(amenityName: string) {
   }
   return Home;
 }
+
+export interface GroupedPropertyAmenities {
+  categoryName: string;
+  items: { name: string; icon: LucideIcon }[];
+}
+
+/** Group a property's amenity labels by AMENITY_CATEGORIES for editorial directory display. */
+export function groupPropertyAmenitiesByCategory(
+  propertyAmenities: string[],
+): GroupedPropertyAmenities[] {
+  const available = new Set(propertyAmenities);
+  const groups: GroupedPropertyAmenities[] = [];
+
+  for (const category of AMENITY_CATEGORIES) {
+    const items = category.amenities.filter((a) => available.has(a.name));
+    if (items.length > 0) {
+      groups.push({ categoryName: category.name, items });
+    }
+  }
+
+  const catalogued = new Set(getAllAmenities());
+  const uncategorized = propertyAmenities.filter((name) => !catalogued.has(name));
+  if (uncategorized.length > 0) {
+    groups.push({
+      categoryName: 'Other',
+      items: uncategorized.map((name) => ({ name, icon: getAmenityIcon(name) })),
+    });
+  }
+
+  return groups;
+}
+
+const AMENITY_PREVIEW_LIMIT = 9;
+
+export function splitGroupedAmenitiesForPreview(
+  groups: GroupedPropertyAmenities[],
+  previewLimit = AMENITY_PREVIEW_LIMIT,
+): { preview: GroupedPropertyAmenities[]; hasOverflow: boolean } {
+  let count = 0;
+  const preview: GroupedPropertyAmenities[] = [];
+  let hasOverflow = false;
+
+  for (const group of groups) {
+    if (count >= previewLimit) {
+      hasOverflow = true;
+      break;
+    }
+    const remaining = previewLimit - count;
+    if (group.items.length <= remaining) {
+      preview.push(group);
+      count += group.items.length;
+    } else {
+      preview.push({ categoryName: group.categoryName, items: group.items.slice(0, remaining) });
+      hasOverflow = true;
+      break;
+    }
+  }
+
+  if (!hasOverflow && count < groups.reduce((n, g) => n + g.items.length, 0)) {
+    hasOverflow = true;
+  }
+
+  return { preview, hasOverflow };
+}
+
+/** Remaining amenity groups after the preview window — for disclosure expansion only. */
+export function getGroupedAmenitiesBeyondPreview(
+  groups: GroupedPropertyAmenities[],
+  previewLimit = AMENITY_PREVIEW_LIMIT,
+): GroupedPropertyAmenities[] {
+  let count = 0;
+  const overflow: GroupedPropertyAmenities[] = [];
+
+  for (const group of groups) {
+    if (count >= previewLimit) {
+      overflow.push(group);
+      continue;
+    }
+    const remaining = previewLimit - count;
+    if (group.items.length <= remaining) {
+      count += group.items.length;
+    } else {
+      const rest = group.items.slice(remaining);
+      if (rest.length > 0) {
+        overflow.push({ categoryName: group.categoryName, items: rest });
+      }
+      count = previewLimit;
+    }
+  }
+
+  return overflow;
+}

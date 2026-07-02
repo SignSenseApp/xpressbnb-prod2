@@ -12,18 +12,23 @@ export type InquiryCtaContext =
   | 'modal_entry'
   | 'artist_whatsapp';
 
+/** Opening spread CTA — editorial arrival, not marketplace transaction. */
+export function openingArrivalCtaLabel(hasDates: boolean): string {
+  return hasDates ? 'Continue to reservation' : 'Begin your stay';
+}
+
 export function inquiryCtaLabel(context: InquiryCtaContext): string {
   switch (context) {
     case 'property_no_dates':
-      return 'Check availability';
+      return 'Choose your stay';
     case 'property_with_dates':
-      return 'Request to book';
+      return 'Send your request';
     case 'host_card':
       return 'Request to book';
     case 'form_submit':
-      return 'Request to book';
+      return 'Send your request';
     case 'offer_submit':
-      return 'Send offer to host';
+      return 'Send your offer';
     case 'modal_entry':
       return 'Request to book';
     case 'artist_whatsapp':
@@ -33,7 +38,7 @@ export function inquiryCtaLabel(context: InquiryCtaContext): string {
   }
 }
 
-export const INQUIRY_SENDING_LABEL = 'Sending request…';
+export const INQUIRY_SENDING_LABEL = 'Preparing your request…';
 
 export const INQUIRY_HOST_TAGLINE =
   'We bring genuine travel inquiries directly to hosts.';

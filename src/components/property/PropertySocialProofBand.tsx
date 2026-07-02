@@ -9,7 +9,7 @@ import {
 type PropertySocialProofBandProps = {
   propertyId: string;
   city: string;
-  variant?: 'inline' | 'card';
+  variant?: 'inline' | 'card' | 'whisper';
 };
 
 /**
@@ -45,7 +45,9 @@ export default function PropertySocialProofBand({
   const className =
     variant === 'card'
       ? 'rounded-2xl border px-4 py-3 space-y-1.5'
-      : 'space-y-1 mb-4';
+      : variant === 'whisper'
+        ? 'space-y-1'
+        : 'space-y-1 mb-4';
 
   return (
     <div
@@ -57,7 +59,14 @@ export default function PropertySocialProofBand({
       }
     >
       {lines.map((line) => (
-        <p key={line} className="text-sm font-medium text-[#047857]">
+        <p
+          key={line}
+          className={
+            variant === 'whisper'
+              ? 'text-[11px] sm:text-xs text-xpx-subtle leading-relaxed'
+              : 'text-sm font-medium text-[#047857]'
+          }
+        >
           {line}
         </p>
       ))}

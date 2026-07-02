@@ -8,6 +8,7 @@ export type HomepageBelowFoldGateProps = {
   onNavigate: (path: string) => void;
   scrollTo: (id: string) => void;
   onActivateRef?: (activate: () => void) => void;
+  tripQuery?: string;
 };
 
 const BELOW_FOLD_ROOT_MARGIN = '400px 0px';
@@ -17,6 +18,7 @@ export default function HomepageBelowFoldGate({
   onNavigate,
   scrollTo,
   onActivateRef,
+  tripQuery,
 }: HomepageBelowFoldGateProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(false);
@@ -56,6 +58,7 @@ export default function HomepageBelowFoldGate({
             onCityClick={onCityClick}
             onNavigate={onNavigate}
             scrollTo={scrollTo}
+            tripQuery={tripQuery}
           />
         </Suspense>
       ) : null}

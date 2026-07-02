@@ -1,77 +1,39 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react';
-import {
-  ShieldCheck,
-  Zap,
-} from 'lucide-react';
+import { ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 import { XPRESSBNB_LOGO_IMG_CLASS, XPRESSBNB_LOGO_PATH } from '../lib/branding';
 import { logSupabaseError } from '../lib/supabase';
 import type { Property } from '../lib/database.types';
-import { normalizeCityBucket } from '../lib/cityBuckets';
 import { openHomeOverlay } from '../lib/navigation';
 import { TEAM_EMAIL } from '../lib/team';
 import { ManageCookiesLink } from './CookieConsent';
-import FeaturedStaysCarousel from './FeaturedStaysCarousel';
+import EditorialFeaturedCarousel from './home/EditorialFeaturedCarousel';
 import NearbyStaysSection from './nearby/NearbyStaysSection';
 import { OnboardingListingsEngagement } from './onboarding/OnboardingListingsEngagement';
-import { firstImageUrl } from '../lib/savedListingsStorage';
 import { getPublicListings, invalidatePublicListingsCache } from '../lib/publicListings';
 import { warmPublicHostCache } from '../lib/hostPublicCache';
 import { INQUIRY_HOST_TAGLINE } from '../lib/inquiryCopy';
 import HowItWorksWalkthrough from './HowItWorksWalkthrough';
+import { premiumBrand } from '../lib/premiumBrand';
 
-const ACCENT = '#059669';
-const ACCENT_LIGHT = '#ecfdf5';
-const BASE = '#FAFAF8';
-const SURFACE = '#FFFFFF';
-const SURFACE_LIGHT = '#F8FAFC';
-const TEXT = '#0F172A';
-const TEXT_MUTED = '#64748B';
-const TEXT_SUBTLE = '#94A3B8';
-const BORDER = '#E5E7EB';
 const FOOTER_HEADING = '#FFFFFF';
 const FOOTER_BODY = 'rgba(255,255,255,0.6)';
-const FOOTER_LOGO_ACCENT = ACCENT;
-const FOOTER_LINK_HOVER = ACCENT;
 const FOOTER_DIVIDER = 'rgba(255,255,255,0.08)';
 const FOOTER_COPY = 'rgba(255,255,255,0.35)';
-
-function pexelsPhotoUrl(photoId: string, width: number) {
-  return `https://images.pexels.com/photos/${photoId}/pexels-photo-${photoId}.jpeg?auto=compress&cs=tinysrgb&w=${width}`;
-}
-
-const CITIES = ['Delhi', 'Gurgaon', 'Noida', 'Greater Noida', 'Ghaziabad', 'Rishikesh'];
-
-const CITY_TAGLINES: Record<string, string> = {
-  Delhi: 'Capital stays, direct host pricing.',
-  Gurgaon: 'Corporate hub, premium homes.',
-  Noida: 'Modern stays, transparent pricing.',
-  'Greater Noida': 'Spacious homes, quiet neighborhoods.',
-  Rishikesh: 'Riverside retreats, calm stays.',
-  Ghaziabad: 'Comfortable stays near Delhi NCR.',
-};
-
-const CITY_IMAGES: Record<string, string> = {
-  Delhi: pexelsPhotoUrl('789750', 600),
-  Gurgaon: pexelsPhotoUrl('1571460', 600),
-  Noida: pexelsPhotoUrl('1396122', 600),
-  'Greater Noida': pexelsPhotoUrl('1643383', 600),
-  Ghaziabad: pexelsPhotoUrl('2506988', 600),
-  Rishikesh: pexelsPhotoUrl('2161449', 600),
-};
 
 export type HomepageBelowFoldProps = {
   onCityClick: (city: string) => void;
   onNavigate: (path: string) => void;
   scrollTo: (id: string) => void;
+  tripQuery?: string;
 };
 
 export default function HomepageBelowFold({
   onCityClick,
   onNavigate,
   scrollTo,
+  tripQuery = '',
 }: HomepageBelowFoldProps) {
   const [properties, setProperties] = useState<Property[]>([]);
-  const [propertiesByCity, setPropertiesByCity] = useState<Record<string, Property[]>>({});
   const [loading, setLoading] = useState(true);
   const [listingsError, setListingsError] = useState<string | null>(null);
   const loadPropertiesRef = useRef(0);
@@ -92,23 +54,16 @@ export default function HomepageBelowFold({
       if (requestId !== loadPropertiesRef.current) return;
       if (result.status === 'error') {
         setProperties([]);
-        setPropertiesByCity({});
         setListingsError("We couldn't load stays right now. Please try again.");
         return;
       }
       const data = result.listings;
       setProperties(data);
       warmPublicHostCache(data.map((listing) => listing.host_id));
-      const grouped: Record<string, Property[]> = {};
-      CITIES.forEach((c) => {
-        grouped[c] = data.filter((p) => normalizeCityBucket(p.city) === c);
-      });
-      setPropertiesByCity(grouped);
     } catch (err) {
       if (requestId !== loadPropertiesRef.current) return;
       logSupabaseError('Error loading properties', err);
       setProperties([]);
-      setPropertiesByCity({});
       setListingsError("We couldn't load stays right now. Please try again.");
     } finally {
       if (requestId === loadPropertiesRef.current) setLoading(false);
@@ -116,35 +71,66 @@ export default function HomepageBelowFold({
   };
 
   const featuredProperties = properties.slice(0, 8);
+  const formattedTripQuery = tripQuery ? (tripQuery.startsWith('?') ? tripQuery : `?${tripQuery}`) : '';
 
   return (
     <>
-      {/* ──── Nearby Stays (location-powered) ──── */}
       <NearbyStaysSection onNavigate={onNavigate} fallbackTrending={featuredProperties} />
 
-      {/* ──── Featured Stays ──── */}
-      <OnboardingListingsEngagement id="listings" className="scroll-mt-28 xpx-section" style={{ background: BASE }}>
-        <div className="xpx-container">
-          <SectionHeader
-            label="HANDPICKED FOR YOU"
-            title="Featured Stays"
-            subtitle="Handpicked stays from our host community"
-            action={
-              <button
-                onClick={() => onCityClick('Delhi')}
-                className="flex items-center gap-1 text-sm font-semibold transition-colors text-[#059669] hover:text-[#047857]"
+      {/* ─── Featured stays — editorial ─── */}
+      <OnboardingListingsEngagement
+        id="listings"
+        className="scroll-mt-28 pt-8 pb-10 md:pt-12 md:pb-14 md:bg-[#FAF8F4]"
+        style={{ background: '#F9FAFB' }}
+      >
+        {/* Mobile Featured Stays - Modern VRBO Style */}
+        <div className="md:hidden bg-[#F9FAFB] pt-6 pb-28">
+          {/* Section header */}
+          <div className="flex items-center justify-between px-4 mb-5">
+            <div>
+              <h2 className="text-[22px] font-extrabold text-[#111827] leading-tight tracking-tight">
+                Featured stays
+              </h2>
+              {/* Green underline accent */}
+              <div
+                className="h-[3px] w-[90px] rounded-full mt-1.5"
+                style={{ background: 'linear-gradient(90deg, #059669 0%, #10B981 100%)' }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => onCityClick('Delhi')}
+              className="text-[14px] font-semibold flex items-center gap-1 px-3 py-2 rounded-full transition-all hover:bg-[#ECFDF5] active:scale-95"
+              style={{ color: '#059669' }}
+            >
+              View all
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#059669"
+                strokeWidth="2.5"
+                strokeLinecap="round"
               >
-                View all stays
-                <span aria-hidden>&rarr;</span>
-              </button>
-            }
-          />
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+          </div>
 
+          {/* Cards horizontal scroll */}
           {loading ? (
-            <FeaturedSkeleton />
+            <div className="flex gap-3 px-4 overflow-hidden">
+              {[1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="min-w-[calc(100vw-52px)] h-[200px] rounded-[20px] bg-gray-200 animate-pulse"
+                />
+              ))}
+            </div>
           ) : listingsError ? (
-            <div className="py-16 text-center text-sm px-4" style={{ color: TEXT_MUTED }}>
-              <p className="font-semibold text-xpx-text mb-1">We couldn&apos;t load stays right now</p>
+            <div className="py-16 text-center text-sm px-4 text-[#6B7280]">
+              <p className="font-semibold text-[#111827] mb-1">We couldn&apos;t load stays right now</p>
               <p>{listingsError}</p>
               <button
                 type="button"
@@ -152,318 +138,308 @@ export default function HomepageBelowFold({
                   invalidatePublicListingsCache();
                   void loadProperties(loadPropertiesRef.current, true);
                 }}
-                className="mt-4 inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold text-white"
-                style={{ background: ACCENT }}
+                className="mt-4 inline-flex items-center justify-center px-5 py-2.5 rounded-full text-sm font-semibold text-white"
+                style={{ background: '#059669' }}
               >
                 Try again
               </button>
             </div>
           ) : featuredProperties.length === 0 ? (
-            <div className="py-16 text-center text-sm" style={{ color: TEXT_SUBTLE }}>
+            <div className="py-16 text-center text-sm text-[#9CA3AF]">
               No properties available right now.
             </div>
           ) : (
-            <FeaturedStaysCarousel properties={featuredProperties} />
+            <div className="flex gap-4 overflow-x-auto px-4 scrollbar-hide snap-x snap-mandatory">
+              {featuredProperties.map((property) => (
+                <div
+                  key={property.id}
+                  onClick={() => {
+                    const q = formattedTripQuery.startsWith('?') ? formattedTripQuery : formattedTripQuery ? `?${formattedTripQuery}` : '';
+                    onNavigate(`/property/${property.id}${q}`);
+                  }}
+                  className="min-w-[calc(100vw-56px)] max-w-[360px] h-[220px] rounded-[24px] overflow-hidden relative cursor-pointer snap-start shrink-0 transition-all duration-300 active:scale-[0.97]"
+                  style={{
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.12), 0 8px 40px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  {/* Background image */}
+                  {property.images && Array.isArray(property.images) && property.images[0] ? (
+                    <img
+                      src={property.images[0]}
+                      alt={property.title}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholder.svg';
+                      }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300" />
+                  )}
+
+                  {/* Gradient overlay - smoother */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: `linear-gradient(to bottom, rgba(0,0,0,0) 20%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.85) 100%)`,
+                    }}
+                  />
+
+                  {/* TOP LEFT — Location pill with glassmorphism */}
+                  <div
+                    className="absolute top-3.5 left-3.5 flex items-center gap-1.5 rounded-full px-3.5 py-2 backdrop-blur-md"
+                    style={{
+                      background: 'rgba(0,0,0,0.6)',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                    }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                    </svg>
+                    <span className="text-[12.5px] font-semibold text-white">{property.city}</span>
+                  </div>
+
+                  {/* TOP RIGHT — Host Favourite with modern badge */}
+                  <div
+                    className="absolute top-3.5 right-3.5 rounded-[14px] px-3 py-2 text-center backdrop-blur-sm"
+                    style={{
+                      background: 'rgba(255,255,255,0.95)',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    }}
+                  >
+                    <p className="text-[10px] font-bold text-[#111827] leading-tight">Host</p>
+                    <p className="text-[10px] font-semibold leading-tight" style={{ color: '#059669' }}>
+                      Favourite ♡
+                    </p>
+                  </div>
+
+                  {/* BOTTOM ROW */}
+                  <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-4">
+                    {/* Host info */}
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className="w-[38px] h-[38px] rounded-full border-2 border-white overflow-hidden"
+                        style={{
+                          background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                        }}
+                      />
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[13.5px] font-semibold text-white drop-shadow-lg">Your Host</span>
+                        {/* Verified check with better styling */}
+                        <div
+                          className="w-[16px] h-[16px] rounded-full bg-white flex items-center justify-center"
+                          style={{ boxShadow: '0 2px 4px rgba(0,0,0,0.15)' }}
+                        >
+                          <svg
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#059669"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                          >
+                            <path d="M20 6L9 17l-5-5" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Price with modern badge */}
+                    <div
+                      className="text-right px-3 py-2 rounded-[12px] backdrop-blur-md"
+                      style={{
+                        background: 'rgba(0,0,0,0.5)',
+                      }}
+                    >
+                      <span className="text-[17px] font-bold text-white drop-shadow-lg">
+                        ₹{(property.price_per_day ?? property.price_full_day ?? 0).toLocaleString('en-IN')}
+                      </span>
+                      <span className="text-[12px] font-normal text-white/80">/night</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Featured Stays */}
+        <div className="hidden md:block xpx-container">
+          <div className="xpx-premium-featured-head">
+            <div>
+              <h2 className="xpx-premium-section-title">Featured stays</h2>
+              <span className="xpx-premium-squiggle" aria-hidden />
+            </div>
+            <button
+              type="button"
+              onClick={() => onCityClick('Delhi')}
+              className="xpx-premium-view-all"
+            >
+              View all
+              <ArrowRight className="h-4 w-4" strokeWidth={2} />
+            </button>
+          </div>
+
+          {loading ? (
+            <FeaturedSkeleton />
+          ) : listingsError ? (
+            <div className="py-16 text-center text-sm px-4 text-[#6B7280]">
+              <p className="font-semibold text-[#111827] mb-1">We couldn&apos;t load stays right now</p>
+              <p>{listingsError}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  invalidatePublicListingsCache();
+                  void loadProperties(loadPropertiesRef.current, true);
+                }}
+                className="mt-4 inline-flex items-center justify-center px-5 py-2.5 rounded-full text-sm font-semibold text-white"
+                style={{ background: premiumBrand.forest }}
+              >
+                Try again
+              </button>
+            </div>
+          ) : featuredProperties.length === 0 ? (
+            <div className="py-16 text-center text-sm text-[#9CA3AF]">
+              No properties available right now.
+            </div>
+          ) : (
+            <EditorialFeaturedCarousel
+              properties={featuredProperties}
+              tripQuery={formattedTripQuery}
+            />
           )}
         </div>
       </OnboardingListingsEngagement>
 
-      {/* ──── Top Cities ──── */}
-      <section className="xpx-section" style={{ background: SURFACE_LIGHT }}>
-        <div className="xpx-container">
-          <SectionHeader
-            label="EXPLORE"
-            title="Top Destinations"
-            subtitle="Direct host listings across India’s best cities"
-          />
-
-          <div className="hidden md:grid md:grid-cols-12 md:grid-rows-[minmax(240px,1fr)_minmax(210px,0.9fr)] md:gap-4 lg:gap-5">
-            <button
-              type="button"
-              onClick={() => onCityClick('Delhi')}
-              className="group relative md:col-span-5 md:row-span-2 overflow-hidden cursor-pointer transition-all duration-300 md:hover:-translate-y-1"
-              style={{ boxShadow: '0 8px 22px rgba(15,23,42,0.08)', borderRadius: 20 }}
-            >
-              <TopDestinationCardInner city="Delhi" propertiesByCity={propertiesByCity} listingsLoading={loading} variant="hero" />
-            </button>
-            <button
-              type="button"
-              onClick={() => onCityClick('Gurgaon')}
-              className="group relative md:col-span-7 overflow-hidden cursor-pointer transition-all duration-300 md:hover:-translate-y-1"
-              style={{ boxShadow: '0 8px 20px rgba(15,23,42,0.08)', borderRadius: 20 }}
-            >
-              <TopDestinationCardInner city="Gurgaon" propertiesByCity={propertiesByCity} listingsLoading={loading} variant="wide" />
-            </button>
-            <div className="md:col-span-7 grid grid-cols-3 gap-4 lg:gap-5">
-              {(['Noida', 'Greater Noida', 'Rishikesh'] as const).map((city) => (
-                <button
-                  key={city}
-                  type="button"
-                  onClick={() => onCityClick(city)}
-                  className="group relative min-h-[210px] overflow-hidden cursor-pointer transition-all duration-300 md:hover:-translate-y-1"
-                  style={{ boxShadow: '0 8px 18px rgba(15,23,42,0.08)', borderRadius: 20 }}
-                >
-                  <TopDestinationCardInner city={city} propertiesByCity={propertiesByCity} listingsLoading={loading} />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid md:hidden grid-cols-2 gap-4">
-            {CITIES.map((city) => (
-              <button
-                key={city}
-                type="button"
-                onClick={() => onCityClick(city)}
-                className="group relative min-h-[170px] overflow-hidden cursor-pointer transition-all duration-300 active:scale-[0.99]"
-                style={{ boxShadow: '0 8px 18px rgba(15,23,42,0.08)', borderRadius: 20 }}
-              >
-                <TopDestinationCardInner city={city} propertiesByCity={propertiesByCity} listingsLoading={loading} />
-              </button>
-            ))}
-          </div>
+      {/* ─── Brand promise ─── */}
+      <section className="py-12 md:py-16" style={{ background: premiumBrand.stone }}>
+        <div className="xpx-container text-center max-w-2xl mx-auto">
+          <p className="xpx-premium-font-display text-2xl md:text-3xl font-bold tracking-tight text-[#111827]">
+            Book directly with hosts. Zero guest commission.
+          </p>
+          <p className="mt-3 text-sm md:text-base leading-relaxed text-[#6B7280]">
+            Human-first travel across Delhi NCR — transparent pricing before you inquire.
+          </p>
         </div>
       </section>
 
-      {/* ──── Trust message ──── */}
-      <section className="xpx-section" style={{ background: BASE }}>
-        <div className="xpx-container">
-          <div className="text-center max-w-2xl mx-auto">
-            <p className="text-2xl md:text-3xl font-extrabold tracking-tight" style={{ color: TEXT }}>
-              Direct stays. Real hosts. Zero commission.
-            </p>
-            <p className="mt-3 text-sm md:text-base leading-relaxed" style={{ color: TEXT_MUTED }}>
-              Inquire when you are ready — transparent host pricing, no invented review scores.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ──── Host CTA ──── */}
-      <section id="host" className="relative xpx-section" style={{ background: BASE }}>
+      {/* ─── Host CTA ─── */}
+      <section id="host" className="relative py-12 md:py-16" style={{ background: premiumBrand.ivory }}>
         <div className="xpx-container">
           <div
-            className="relative overflow-hidden rounded-[24px] px-5 py-8 sm:px-7 md:px-10 md:py-11 lg:px-12 lg:py-12"
+            className="relative overflow-hidden rounded-[24px] px-6 py-10 md:px-12 md:py-14"
             style={{
               background:
-                'radial-gradient(74% 84% at 100% 0%, rgba(52,211,153,0.28) 0%, rgba(16,185,129,0) 62%), radial-gradient(70% 82% at 8% 100%, rgba(16,185,129,0.16) 0%, rgba(16,185,129,0) 66%), linear-gradient(136deg, #064e3b 0%, #047857 46%, #059669 100%)',
-              boxShadow: '0 14px 36px rgba(6, 78, 59, 0.25)',
+                'linear-gradient(135deg, #064E3B 0%, #0B8A5A 52%, #10B981 100%)',
+              boxShadow: '0 20px 50px rgba(11, 138, 90, 0.22)',
             }}
           >
-            <div className="absolute -top-16 -right-10 h-56 w-56 rounded-full bg-emerald-200/10 blur-3xl" aria-hidden />
-            <div className="absolute -bottom-16 left-[24%] h-48 w-48 rounded-full bg-emerald-300/10 blur-3xl" aria-hidden />
-
-            <div className="relative z-[1] grid grid-cols-1 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)] gap-8 lg:gap-8 items-center">
-              <div className="max-w-xl">
-                <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: 'rgba(236,253,245,0.86)' }}>
-                  Host with xpressbnb
-                </p>
-                <h2 className="mt-3 text-[30px] sm:text-[36px] md:text-[44px] font-extrabold tracking-[-0.02em] leading-[1.05] text-white max-w-[14ch]">
-                  Turn your empty space into income
-                </h2>
-                <p className="mt-4 max-w-[48ch] text-sm sm:text-[15px] md:text-base leading-relaxed" style={{ color: 'rgba(236,253,245,0.78)' }}>
-                  {INQUIRY_HOST_TAGLINE} List in minutes, zero platform fees on guest bookings.
-                </p>
-
-                <div className="mt-6 flex flex-col sm:flex-row gap-2.5 sm:gap-3">
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('/auth/login')}
-                    className="inline-flex min-h-[48px] w-full sm:w-auto items-center justify-center rounded-full px-5 sm:px-5.5 py-2.5 text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                    style={{
-                      background: '#ffffff',
-                      color: '#065f46',
-                      boxShadow: '0 8px 18px rgba(6, 78, 59, 0.22)',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#ecfdf5';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = '#ffffff';
-                    }}
-                  >
-                    Start hosting
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => scrollTo('how-it-works')}
-                    className="inline-flex min-h-[48px] w-full sm:w-auto items-center justify-center rounded-full px-5 sm:px-5.5 py-2.5 text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                    style={{
-                      background: 'rgba(255,255,255,0.06)',
-                      border: '1px solid rgba(236,253,245,0.45)',
-                      color: '#ffffff',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(255,255,255,0.12)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                    }}
-                  >
-                    How it works
-                  </button>
-                </div>
-              </div>
-
-              <div className="relative w-full max-w-[470px] lg:ml-auto pt-2 sm:pt-0">
-                <div
-                  className="relative overflow-hidden rounded-[20px] border"
-                  style={{
-                    borderColor: 'rgba(236,253,245,0.36)',
-                    boxShadow: '0 12px 28px rgba(6, 78, 59, 0.24)',
-                  }}
+            <div className="relative z-[1] max-w-xl">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-100/90">
+                Host with XpressBnB
+              </p>
+              <h2 className="mt-3 xpx-premium-font-display text-[32px] md:text-[40px] font-bold tracking-tight leading-[1.05] text-white max-w-[14ch]">
+                Turn your space into income
+              </h2>
+              <p className="mt-4 text-sm md:text-base leading-relaxed text-emerald-50/85 max-w-[42ch]">
+                {INQUIRY_HOST_TAGLINE} List in minutes, zero platform fees on guest bookings.
+              </p>
+              <div className="mt-7 flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={() => onNavigate('/auth/login')}
+                  className="inline-flex min-h-[48px] items-center justify-center rounded-full px-6 text-sm font-semibold bg-white text-[#065F46] shadow-lg xpx-press"
                 >
-                  <img
-                    src="https://images.pexels.com/photos/6585618/pexels-photo-6585618.jpeg?auto=compress&cs=tinysrgb&w=1200"
-                    alt="Modern premium room for hosting"
-                    className="h-[248px] w-full object-cover sm:h-[278px] md:h-[304px]"
-                    loading="lazy"
-                  />
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background: 'linear-gradient(180deg, rgba(2,6,23,0.06) 0%, rgba(2,6,23,0.55) 100%)',
-                    }}
-                  />
-                  <div className="absolute left-3.5 right-3.5 bottom-3.5 rounded-[14px] border px-3.5 py-2.5 backdrop-blur-sm" style={{ borderColor: 'rgba(236,253,245,0.26)', background: 'rgba(6,78,59,0.5)' }}>
-                    <p className="text-xs uppercase tracking-[0.18em] font-semibold" style={{ color: 'rgba(167,243,208,0.88)' }}>
-                      Why hosts list here
-                    </p>
-                    <p className="mt-1 text-[13px] font-semibold text-white">Direct inquiries, zero commission on guest bookings</p>
-                  </div>
-                </div>
-
-                <div
-                  className="absolute -left-5 bottom-4 hidden sm:block w-[250px] rounded-[18px] border p-3.5 sm:w-[270px] sm:p-4"
-                  style={{
-                    borderColor: 'rgba(209,250,229,0.44)',
-                    background: 'rgba(255,255,255,0.96)',
-                    boxShadow: '0 10px 24px rgba(6, 78, 59, 0.18)',
-                  }}
+                  Start hosting
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollTo('how-it-works')}
+                  className="inline-flex min-h-[48px] items-center justify-center rounded-full px-6 text-sm font-semibold border border-white/40 text-white xpx-press"
                 >
-                  {[
-                    { icon: '%', label: 'Guest commission', value: '0%' },
-                    { icon: '→', label: 'Inquiry flow', value: 'Direct' },
-                    { icon: '✓', label: 'Listing control', value: 'Yours' },
-                  ].map((item) => (
-                    <div
-                      key={item.label}
-                      className="flex items-center gap-2.5 py-2.5"
-                      style={{
-                        borderBottom: item.label === 'Listing control' ? 'none' : '1px solid rgba(16,185,129,0.14)',
-                      }}
-                    >
-                      <span
-                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[13px] font-bold"
-                        style={{ background: '#ecfdf5', color: '#047857' }}
-                      >
-                        {item.icon}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-[11px] uppercase tracking-[0.12em] font-semibold" style={{ color: '#6b7280' }}>
-                          {item.label}
-                        </p>
-                        <p className="mt-0.5 text-[16px] font-extrabold leading-none" style={{ color: '#065f46' }}>
-                          {item.value}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                  How it works
+                </button>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ──── How it works + honest trust ──── */}
-      <section id="why" className="scroll-mt-28 xpx-section relative z-[1]" style={{ background: SURFACE_LIGHT }}>
-        <div className="xpx-container space-y-10 md:space-y-12">
-          <SectionHeader
-            label="HOW IT WORKS"
-            title="Three calm steps to your stay"
-            subtitle="Browse first. Inquire when you're ready. Hear directly from the host."
-          />
+      {/* ─── How it works ─── */}
+      <section id="why" className="scroll-mt-28 py-12 md:py-16" style={{ background: premiumBrand.stone }}>
+        <div className="xpx-container space-y-10">
+          <div>
+            <p className="xpx-premium-eyebrow">How it works</p>
+            <h2 className="xpx-premium-section-title mt-2">Three calm steps to your stay</h2>
+            <p className="mt-2 text-sm text-[#6B7280] max-w-lg">
+              Browse first. Inquire when you&apos;re ready. Hear directly from the host.
+            </p>
+          </div>
           <HowItWorksWalkthrough id="how-it-works" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {(
               [
                 {
                   icon: ShieldCheck,
                   title: 'Verified when marked',
-                  desc: 'Listings with a verified badge have passed our quality review. Others are direct host listings with transparent pricing.',
+                  desc: 'Quality-reviewed listings with transparent host pricing.',
                 },
                 {
                   icon: Zap,
                   title: 'Zero guest commission',
-                  desc: 'You pay the host directly. We do not add platform fees on top of the listed price.',
+                  desc: 'You pay the host directly — no platform fees on your stay.',
                 },
               ] as const
-            ).map((card) => {
-              const chip = { bg: ACCENT_LIGHT, fg: ACCENT };
-              return (
+            ).map((card) => (
+              <div
+                key={card.title}
+                className="rounded-[20px] p-6 bg-white/70 backdrop-blur-xl border border-white/80"
+                style={{ boxShadow: '0 8px 24px rgba(17,24,39,0.05)' }}
+              >
                 <div
-                  key={card.title}
-                  className="h-full rounded-[20px] p-6 flex flex-col"
-                  style={{
-                    background: SURFACE,
-                    border: `1px solid ${BORDER}`,
-                  }}
+                  className="w-11 h-11 rounded-xl flex items-center justify-center"
+                  style={{ background: 'rgba(11,138,90,0.12)', color: premiumBrand.forest }}
                 >
-                  <div
-                    className="w-12 h-12 rounded-[14px] flex items-center justify-center"
-                    style={{ background: chip.bg }}
-                  >
-                    <card.icon className="w-5 h-5" style={{ color: chip.fg }} strokeWidth={2} />
-                  </div>
-                  <h3 className="mt-5 font-bold text-lg" style={{ color: TEXT }}>{card.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed" style={{ color: TEXT_MUTED }}>{card.desc}</p>
+                  <card.icon className="w-5 h-5" strokeWidth={2} />
                 </div>
-              );
-            })}
+                <h3 className="mt-4 font-bold text-lg text-[#111827]">{card.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-[#6B7280]">{card.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ──── Footer ──── */}
-      <footer
-        style={{
-          background: '#032E25',
-          borderTop: `1px solid ${FOOTER_DIVIDER}`,
-        }}
-      >
-        <div className="xpx-container pt-14 md:pt-16 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-9">
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))] gap-10 md:gap-10 mb-10 md:mb-11">
+      {/* ─── Footer ─── */}
+      <footer style={{ background: '#032E25', borderTop: `1px solid ${FOOTER_DIVIDER}` }}>
+        <div className="xpx-container pt-14 md:pt-16 pb-8 md:pb-10">
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))] gap-10 mb-10">
             <div>
-              <div className="flex items-center gap-2.5 text-lg leading-none min-h-[40px]">
+              <div className="flex items-center gap-2.5">
                 <img
                   src={XPRESSBNB_LOGO_PATH}
                   alt=""
-                  className={`${XPRESSBNB_LOGO_IMG_CLASS} h-9 w-9 object-contain shrink-0`}
+                  className={`${XPRESSBNB_LOGO_IMG_CLASS} h-9 w-9 object-contain`}
                   width={38}
                   height={38}
                   decoding="async"
                 />
-                <span className="font-extrabold tracking-tight" style={{ color: FOOTER_HEADING }}>
-                  Xpress<span style={{ color: FOOTER_LOGO_ACCENT }}>BnB</span>
+                <span className="xpx-premium-font-display font-bold text-lg text-white">
+                  Xpress<span style={{ color: premiumBrand.forest }}>BnB</span>
                 </span>
               </div>
               <p className="mt-5 text-sm leading-relaxed max-w-sm" style={{ color: FOOTER_BODY }}>
                 Direct stays across Delhi NCR. Host-listed pricing, zero guest commission.
               </p>
-              <p className="mt-4 text-sm" style={{ color: FOOTER_BODY }}>
-                <a
-                  href={`mailto:${TEAM_EMAIL}`}
-                  className="font-semibold underline underline-offset-2 hover:opacity-90"
-                  style={{ color: FOOTER_LINK_HOVER }}
-                >
-                  Questions? Email us
-                </a>
-              </p>
             </div>
             <FooterCol
               title="Explore"
-              items={CITIES.map((c) => ({ label: c, onClick: () => onCityClick(c) }))}
+              items={['Delhi', 'Gurgaon', 'Noida', 'Rishikesh'].map((c) => ({
+                label: c,
+                onClick: () => onCityClick(c),
+              }))}
             />
             <FooterCol
               title="Company"
@@ -483,19 +459,16 @@ export default function HomepageBelowFold({
             />
           </div>
           <div
-            className="pt-7 md:pt-8 flex flex-col md:flex-row items-center justify-between gap-3"
+            className="pt-7 flex flex-col md:flex-row items-center justify-between gap-3"
             style={{ borderTop: `1px solid ${FOOTER_DIVIDER}` }}
           >
             <p className="text-xs" style={{ color: FOOTER_COPY }}>
-              &copy; 2025 XpressBnB. All rights reserved.
+              &copy; 2026 XpressBnB. All rights reserved.
               {' · '}
-              <ManageCookiesLink
-                className="hover:underline transition-colors"
-                style={{ color: FOOTER_BODY }}
-              />
+              <ManageCookiesLink className="hover:underline" style={{ color: FOOTER_BODY }} />
             </p>
             <p className="text-xs font-semibold" style={{ color: FOOTER_BODY }}>
-              India&rsquo;s Smarter Stay ♡
+              India&apos;s direct host marketplace
             </p>
           </div>
         </div>
@@ -504,99 +477,16 @@ export default function HomepageBelowFold({
   );
 }
 
-function SectionHeader({
-  label,
-  title,
-  subtitle,
-  action,
-}: {
-  label: string;
-  title: string;
-  subtitle: string;
-  action?: ReactNode;
-}) {
-  return (
-    <div className="xpx-section-head flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 sm:gap-6">
-      <div className="min-w-0">
-        <span className="text-[11px] font-bold tracking-[0.2em]" style={{ color: ACCENT }}>
-          {label}
-        </span>
-        <h2 className="mt-2.5 text-[26px] sm:text-[28px] md:text-3xl font-extrabold tracking-tight leading-[1.12]" style={{ color: TEXT }}>
-          {title}
-        </h2>
-        <p className="text-sm md:text-[15px] mt-1.5" style={{ color: TEXT_MUTED }}>{subtitle}</p>
-      </div>
-      {action}
-    </div>
-  );
-}
-
 function FeaturedSkeleton() {
   return (
-    <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5 overflow-hidden">
-      {[1, 2, 3, 4, 5].map((i) => (
+    <div className="flex gap-4 overflow-hidden">
+      {[1, 2].map((i) => (
         <div
           key={i}
-          className="xpx-property-card shrink-0 w-[85vw] min-w-[85vw] max-w-[85vw] md:w-auto md:min-w-0 md:max-w-[380px] overflow-hidden"
-        >
-          <div className="xpx-property-card-media animate-pulse" style={{ background: SURFACE_LIGHT }} />
-          <div className="xpx-property-card-skeleton-body">
-            <div className="h-4 w-3/4 rounded animate-pulse" style={{ background: SURFACE_LIGHT }} />
-            <div className="h-3 w-1/2 rounded animate-pulse" style={{ background: SURFACE_LIGHT }} />
-            <div className="h-10 w-full rounded-xl animate-pulse" style={{ background: SURFACE_LIGHT }} />
-          </div>
-        </div>
+          className="shrink-0 w-[min(88vw,380px)] aspect-[4/5] rounded-[24px] animate-pulse"
+          style={{ background: premiumBrand.stone }}
+        />
       ))}
-    </div>
-  );
-}
-
-function TopDestinationCardInner({
-  city,
-  propertiesByCity,
-  listingsLoading = false,
-  variant = 'small',
-}: {
-  city: string;
-  propertiesByCity: Record<string, Property[]>;
-  listingsLoading?: boolean;
-  variant?: 'hero' | 'wide' | 'small';
-}) {
-  const cover =
-    firstImageUrl(propertiesByCity[city]?.[0]?.images ?? null) || CITY_IMAGES[city];
-  const citySize = variant === 'hero' ? 30 : variant === 'wide' ? 24 : 19;
-  const cardHeight = variant === 'hero' ? 'min-h-[470px]' : variant === 'wide' ? 'min-h-[240px]' : 'h-full';
-  return (
-    <div className={`relative w-full h-full ${cardHeight}`}>
-      <img
-        src={cover}
-        alt={city}
-        className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-[1.06] transition-transform duration-700"
-        loading="lazy"
-      />
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'linear-gradient(180deg, rgba(2,6,23,0) 42%, rgba(2,6,23,0.32) 68%, rgba(2,6,23,0.82) 100%)',
-        }}
-      />
-      <div className="absolute bottom-5 left-5 right-5 text-left">
-        <div
-          className="text-white font-extrabold leading-tight"
-          style={{ fontSize: citySize, textShadow: '0 3px 12px rgba(2,6,23,0.38)' }}
-        >
-          {city}
-        </div>
-        {listingsLoading ? (
-          <p className="text-sm font-medium mt-1" style={{ color: 'rgba(248,250,252,0.88)' }}>
-            Loading stays…
-          </p>
-        ) : (
-          <p className="text-xs font-medium text-white/75 italic tracking-wide mt-1">
-            {CITY_TAGLINES[city] || city}
-          </p>
-        )}
-      </div>
     </div>
   );
 }
@@ -610,7 +500,7 @@ function FooterCol({
 }) {
   return (
     <div>
-      <h4 className="font-bold text-sm mb-5 tracking-wide" style={{ color: FOOTER_HEADING }}>{title}</h4>
+      <h4 className="font-bold text-sm mb-5 text-white">{title}</h4>
       <ul className="space-y-3">
         {items.map((item) => (
           <li key={item.label}>
@@ -619,7 +509,7 @@ function FooterCol({
               onClick={item.onClick}
               className="text-sm transition-colors hover:underline"
               style={{ color: FOOTER_BODY }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = FOOTER_LINK_HOVER; }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = premiumBrand.forest; }}
               onMouseLeave={(e) => { e.currentTarget.style.color = FOOTER_BODY; }}
             >
               {item.label}

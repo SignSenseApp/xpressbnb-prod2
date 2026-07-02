@@ -3,24 +3,34 @@ import type { Property } from '../../lib/database.types';
 import { useNearbyLocationOptional } from '../../contexts/NearbyLocationContext';
 import { getPublicListings } from '../../lib/publicListings';
 import { rankPropertiesForNearby } from '../../lib/nearbyRanking';
-import FeaturedStaysCarousel from '../FeaturedStaysCarousel';
-import NearbyStaysSkeleton from '../nearby/NearbyStaysSkeleton';
 import NearbyDestinationsFallback from '../nearby/NearbyDestinationsFallback';
 import { isMappableProperty } from '../../lib/propertyCoords';
+import {
+  chapterDestinationEssay,
+  chapterQuietEscapes,
+  chapterWeekendSelection,
+  chapterWorthWaking,
+} from '../../lib/discoveryEditorial';
+import {
+  DiscoveryCuratedCollection,
+  DiscoveryEditorialPause,
+  DiscoveryJournalSkeleton,
+  DiscoveryPortraitPair,
+  DiscoveryWeekendSelection,
+  DiscoveryWideChapter,
+} from './editorial/EditorialDiscoveryModules';
 
 type NearbyPropertiesSectionProps = {
   originProperty: Property;
 };
 
 /**
- * Property detail — location-aware "Similar stays nearby" using guest coords.
+ * Second movement — wide story, weekend trio, portraits, collection, destination essay.
  */
 export default function NearbyPropertiesSection({ originProperty }: NearbyPropertiesSectionProps) {
   const nearby = useNearbyLocationOptional();
   const [loading, setLoading] = useState(true);
-  const [similar, setSimilar] = useState<
-    Array<Property & { distanceKm: number }>
-  >([]);
+  const [similar, setSimilar] = useState<Array<Property & { distanceKm: number }>>([]);
 
   const originCoords = useMemo(() => {
     if (nearby?.coords) return nearby.coords;
@@ -61,46 +71,93 @@ export default function NearbyPropertiesSection({ originProperty }: NearbyProper
     };
   }, [originCoords, originProperty.id]);
 
-  const nearestCities = nearby?.nearestCities?.length
-    ? nearby.nearestCities
-    : [];
+  const nearestCities = nearby?.nearestCities?.length ? nearby.nearestCities : [];
 
   if (!originCoords && !loading) return null;
 
   const distanceMap = Object.fromEntries(similar.map((p) => [p.id, p.distanceKm]));
+  const nearbySource = 'nearby_journal';
 
   const handleExploreCity = (slug: string) => {
     window.history.pushState({}, '', `/stays/${slug}`);
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
-  return (
-    <section id="similar-nearby" className="scroll-mt-28">
-      <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-xpx-text">
-        More stays near you
-      </h2>
-      <p className="mt-2 text-sm text-xpx-muted">
-        Other exceptional homes within reach — curated by distance and quality.
-      </p>
+  const wide = similar[0];
+  const weekend = similar.slice(1, 4);
+  const portraitPair = similar.slice(4, 6) as [Property, Property] | [];
+  const collection = similar.slice(6);
 
+  return (
+    <div
+      id="similar-nearby"
+      className="xpx-discovery-journal xpx-discovery-journal--closing scroll-mt-28"
+    >
       {loading ? (
-        <div className="mt-6">
-          <NearbyStaysSkeleton />
-        </div>
+        <DiscoveryJournalSkeleton />
       ) : similar.length > 0 ? (
-        <div className="mt-6">
-          <FeaturedStaysCarousel properties={similar} distanceByPropertyId={distanceMap} />
-        </div>
+        <>
+          <DiscoveryEditorialPause>
+            The story does not end at the doorstep. These addresses continue the mood — each
+            chosen for a different reason.
+          </DiscoveryEditorialPause>
+
+          {wide && (
+            <DiscoveryWideChapter
+              property={wide}
+              copy={chapterWorthWaking()}
+              nearbyDistanceKm={wide.distanceKm}
+              nearbySource={nearbySource}
+              id="discovery-wide-nearby"
+            />
+          )}
+
+          {weekend.length >= 2 && (
+            <DiscoveryWeekendSelection
+              properties={weekend}
+              copy={chapterWeekendSelection()}
+              nearbyDistanceById={distanceMap}
+              nearbySource={nearbySource}
+              id="discovery-weekend-nearby"
+            />
+          )}
+
+          {portraitPair.length === 2 && (
+            <DiscoveryPortraitPair
+              properties={portraitPair}
+              copy={chapterQuietEscapes(originProperty)}
+              nearbyDistanceById={distanceMap}
+              nearbySource={nearbySource}
+              id="discovery-portraits-nearby"
+            />
+          )}
+
+          {collection.length > 0 && (
+            <DiscoveryCuratedCollection
+              properties={collection}
+              copy={{
+                eyebrow: 'Editorial notes',
+                headline: 'Places with unforgettable terraces',
+                lead: 'A final handful — open when curiosity outweighs the itinerary.',
+              }}
+              nearbyDistanceById={distanceMap}
+              nearbySource={nearbySource}
+              id="discovery-collection-nearby"
+            />
+          )}
+        </>
       ) : nearestCities.length > 0 ? (
-        <div className="mt-6">
-          <NearbyDestinationsFallback
-            title="Popular destinations near this stay"
-            subtitle="Explore verified inventory in nearby cities"
-            nearestCities={nearestCities.slice(0, 3)}
-            onExploreCity={handleExploreCity}
-          />
-        </div>
-      ) : null}
-    </section>
+        <NearbyDestinationsFallback
+          title={chapterDestinationEssay(originProperty.city).headline}
+          subtitle={chapterDestinationEssay(originProperty.city).lead}
+          nearestCities={nearestCities.slice(0, 3)}
+          onExploreCity={handleExploreCity}
+        />
+      ) : (
+        <p className="xpx-discovery-pause-text">
+          We&apos;re curating more remarkable places nearby.
+        </p>
+      )}
+    </div>
   );
 }

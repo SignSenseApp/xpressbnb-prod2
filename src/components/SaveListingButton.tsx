@@ -13,6 +13,7 @@ type SaveListingButtonProps = {
   /** `card` = absolute on listing image; `inline` = toolbar button */
   variant?: 'card' | 'inline';
   align?: 'left' | 'right';
+  presentation?: 'default' | 'editorial';
 };
 
 export default function SaveListingButton({
@@ -22,6 +23,7 @@ export default function SaveListingButton({
   size = 'sm',
   variant = 'card',
   align = 'right',
+  presentation = 'default',
 }: SaveListingButtonProps) {
   const { isSaved, toggleSnapshot } = useSavedListings();
   const saved = isSaved(propertyId);
@@ -32,7 +34,21 @@ export default function SaveListingButton({
   const positionClass =
     variant === 'card'
       ? `absolute top-3 z-10 ${align === 'left' ? 'left-3' : 'right-3'} ${dim}`
-      : 'inline-flex items-center gap-1.5 px-3 py-2';
+      : presentation === 'editorial'
+        ? 'inline-flex items-center gap-1.5'
+        : 'inline-flex items-center gap-1.5 px-3 py-2';
+
+  const interactionClass =
+    presentation === 'editorial'
+      ? ''
+      : 'transition-transform hover:scale-110 active:scale-95';
+
+  const inlineClass =
+    variant === 'inline' && presentation !== 'editorial'
+      ? 'hover:bg-slate-100 text-sm font-semibold text-xpx-text'
+      : variant === 'inline' && presentation === 'editorial'
+        ? 'text-sm font-normal'
+        : '';
 
   return (
     <button
@@ -41,7 +57,7 @@ export default function SaveListingButton({
         e.stopPropagation();
         toggleSnapshot(getSnapshot());
       }}
-      className={`${positionClass} rounded-full flex items-center justify-center transition-transform hover:scale-110 active:scale-95 ${variant === 'inline' ? 'hover:bg-slate-100 text-sm font-semibold text-xpx-text' : ''} ${className}`}
+      className={`${positionClass} ${presentation === 'editorial' ? '' : 'rounded-full'} flex items-center justify-center ${interactionClass} ${inlineClass} ${className}`}
       style={
         variant === 'card'
           ? {

@@ -73,6 +73,114 @@ export function inferFeatureHighlights(property: Property): string[] {
   return Array.from(new Set(out)).slice(0, 6);
 }
 
+const SPELL_COUNT: Record<number, string> = {
+  1: 'one',
+  2: 'two',
+  3: 'three',
+  4: 'four',
+  5: 'five',
+  6: 'six',
+  7: 'seven',
+  8: 'eight',
+  9: 'nine',
+  10: 'ten',
+  11: 'eleven',
+  12: 'twelve',
+};
+
+function spellCount(n: number): string {
+  return SPELL_COUNT[n] ?? String(n);
+}
+
+function capitalizeWords(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+export interface PropertyEditorialStory {
+  emotionalLine: string | null;
+  specifications: string[];
+}
+
+/**
+ * Hospitality-language story lines from real property fields — no fabrication.
+ * Used in the editorial opening below the hero.
+ */
+export function inferEditorialEmotionalLine(property: Property): string | null {
+  const amenities = listPropertyAmenities(property.amenities).map((a) => a.toLowerCase());
+  const cityLower = (property.city ?? '').toLowerCase();
+  const titleLower = (property.title ?? '').toLowerCase();
+
+  if (amenities.some((a) => a.includes('mountain'))) {
+    return 'Wake up overlooking the mountains';
+  }
+  if (amenities.some((a) => a.includes('beach') || a.includes('waterfront') || a.includes('lake'))) {
+    return 'The water, never far from your door';
+  }
+  if (cityLower === 'rishikesh' || /river|riverside|ganga/i.test(titleLower)) {
+    return 'Where the river slows the clock';
+  }
+  if (amenities.some((a) => a.includes('garden'))) {
+    return 'Mornings that begin in the garden';
+  }
+  if (amenities.some((a) => a.includes('pool') || a.includes('swim'))) {
+    return 'Unhurried days by the water';
+  }
+  if (property.is_couple_friendly) {
+    return 'A sanctuary made for unhurried time together';
+  }
+  return null;
+}
+
+export function buildPropertyEditorialStory(property: Property): PropertyEditorialStory {
+  const amenities = listPropertyAmenities(property.amenities).map((a) => a.toLowerCase());
+  const specifications: string[] = [];
+
+  const guests = Math.max(0, property.max_guests ?? 0);
+  if (guests > 0) {
+    specifications.push(
+      guests <= 12
+        ? `Designed for up to ${spellCount(guests)} guest${guests === 1 ? '' : 's'}`
+        : `Designed for up to ${guests} guests`,
+    );
+  }
+
+  const bedrooms = Math.max(0, property.bedrooms ?? 0);
+  if (bedrooms > 0) {
+    specifications.push(
+      bedrooms <= 12
+        ? `${capitalizeWords(spellCount(bedrooms))} peaceful bedroom${bedrooms === 1 ? '' : 's'}`
+        : `${bedrooms} peaceful bedrooms`,
+    );
+  }
+
+  const bathrooms = Math.max(0, property.bathrooms ?? 0);
+  if (bathrooms > 0) {
+    if (bathrooms === 1) specifications.push('One spa-style bathroom');
+    else if (bathrooms <= 12) {
+      specifications.push(`${capitalizeWords(spellCount(bathrooms))} spa-style bathrooms`);
+    } else {
+      specifications.push(`${bathrooms} spa-style bathrooms`);
+    }
+  }
+
+  if (amenities.some((a) => a.includes('outdoor dining') || a.includes('patio') || a.includes('bbq'))) {
+    specifications.push('Private outdoor dining');
+  } else if (amenities.some((a) => a.includes('balcony'))) {
+    specifications.push('Your own balcony, open to the sky');
+  }
+  if (amenities.some((a) => a.includes('workspace') || a.includes('dedicated workspace'))) {
+    specifications.push('A quiet workspace when you need it');
+  }
+  if (amenities.some((a) => a.includes('pool') || a.includes('swim'))) {
+    specifications.push('A pool reserved for you');
+  }
+
+  return {
+    emotionalLine: inferEditorialEmotionalLine(property),
+    specifications: Array.from(new Set(specifications)).slice(0, 5),
+  };
+}
+
 export interface SubRating {
   label: string;
   /** 0 means "no real signal yet"; UI hides the bars rather than faking a 4.9. */

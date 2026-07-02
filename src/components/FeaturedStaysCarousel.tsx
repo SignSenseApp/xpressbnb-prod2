@@ -1,3 +1,11 @@
+/**
+ * MARKETPLACE FROZEN (Phase MP-Freeze)
+ *
+ * Carousel for listing grids on browsing surfaces. Uses ConversionPropertyCard only.
+ * Editorial property-page discovery must not use this component.
+ *
+ * @see components/marketplace/README.md
+ */
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Property } from '../lib/database.types';
@@ -357,6 +365,13 @@ export default function FeaturedStaysCarousel({
 
   if (count === 0) return null;
 
+  const navClass =
+    'xpx-lux-carousel-nav xpx-lux-carousel-nav--hairline absolute top-[calc(42%)] z-[2] hidden md:inline-flex';
+  const desktopNavClass = `${navClass} left-0 -translate-x-full pr-3`;
+  const desktopNavRightClass = `${navClass} right-0 translate-x-full pl-3`;
+  const mobileNavClass = 'xpx-lux-carousel-nav xpx-lux-carousel-nav--hairline';
+  const chevronClass = 'h-4 w-4';
+
   return (
     <div ref={rootRef} className="relative">
       {loopEnabled && (
@@ -368,10 +383,10 @@ export default function FeaturedStaysCarousel({
               goPrev();
               scheduleResume();
             }}
-            className="absolute left-0 top-[calc(110px)] z-[2] hidden h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border border-[#E5E7EB] bg-white shadow-[0_6px_16px_rgba(15,23,42,0.12)] transition-opacity hover:opacity-90 md:flex lg:top-[calc(50%-60px)]"
-            aria-label="Previous featured stay"
+            className={desktopNavClass}
+            aria-label="Previous stay"
           >
-            <ChevronLeft className="h-4 w-4 text-[#0F172A]" />
+            <ChevronLeft className={chevronClass} strokeWidth={1.25} />
           </button>
           <button
             type="button"
@@ -380,10 +395,10 @@ export default function FeaturedStaysCarousel({
               goNext();
               scheduleResume();
             }}
-            className="absolute right-0 top-[calc(110px)] z-[2] hidden h-9 w-9 translate-x-1/2 items-center justify-center rounded-full border border-[#E5E7EB] bg-white shadow-[0_6px_16px_rgba(15,23,42,0.12)] transition-opacity hover:opacity-90 md:flex lg:top-[calc(50%-60px)]"
-            aria-label="Next featured stay"
+            className={desktopNavRightClass}
+            aria-label="Next stay"
           >
-            <ChevronRight className="h-4 w-4 text-[#0F172A]" />
+            <ChevronRight className={chevronClass} strokeWidth={1.25} />
           </button>
         </>
       )}
@@ -393,7 +408,7 @@ export default function FeaturedStaysCarousel({
         className="overflow-hidden touch-pan-y"
         role="region"
         aria-roledescription="carousel"
-        aria-label="Featured Stays"
+        aria-label="Editor's selection"
         tabIndex={0}
         onKeyDown={onKeyDown}
       >
@@ -440,11 +455,8 @@ export default function FeaturedStaysCarousel({
           {properties.map((property, index) => (
             <span
               key={property.id}
-              className="h-1.5 rounded-full transition-all duration-300"
-              style={{
-                width: index === logicalIndex ? 16 : 6,
-                background: index === logicalIndex ? '#059669' : 'rgba(15,23,42,0.18)',
-              }}
+              className={`xpx-lux-carousel-dot ${index === logicalIndex ? 'xpx-lux-carousel-dot--active' : ''}`}
+              style={{ width: index === logicalIndex ? 14 : 5 }}
             />
           ))}
         </div>
@@ -459,10 +471,10 @@ export default function FeaturedStaysCarousel({
               goPrev();
               scheduleResume();
             }}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#E5E7EB] bg-white shadow-[0_6px_16px_rgba(15,23,42,0.12)]"
-            aria-label="Previous featured stay"
+            className={mobileNavClass}
+            aria-label="Previous stay"
           >
-            <ChevronLeft className="h-4 w-4 text-[#0F172A]" />
+            <ChevronLeft className={chevronClass} strokeWidth={1.25} />
           </button>
           <button
             type="button"
@@ -471,10 +483,10 @@ export default function FeaturedStaysCarousel({
               goNext();
               scheduleResume();
             }}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#E5E7EB] bg-white shadow-[0_6px_16px_rgba(15,23,42,0.12)]"
-            aria-label="Next featured stay"
+            className={mobileNavClass}
+            aria-label="Next stay"
           >
-            <ChevronRight className="h-4 w-4 text-[#0F172A]" />
+            <ChevronRight className={chevronClass} strokeWidth={1.25} />
           </button>
         </div>
       )}

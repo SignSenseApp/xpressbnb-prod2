@@ -1,3 +1,15 @@
+/**
+ * MARKETPLACE FROZEN (Phase MP-Freeze)
+ *
+ * Comparison-first property card for browsing surfaces only:
+ * homepage featured, city listings, saved, map discovery, search results.
+ *
+ * Do NOT convert this into editorial UI. Do NOT remove price, save, host,
+ * specs, or stay score. Editorial discovery on `/property/*` uses
+ * `components/property/editorial/DiscoveryPropertyWindow` instead.
+ *
+ * @see components/marketplace/README.md
+ */
 import { memo, useEffect, useRef, useState } from 'react';
 import type { Property } from '../lib/database.types';
 import { computeXpressbnbStayScore } from '../lib/xpressbnbStayScore';
@@ -86,8 +98,7 @@ function HostPriceTag({ price }: { price: string }) {
 }
 
 /**
- * Finalized XpressBNB property card — pixel-accurate to product spec.
- * Used in city listings, saved page, and homepage featured carousel.
+ * Marketplace property card — city listings, saved page, featured carousel.
  */
 export default memo(function ConversionPropertyCard({
   property,
@@ -192,7 +203,6 @@ export default memo(function ConversionPropertyCard({
       }}
       className={`xpx-property-card group flex h-full w-full max-w-[380px] cursor-pointer flex-col overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#059669] motion-reduce:transition-none ${className}`}
     >
-      {/* Hero image gallery */}
       <PropertyCardGallery
         images={property.images}
         alt={property.title}
@@ -222,28 +232,18 @@ export default memo(function ConversionPropertyCard({
         )}
       </PropertyCardGallery>
 
-      {/* Card body — fixed-height zones for grid alignment */}
       <div className="xpx-property-card-body">
-        <h3
-          className="xpx-property-card-zone-title"
-          title={property.title}
-        >
+        <h3 className="xpx-property-card-zone-title" title={property.title}>
           {property.title}
         </h3>
 
-        <div
-          className="xpx-property-card-zone-location"
-          title={locationLabel}
-        >
+        <div className="xpx-property-card-zone-location" title={locationLabel}>
           <LocationPinIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
           <span className="xpx-property-card-zone-location__text">{locationLabel}</span>
         </div>
 
         <div className="xpx-property-card-zone-host">
-          <PropertyCardHostRow
-            hostId={property.host_id}
-            propertyVerified={property.is_verified}
-          />
+          <PropertyCardHostRow hostId={property.host_id} propertyVerified={property.is_verified} />
         </div>
 
         <div className="xpx-property-card-zone-meta">
