@@ -1,10 +1,20 @@
 import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
-import { Calendar } from 'lucide-react';
+import {
+  Calendar,
+  Mail,
+  User,
+  MessageSquare,
+  Sparkles,
+  Tag,
+  X,
+  Loader2,
+  Phone,
+} from 'lucide-react';
 import type { Property } from '../lib/database.types';
 import { supabase } from '../lib/supabase';
 import { findPromoCode, type PromoCodeDef } from '../lib/offers';
 import { buildGuestPricingQuote, getInquirySubmitAmount } from '../lib/guestPricingEngine';
-import { GUEST_PRICING_NO_COMMISSION } from '../lib/guestPricingCopy';
+import { GUEST_PRICING_INQUIRY_TOTAL_NOTE, GUEST_PRICING_NO_COMMISSION } from '../lib/guestPricingCopy';
 import GuestPricingBreakdown from './pricing/GuestPricingBreakdown';
 import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
 import BookingProgressBar from './booking/BookingProgressBar';
@@ -65,10 +75,55 @@ function formatDate(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
-function ConciergeGuidance({ message }: { message: string }) {
+function ErrorBanner({ message }: { message: string }) {
   return (
-    <p className="xpx-concierge-guidance" role="status" aria-live="polite">
+    <div
+      className="mt-3 rounded-xl border px-4 py-3 text-sm font-medium"
+      style={{
+        background: 'rgba(254,242,242,0.9)',
+        borderColor: 'rgba(254,202,202,0.9)',
+        color: '#991B1B',
+      }}
+      role="alert"
+    >
       {message}
+    </div>
+  );
+}
+
+function BookingStepLabels({
+  currentStep,
+}: {
+  currentStep: number;
+}) {
+  const steps = BOOKING_STEP_LABELS.map((label, index) => {
+    const n = index + 1;
+    const done = n < currentStep;
+    const active = n === currentStep && !done;
+    return { n, label, active, done };
+  });
+
+  return (
+    <p
+      className="text-[11px] font-semibold tracking-wide text-xpx-subtle text-center"
+      aria-label="Booking steps"
+    >
+      {steps.map((step, i) => (
+        <span key={step.n}>
+          {i > 0 ? <span className="mx-1.5 text-xpx-border-strong">·</span> : null}
+          <span
+            className={
+              step.done
+                ? 'text-emerald-700'
+                : step.active
+                  ? 'text-xpx-text'
+                  : 'text-xpx-subtle'
+            }
+          >
+            {step.n} {step.label}
+          </span>
+        </span>
+      ))}
     </p>
   );
 }
@@ -165,13 +220,13 @@ export default function BookingForm({
     setPromoError(null);
     const promo = findPromoCode(promoInput);
     if (!promo) {
-      setPromoError('That code isn’t recognised — please check and try again.');
+      setPromoError('Invalid promo code.');
       setAppliedPromo(null);
       return;
     }
     if (promo.minSubtotal && calculatedPrice < promo.minSubtotal) {
       setPromoError(
-        `This arrangement applies to stays from ₹${promo.minSubtotal.toLocaleString()} — adjust your dates or choose another code.`,
+        `This code requires a subtotal of at least ₹${promo.minSubtotal.toLocaleString()}.`,
       );
       return;
     }
@@ -186,33 +241,28 @@ export default function BookingForm({
 
   const validateForm = (): string | null => {
     if (!checkInDate || !checkOutDate) {
-      return 'Choose your preferred arrival and departure to continue.';
+      return 'Please select check-in and check-out dates from the calendar above.';
     }
     if (checkOutDate <= checkInDate) {
-      return 'Departure should follow your arrival — adjust your dates above.';
+      return 'Check-out must be after check-in.';
     }
     const emailErr = guestEmailError(formData.guest_email);
-    if (emailErr) {
-      if (!formData.guest_email.trim()) {
-        return 'Share an email address where we may follow up.';
-      }
-      return 'That email address doesn’t look quite right — please check and try again.';
-    }
+    if (emailErr) return emailErr;
     if (!formData.guest_name.trim()) {
-      return 'Tell us the name we should address your request to.';
+      return 'Please enter your name';
     }
     const phoneDigits = normalizePhoneDigits(formData.guest_phone);
     if (phoneDigits.length !== 10) {
-      return 'A mobile number helps our team reach you — please share a 10-digit number.';
+      return 'Please enter a valid 10-digit phone number';
     }
     if (numberOfDays <= 0) {
-      return 'Choose your preferred arrival and departure to continue.';
+      return 'Please select check-in and check-out dates from the calendar above.';
     }
     if (calculatedPrice <= 0) {
-      return 'We couldn’t estimate your stay — please choose your dates again.';
+      return 'Invalid booking total. Please reselect your dates.';
     }
     if (inquiryAmount <= 0) {
-      return 'We couldn’t estimate your stay — please choose your dates again.';
+      return 'Invalid booking total. Please reselect your dates.';
     }
     const cooldownRemaining = getInquiryCooldownRemainingMs();
     if (cooldownRemaining > 0) {
@@ -222,7 +272,7 @@ export default function BookingForm({
       return inquiryTooFastMessage();
     }
     if (honeypot.trim()) {
-      return 'We couldn’t send your request just now — please try again in a moment.';
+      return 'Could not submit your inquiry. Please try again.';
     }
     return null;
   };
@@ -357,9 +407,7 @@ export default function BookingForm({
     try {
       const available = await assertDatesAvailable(checkIn, checkOut);
       if (!available) {
-        setErrorMessage(
-          'Those dates may no longer be available — please choose another arrival.',
-        );
+        setErrorMessage('Booking unavailable');
         trackXpressEvent('inquiry_submit_failed', {
           ...analyticsScope,
           error_category: 'availability',
@@ -375,9 +423,7 @@ export default function BookingForm({
       const abuse = buildInquiryAbusePayload(formOpenedAtRef.current, honeypot);
 
       if (!property.host_id) {
-        setErrorMessage(
-          'We’re unable to reach the host for this stay — please try again shortly.',
-        );
+        setErrorMessage('This listing is missing host details. Please try again later.');
         setLoading(false);
         setTransitionPhase(null);
         return;
@@ -435,9 +481,7 @@ export default function BookingForm({
     } catch (error) {
       if (import.meta.env.DEV) console.error('Booking error:', error);
       const errMsg =
-        error instanceof Error
-          ? error.message
-          : 'We couldn’t send your request just now — please try again in a moment.';
+        error instanceof Error ? error.message : 'Something went wrong. Please try again.';
       setErrorMessage(errMsg);
       trackXpressEvent('inquiry_submit_failed', {
         property_id: property.id,
@@ -487,218 +531,249 @@ export default function BookingForm({
     <>
     <form
       onSubmit={handleSubmit}
-      className="relative max-w-full overflow-x-hidden pb-[max(1rem,env(safe-area-inset-bottom))]"
+      className="relative space-y-5 max-w-full overflow-x-hidden pb-[max(1rem,env(safe-area-inset-bottom))]"
     >
       <InquiryHoneypotField value={honeypot} onChange={setHoneypot} />
+      {numberOfDays > 0 && (
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-xl -mt-1">
+          <span className="text-sm text-gray-500">Total</span>
+          <span className="text-base font-bold text-gray-900 tabular-nums">
+            ₹{totalPrice.toLocaleString('en-IN')}
+          </span>
+        </div>
+      )}
       <BookingProgressBar currentStep={bookingStep} labels={[...BOOKING_STEP_LABELS]} />
+      <BookingStepLabels currentStep={bookingStep} />
 
       {checkInDate && checkOutDate && (
         <div
-          className="flex items-center justify-between gap-3 py-4"
-          style={{ borderBottom: '1px solid var(--lux-divider)' }}
+          className="rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3"
+          style={{
+            background: 'var(--xpx-surface-light)',
+            border: '1px solid var(--xpx-border)',
+          }}
         >
           <div className="min-w-0">
-            <p className="xpx-concierge-stay-summary-label">Your stay</p>
-            <p className="mt-1 text-sm font-normal leading-snug" style={{ color: 'var(--lux-ink)' }}>
-              <span className="sr-only">Arrival </span>
+            <p className="text-sm font-bold text-xpx-text leading-snug">
               {checkInDate.toLocaleDateString('en-IN', {
                 month: 'short',
                 day: 'numeric',
               })}
-              <span aria-hidden> → </span>
-              <span className="sr-only">Departure </span>
+              {' → '}
               {checkOutDate.toLocaleDateString('en-IN', {
                 month: 'short',
                 day: 'numeric',
               })}
             </p>
-            <p className="xpx-concierge-hint mt-1">
+            <p className="text-xs text-xpx-muted mt-0.5">
               {numberOfDays} {numberOfDays === 1 ? 'night' : 'nights'} · {safeGuestCount}{' '}
-              {safeGuestCount === 1 ? 'traveller' : 'travellers'}
+              {safeGuestCount === 1 ? 'guest' : 'guests'}
             </p>
           </div>
           <button
             type="button"
             onClick={onEditDates}
-            className="xpx-lux-link shrink-0 text-sm"
+            className="shrink-0 text-xs font-semibold text-xpx-text underline underline-offset-2 hover:text-xpx-warm-dark px-3 py-2 min-h-[44px] min-w-[44px]"
           >
-            Change dates
+            Edit dates
           </button>
         </div>
       )}
 
-      <InquiryConfidenceStrip className="mt-6" />
+      <InquiryConfidenceStrip className="mb-4" />
 
-      <div className="xpx-reservation-stack mt-8" id="booking-step-contact">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" id="booking-step-contact">
         <div>
-          <label className="xpx-concierge-label" htmlFor="inquiry-guest-name">
-            Your name
+          <label className="block text-[11px] font-bold uppercase tracking-[0.14em] text-xpx-subtle mb-2">
+            <User className="w-3.5 h-3.5 inline mr-1" aria-hidden />
+            Full name
           </label>
           <input
-            id="inquiry-guest-name"
             type="text"
             required
             value={formData.guest_name}
             onChange={(e) => setFormData({ ...formData, guest_name: e.target.value })}
-            className="xpx-concierge-field"
-            placeholder="As we should address you"
+            className="xpx-input"
+            placeholder="Your name"
             autoComplete="name"
           />
         </div>
 
         <div>
-          <label className="xpx-concierge-label" htmlFor="inquiry-guest-email">
+          <label className="block text-[11px] font-bold uppercase tracking-[0.14em] text-xpx-subtle mb-2">
+            <Mail className="w-3.5 h-3.5 inline mr-1" aria-hidden />
             Email
           </label>
           <input
-            id="inquiry-guest-email"
             type="email"
             required
             value={formData.guest_email}
             onChange={(e) => setFormData({ ...formData, guest_email: e.target.value })}
-            className="xpx-concierge-field"
-            placeholder="Where we may follow up"
+            className="xpx-input"
+            placeholder="you@email.com"
             autoComplete="email"
           />
         </div>
 
-        <div>
-          <label className="xpx-concierge-label" htmlFor="inquiry-guest-phone">
-            Mobile
+        <div className="md:col-span-2">
+          <label className="block text-[11px] font-bold uppercase tracking-[0.14em] text-xpx-subtle mb-2">
+            <Phone className="w-3.5 h-3.5 inline mr-1" aria-hidden />
+            Mobile number
           </label>
           <input
-            id="inquiry-guest-phone"
             type="tel"
             required
             inputMode="numeric"
             autoComplete="tel"
             value={formData.guest_phone}
             onChange={(e) => setFormData({ ...formData, guest_phone: e.target.value })}
-            className="xpx-concierge-field"
+            className="xpx-input"
             placeholder="10-digit mobile"
           />
-          <p className="xpx-concierge-hint mt-2">
-            So a member of our team can reach you about your stay.
+          <p className="text-[11px] text-xpx-subtle mt-1.5 leading-relaxed">
+            Used so we can reach you about your inquiry.
           </p>
         </div>
       </div>
 
-      <div className="xpx-reservation-stack mt-8" style={{ borderTop: '1px solid var(--lux-divider)', paddingTop: '2rem' }}>
-        <label className="flex cursor-pointer items-start gap-3">
+      <div
+        className="rounded-2xl p-4"
+        style={{ background: 'var(--xpx-surface-light)', border: '1px solid var(--xpx-border)' }}
+      >
+        <label className="flex items-start gap-3 cursor-pointer">
           <input
             type="checkbox"
             checked={includeDecoration}
             onChange={(e) => setIncludeDecoration(e.target.checked)}
-            className="mt-1 h-4 w-4 rounded border-lux-divider text-lux-accent focus:ring-lux-accent"
+            className="w-5 h-5 mt-0.5 rounded border-xpx-border text-emerald-600 focus:ring-emerald-500"
           />
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-baseline gap-2">
-              <span className="text-sm font-normal" style={{ color: 'var(--lux-ink)' }}>
-                Celebration arrangement
-              </span>
-              <span className="ml-auto text-sm tabular-nums" style={{ color: 'var(--lux-ink-muted)' }}>
-                ₹2,000
-              </span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <Sparkles className="w-4 h-4 text-amber-600 shrink-0" aria-hidden />
+              <span className="font-bold text-xpx-text text-sm">Decoration add-on</span>
+              <span className="ml-auto text-base font-bold text-xpx-text tabular-nums">₹2,000</span>
             </div>
-            <p className="xpx-concierge-hint mt-1">
-              Balloons, banners, and a themed setup for your occasion.
+            <p className="text-xs text-xpx-muted leading-relaxed">
+              Balloons, banners, and themed setup for your occasion.
             </p>
           </div>
         </label>
+      </div>
 
-        <div>
-          <label className="xpx-concierge-label" htmlFor="inquiry-special-requests">
-            Special requests <span className="font-normal text-lux-whisper">(optional)</span>
-          </label>
-          <textarea
-            id="inquiry-special-requests"
-            value={formData.special_requests}
-            onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
-            rows={4}
-            className="xpx-concierge-field resize-none"
-            placeholder="Dietary needs, arrival time, celebrations — anything we should know."
-          />
+      <div>
+        <label className="block text-[11px] font-bold uppercase tracking-[0.14em] text-xpx-subtle mb-2">
+          <MessageSquare className="w-3.5 h-3.5 inline mr-1" aria-hidden />
+          Special requests <span className="normal-case font-medium text-xpx-muted">(optional)</span>
+        </label>
+        <textarea
+          value={formData.special_requests}
+          onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
+          rows={3}
+          className="xpx-input resize-none"
+          placeholder="Anything the host should know?"
+        />
+      </div>
+
+      <div
+        className="rounded-2xl p-4 sm:p-5"
+        style={{ background: 'var(--xpx-surface)', border: '1px solid var(--xpx-border)' }}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-bold text-xpx-text text-sm">Promo code</h4>
+          {appliedPromo && (
+            <button
+              type="button"
+              onClick={handleClearPromo}
+              className="text-xs font-semibold text-xpx-muted hover:text-xpx-text inline-flex items-center gap-1"
+            >
+              <X className="w-3.5 h-3.5" aria-hidden />
+              Remove
+            </button>
+          )}
         </div>
-
-        <div>
-          <div className="mb-3 flex items-center justify-between">
-            <span className="xpx-concierge-label mb-0">Private arrangement code</span>
-            {appliedPromo && (
-              <button
-                type="button"
-                onClick={handleClearPromo}
-                className="xpx-lux-link text-xs"
-              >
-                Remove
-              </button>
-            )}
+        {appliedPromo ? (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 flex items-start gap-3">
+            <Tag className="w-4 h-4 text-emerald-700 mt-0.5 shrink-0" aria-hidden />
+            <div className="text-sm text-emerald-900 min-w-0">
+              <p className="font-semibold">
+                <span className="font-mono">{appliedPromo.code}</span> applied
+              </p>
+              <p className="text-xs">{appliedPromo.label}</p>
+            </div>
           </div>
-          {appliedPromo ? (
-            <p className="xpx-concierge-whisper">
-              <span className="font-medium tabular-nums">{appliedPromo.code}</span> —{' '}
-              {appliedPromo.label}
-            </p>
-          ) : (
-            <div className="flex items-stretch gap-3">
+        ) : (
+          <div className="flex items-stretch gap-2">
+            <div className="relative flex-1 min-w-0">
+              <Tag
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-xpx-subtle"
+                aria-hidden
+              />
               <input
                 type="text"
                 value={promoInput}
                 onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                placeholder="If you have one"
-                className="xpx-concierge-field min-w-0 flex-1 uppercase tracking-wide"
+                placeholder="WELCOME10"
+                className="xpx-input pl-9 uppercase tracking-wide text-sm"
               />
-              <button type="button" onClick={handleApplyPromo} className="xpx-lux-link shrink-0">
-                Apply
-              </button>
             </div>
-          )}
-          {promoError && (
-            <p className="xpx-concierge-guidance" role="status">
-              {promoError}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <p className="xpx-concierge-label">Your stay</p>
-          {numberOfDays > 0 && pricingQuote.guestTotal > 0 ? (
-            <>
-              <GuestPricingBreakdown
-                lines={pricingQuote.lines}
-                guestTotal={pricingQuote.guestTotal}
-              />
-              {totalSaved > 0 && (
-                <p className="xpx-concierge-hint mt-3 text-right tabular-nums">
-                  Arrangement saves ₹{totalSaved.toLocaleString('en-IN')}
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="xpx-concierge-hint flex items-center gap-2">
-              <Calendar className="h-3.5 w-3.5 shrink-0" strokeWidth={1.25} aria-hidden />
-              Choose arrival and departure above to see your estimated stay.
-            </p>
-          )}
-        </div>
+            <button
+              type="button"
+              onClick={handleApplyPromo}
+              className="shrink-0 px-4 py-2.5 rounded-xl border border-xpx-border-strong text-sm font-semibold text-xpx-text hover:bg-xpx-surface-light transition-colors"
+            >
+              Apply
+            </button>
+          </div>
+        )}
+        {promoError && <p className="mt-2 text-xs text-red-600">{promoError}</p>}
       </div>
 
-      {errorMessage && <ConciergeGuidance message={errorMessage} />}
-
       <div
-        className="sticky bottom-0 z-10 -mx-1 mt-8 px-1 pt-4 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
-        style={{ background: 'var(--lux-base)' }}
-        id="booking-step-submit"
+        className="rounded-2xl p-4 sm:p-5"
+        style={{ background: 'var(--xpx-surface-light)', border: '1px solid var(--xpx-border)' }}
       >
+        <h4 className="font-bold text-xpx-text text-sm mb-3">Price summary</h4>
+        {numberOfDays > 0 && pricingQuote.guestTotal > 0 ? (
+          <>
+            <GuestPricingBreakdown
+              lines={pricingQuote.lines}
+              guestTotal={pricingQuote.guestTotal}
+            />
+            {totalSaved > 0 && (
+              <p className="text-xs font-semibold text-emerald-700 text-right mt-2">
+                You save ₹{totalSaved.toLocaleString('en-IN')}
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-xs text-xpx-muted flex items-center gap-2">
+            <Calendar className="w-3.5 h-3.5 shrink-0" aria-hidden />
+            Select dates above to see pricing
+          </p>
+        )}
+      </div>
+
+      {errorMessage && <ErrorBanner message={errorMessage} />}
+
+      <div className="sticky bottom-0 z-10 -mx-1 px-1 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-[var(--xpx-surface)] via-[var(--xpx-surface)] to-transparent" id="booking-step-submit">
         <button
           type="submit"
           disabled={loading}
           aria-busy={loading}
-          className="xpx-concierge-cta disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full py-3.5 rounded-2xl font-bold text-[15px] text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 motion-reduce:transition-none xpx-press"
+          style={{ background: 'var(--xpx-cta)', boxShadow: 'var(--xpx-cta-glow)', minHeight: 52 }}
         >
-          {loading ? INQUIRY_SENDING_LABEL : inquiryCtaLabel('form_submit')}
+          {loading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" aria-hidden />
+              {INQUIRY_SENDING_LABEL}
+            </>
+          ) : (
+            inquiryCtaLabel('form_submit')
+          )}
         </button>
-        <p className="xpx-concierge-hint mt-3 text-center">
-          We’ll review availability personally. {GUEST_PRICING_NO_COMMISSION}
+        <p className="text-[11px] text-xpx-subtle text-center mt-2 leading-relaxed">
+          {GUEST_PRICING_NO_COMMISSION} {GUEST_PRICING_INQUIRY_TOTAL_NOTE}
         </p>
       </div>
     </form>

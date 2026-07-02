@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Tag, Users, Sparkles } from 'lucide-react';
 import type { Property } from '../../lib/database.types';
 import BookingCalendar from '../BookingCalendar';
 import { computeOffer } from '../../lib/offers';
@@ -14,27 +15,47 @@ import PropertyTrustNotes from './PropertyTrustNotes';
 
 interface PropertySidebarProps {
   property: Property;
+  /** Date range / nightly total provided by the calendar inside the sidebar. */
   checkIn: Date | null;
   checkOut: Date | null;
   nightlyTotal: number;
   onDateRangeSelect: (checkIn: Date | null, checkOut: Date | null, total: number) => void;
+  /** Guest count — controlled by the property page (single source of truth). */
   numGuests: number;
   onGuestsChange: (guests: number) => void;
+  /** True when check-in and check-out are selected and valid. */
   hasValidDates: boolean;
+  /** Primary CTA when dates are missing — scrolls to the calendar. */
   onCheckAvailability: () => void;
+  /** Primary CTA when dates are set — opens the booking form. */
   onRequestToBook: () => void;
+  /** Hide primary booking CTA while the inquiry form is open. */
   hideBookingCtas?: boolean;
+  /** Opens the existing OfferModal with a "make an offer" prefill. */
   onMakeOffer: () => void;
+  /** WELCOME10-style promo pill copy (passed in so the page controls the
+   *  exact promo it wants to surface here). */
   promoCode: string | null;
   promoLabel: string | null;
+  /** From hero search URL — seed calendar + guest count */
   initialCalendarCheckIn?: string | null;
   initialCalendarCheckOut?: string | null;
   initialTripGuests?: number;
 }
 
 /**
- * Concierge column — reservation desk for the property page.
- * Visual only; all booking state flows through page-level handlers.
+ * Booking sidebar.
+ *
+ * Renders the price card, promo pill, calendar, guests dropdown, an
+ * itemised price breakdown and inquiry CTAs (Check availability / Send inquiry +
+ * "Make an Offer"). On desktop it lives in a sticky column to the right
+ * of the main content; on mobile it stacks at the bottom of the content
+ * flow and the page also surfaces a fixed bottom action bar that scrolls
+ * to this sidebar.
+ *
+ * Crucially: this component DOES NOT mutate booking state on its own. It
+ * just calls back into the page-level handlers, so the existing booking
+ * pipeline (BookingForm + Supabase insert) stays unchanged.
  */
 export default function PropertySidebar({
   property,
@@ -61,7 +82,7 @@ export default function PropertySidebar({
     if (!checkIn || !checkOut) return 0;
     return Math.max(
       1,
-      Math.round((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)),
+      Math.round((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))
     );
   }, [checkIn, checkOut]);
 
@@ -76,109 +97,156 @@ export default function PropertySidebar({
     [nightlyTotal, nights, numGuests, property],
   );
 
-  const displayPrice = offer.discountAmount > 0 ? offer.finalPrice : basePrice;
-
   return (
-    <aside className="xpx-concierge lg:max-h-none" aria-label="Your stay">
-      <p className="xpx-lux-eyebrow">Your stay</p>
-      <h2 className="xpx-lux-heading">Plan your stay</h2>
-
-      <div className="xpx-lux-section-body">
-        <div>
-          <p className="xpx-concierge-price-label">From</p>
-          <p className="xpx-concierge-price-amount">
-            ₹{displayPrice.toLocaleString('en-IN')}
-            {offer.discountAmount > 0 && (
-              <span className="xpx-concierge-price-strike">
-                ₹{basePrice.toLocaleString('en-IN')}
-              </span>
-            )}
-          </p>
-          <p className="xpx-concierge-price-unit">per night</p>
-          <p className="xpx-concierge-hint">
-            {nights > 0 ? GUEST_PRICING_TRIP_HINT(nights) : GUEST_PRICING_NIGHTLY_HINT}
-          </p>
+    <div
+      className="rounded-3xl p-5 sm:p-6 lg:max-h-none"
+      style={{
+        background: 'var(--xpx-surface)',
+        border: '1px solid var(--xpx-border-strong)',
+        boxShadow: '0 12px 40px rgba(15,23,42,0.08)',
+      }}
+    >
+      {/* Headline price */}
+      <div>
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <span className="text-3xl sm:text-[34px] font-extrabold text-xpx-text leading-none tabular-nums">
+            ₹{(offer.discountAmount > 0 ? offer.finalPrice : basePrice).toLocaleString('en-IN')}
+          </span>
+          {offer.discountAmount > 0 && (
+            <span className="text-base text-xpx-subtle line-through tabular-nums">
+              ₹{basePrice.toLocaleString('en-IN')}
+            </span>
+          )}
+          <span className="text-sm text-xpx-muted">/ night</span>
         </div>
+        <p className="text-[11px] text-xpx-subtle mt-1">
+          {nights > 0 ? GUEST_PRICING_TRIP_HINT(nights) : GUEST_PRICING_NIGHTLY_HINT}
+        </p>
+      </div>
 
-        {promoCode && (
-          <p className="xpx-concierge-promo-whisper">
-            {promoLabel ? `${promoLabel} · ` : ''}
-            <span className="tabular-nums">{promoCode}</span> — mention when you send your request.
-          </p>
-        )}
-
-        <div className="xpx-concierge-section" id="booking-step-calendar">
-          <label className="xpx-concierge-label" htmlFor="concierge-calendar-region">
-            Arrival &amp; departure
-          </label>
-          <div id="concierge-calendar-region">
-            <BookingCalendar
-              propertyId={property.id}
-              basePrice={basePrice}
-              onDateRangeSelect={onDateRangeSelect}
-              initialCheckIn={initialCalendarCheckIn ?? undefined}
-              initialCheckOut={initialCalendarCheckOut ?? undefined}
-            />
+      {/* Promo pill — sourced from offers.ts WELCOME10 by default. */}
+      {promoCode && (
+        <div
+          className="mt-4 rounded-xl p-3 flex items-start gap-2.5"
+          style={{
+            background:
+              'linear-gradient(120deg, rgba(80,200,120,0.18) 0%, rgba(80,200,120,0.06) 60%, var(--xpx-surface-light) 100%)',
+            border: '1px solid rgba(80,200,120,0.36)',
+          }}
+        >
+          <div
+            className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{ background: 'rgba(80,200,120,0.12)', color: 'var(--accent-dark)' }}
+          >
+            <Tag className="w-3.5 h-3.5" />
+          </div>
+          <div className="text-xs leading-snug">
+            <span className="font-bold tabular-nums" style={{ color: 'var(--accent-dark)' }}>
+              {promoCode}
+            </span>{' '}
+            <span className="text-xpx-text font-semibold">— {promoLabel}.</span>
+            <span className="text-xpx-muted"> Apply when you send your inquiry.</span>
           </div>
         </div>
+      )}
 
-        <div className="xpx-concierge-section" id="booking-step-guests">
-          <label className="xpx-concierge-label" htmlFor="concierge-travellers">
-            Travellers
-          </label>
+      {/* Calendar */}
+      <div className="mt-4" id="booking-step-calendar">
+        <p className="text-[11px] uppercase tracking-[0.18em] font-bold text-xpx-subtle mb-2">
+          Check availability
+        </p>
+        <BookingCalendar
+          propertyId={property.id}
+          basePrice={basePrice}
+          onDateRangeSelect={onDateRangeSelect}
+          initialCheckIn={initialCalendarCheckIn ?? undefined}
+          initialCheckOut={initialCalendarCheckOut ?? undefined}
+        />
+      </div>
+
+      {/* Guests dropdown — limited to property.max_guests. */}
+      <div className="mt-4" id="booking-step-guests">
+        <label className="block text-[11px] uppercase tracking-[0.18em] font-bold text-xpx-subtle mb-2">
+          Guests
+        </label>
+        <div className="relative">
+          <Users
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-xpx-subtle pointer-events-none"
+          />
           <select
-            id="concierge-travellers"
             value={numGuests}
             onChange={(e) => onGuestsChange(Number(e.target.value))}
-            className="xpx-concierge-field xpx-concierge-select"
-            aria-label="Number of travellers"
+            className="xpx-input pl-9 cursor-pointer"
+            aria-label="Number of guests"
           >
             {Array.from({ length: Math.max(1, property.max_guests || 1) }, (_, i) => i + 1).map(
               (n) => (
                 <option key={n} value={n}>
-                  {n} {n === 1 ? 'traveller' : 'travellers'}
+                  {n} {n === 1 ? 'Guest' : 'Guests'}
                 </option>
-              ),
+              )
             )}
           </select>
         </div>
+      </div>
 
-        {nights > 0 && quote.guestTotal > 0 && (
-          <div className="xpx-concierge-section">
-            <hr className="xpx-concierge-divider" />
-            <p className="xpx-concierge-label">Your stay</p>
-            <GuestPricingBreakdown lines={quote.lines} guestTotal={quote.guestTotal} />
-          </div>
-        )}
+      {/* Price breakdown — only renders once the user has selected dates so
+          we never display a blank itemised list. */}
+      {nights > 0 && quote.guestTotal > 0 && (
+        <div className="mt-5 pt-5" style={{ borderTop: '1px solid var(--xpx-border)' }}>
+          <GuestPricingBreakdown lines={quote.lines} guestTotal={quote.guestTotal} />
+        </div>
+      )}
 
-        {!hideBookingCtas && (
-          <div className="xpx-concierge-section space-y-3">
-            <button
-              type="button"
-              onClick={hasValidDates ? onRequestToBook : onCheckAvailability}
-              className="xpx-concierge-cta"
-            >
+      {!hideBookingCtas && (
+        <>
+          <button
+            type="button"
+            onClick={hasValidDates ? onRequestToBook : onCheckAvailability}
+            className="mt-5 w-full py-3.5 rounded-2xl font-bold text-[15px] text-white xpx-press touch-manipulation"
+            style={{
+              background: 'var(--xpx-cta)',
+              boxShadow: 'var(--xpx-cta-glow)',
+              minHeight: 52,
+            }}
+          >
+            <span className="inline-flex items-center justify-center gap-2">
+              <Sparkles className="w-4 h-4" />
               {hasValidDates
                 ? inquiryCtaLabel('property_with_dates')
                 : inquiryCtaLabel('property_no_dates')}
-            </button>
-            <button type="button" onClick={onMakeOffer} className="xpx-concierge-link w-full">
-              Propose a private offer
-            </button>
-          </div>
-        )}
+            </span>
+          </button>
 
-        <p className="xpx-concierge-whisper mt-5 leading-relaxed">
-          {GUEST_PRICING_INQUIRY_TOTAL_NOTE}
+          <button
+            type="button"
+            onClick={onMakeOffer}
+            className="mt-2.5 w-full py-3 rounded-2xl font-semibold text-sm text-xpx-text transition-colors motion-reduce:transition-none motion-reduce:active:scale-100 active:scale-[0.98]"
+            style={{
+              background: 'var(--xpx-surface)',
+              border: '1px solid var(--xpx-border-strong)',
+              minHeight: 48,
+            }}
+          >
+            Make an Offer
+          </button>
+        </>
+      )}
+
+      <p
+        className="mt-3 text-[11px] text-xpx-subtle text-center leading-snug px-1"
+      >
+        Share your dates and contact details to send a request. {GUEST_PRICING_INQUIRY_TOTAL_NOTE}
+      </p>
+      <PropertyTrustNotes className="mt-3 px-1" />
+
+      {/* When the user hasn't picked dates yet, give a soft prompt so the
+          empty breakdown doesn't read as "broken". */}
+      {nights === 0 && (
+        <p className="mt-2 text-[11px] text-center text-xpx-muted">
+          Select check-in &amp; check-out above to see the full price breakdown.
         </p>
-        <PropertyTrustNotes className="mt-3" />
-
-        {nights === 0 && (
-          <p className="xpx-concierge-hint mt-3 text-center">
-            Choose arrival and departure to see your estimated stay.
-          </p>
-        )}
-      </div>
-    </aside>
+      )}
+    </div>
   );
 }

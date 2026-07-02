@@ -264,39 +264,36 @@ export default function BookingCalendar({
   const calendarDays = getCalendarDays();
 
   return (
-    <div className="xpx-concierge-calendar" aria-busy={isLoading}>
-      <div className="mb-5 flex items-center justify-between">
+    <div
+      className="rounded-2xl p-3 sm:p-4 md:p-6"
+      style={{ background: 'var(--xpx-surface-light)', border: '1px solid var(--xpx-border)' }}
+    >
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
         <button
-          type="button"
           onClick={goToPreviousMonth}
-          className="xpx-concierge-calendar-nav touch-manipulation"
+          className="p-1.5 sm:p-2 hover:bg-slate-100 rounded-lg transition-colors touch-manipulation text-xpx-text"
           aria-label="Previous month"
         >
-          <ChevronLeft className="h-4 w-4" strokeWidth={1.25} />
+          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
 
-        <h3 className="xpx-concierge-calendar-month">
-          <span className="hidden sm:inline">
-            {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-          </span>
-          <span className="sm:hidden">
-            {monthNames[currentMonth.getMonth()].slice(0, 3)} {currentMonth.getFullYear()}
-          </span>
+        <h3 className="text-base sm:text-lg font-semibold text-xpx-text">
+          <span className="hidden sm:inline">{monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
+          <span className="sm:hidden">{monthNames[currentMonth.getMonth()].slice(0, 3)} {currentMonth.getFullYear()}</span>
         </h3>
 
         <button
-          type="button"
           onClick={goToNextMonth}
-          className="xpx-concierge-calendar-nav touch-manipulation"
+          className="p-1.5 sm:p-2 hover:bg-slate-100 rounded-lg transition-colors touch-manipulation text-xpx-text"
           aria-label="Next month"
         >
-          <ChevronRight className="h-4 w-4" strokeWidth={1.25} />
+          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
       </div>
 
-      <div className="mb-2 grid grid-cols-7 gap-0">
+      <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1 sm:mb-2">
         {dayNames.map((day, index) => (
-          <div key={day} className="xpx-concierge-calendar-day-label py-2 text-center">
+          <div key={day} className="text-center text-[10px] sm:text-xs font-medium text-xpx-subtle py-1 sm:py-2">
             <span className="hidden sm:inline">{day}</span>
             <span className="sm:hidden">{dayNamesShort[index]}</span>
           </div>
@@ -304,42 +301,36 @@ export default function BookingCalendar({
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-7 gap-0" aria-hidden>
+        <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
           {Array.from({ length: 42 }).map((_, i) => (
-            <div key={i} className="aspect-square xpx-concierge-calendar-placeholder" />
+            <div key={i} className="aspect-square animate-pulse rounded-md sm:rounded-lg" style={{ background: 'rgba(15,23,42,0.05)' }} />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-7 gap-0">
+        <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
           {calendarDays.map((day, index) => {
             const isDisabled = !day.isAvailable || !day.isCurrentMonth;
-            const isSelected = day.isSelected;
-            const isInRange = day.isInRange && !day.isSelected;
-            const showPrice =
-              day.isCurrentMonth &&
-              day.isAvailable &&
-              (isSelected || isInRange);
+            const baseColor = day.isCurrentMonth ? 'text-xpx-text' : 'text-xpx-subtle';
+            const todayRing = day.isToday ? 'ring-1 sm:ring-2 ring-[var(--xpx-warm)]' : '';
+            const selectedBg = day.isSelected ? 'bg-[var(--xpx-warm)] text-white font-bold' : '';
+            const inRangeBg = day.isInRange && !day.isSelected ? 'bg-[rgba(80,200,120,0.18)]' : '';
+            const hoverable =
+              !day.isSelected && !day.isInRange && day.isAvailable && day.isCurrentMonth
+                ? 'hover:bg-white active:bg-slate-100'
+                : '';
+            const cursor = isDisabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer';
 
             return (
               <button
                 key={index}
-                type="button"
                 onClick={() => handleDateClick(day)}
                 disabled={isDisabled}
-                className={[
-                  'xpx-concierge-calendar-cell touch-manipulation',
-                  day.isToday && !isSelected ? 'xpx-concierge-calendar-cell--today' : '',
-                  isSelected ? 'xpx-concierge-calendar-cell--selected' : '',
-                  isInRange ? 'xpx-concierge-calendar-cell--range' : '',
-                  !day.isCurrentMonth || !day.isAvailable ? 'opacity-35' : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
+                className={`aspect-square p-0.5 sm:p-1 rounded-md sm:rounded-lg relative transition-all touch-manipulation ${baseColor} ${todayRing} ${selectedBg} ${inRangeBg} ${hoverable} ${cursor}`}
               >
-                <div className="flex h-full flex-col items-center justify-center gap-1">
-                  <span className="text-[15px] font-normal leading-none">{day.date.getDate()}</span>
-                  {showPrice && (
-                    <span className="xpx-concierge-calendar-price-whisper">
+                <div className="flex flex-col items-center justify-center h-full gap-0 sm:gap-0.5">
+                  <span className="text-xs sm:text-sm font-medium leading-none">{day.date.getDate()}</span>
+                  {day.isCurrentMonth && day.isAvailable && (
+                    <span className={`text-[9px] sm:text-xs leading-none ${day.isSelected ? 'text-white/90' : 'text-xpx-subtle'}`}>
                       ₹{day.price > 999 ? `${Math.round(day.price / 1000)}k` : day.price}
                     </span>
                   )}
@@ -351,43 +342,57 @@ export default function BookingCalendar({
       )}
 
       {(checkInDate || checkOutDate) && (
-        <div className="mt-6 pt-5" style={{ borderTop: '1px solid var(--lux-divider)' }}>
-          <dl className="xpx-concierge-folio space-y-2">
+        <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 xpx-divider">
+          <div className="space-y-2 sm:space-y-3">
             {checkInDate && (
-              <div className="xpx-concierge-folio-row">
-                <dt>Arrival</dt>
-                <dd className="tabular-nums" style={{ color: 'var(--lux-ink)' }}>
-                  {checkInDate.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </dd>
+              <div className="flex justify-between text-xs sm:text-sm">
+                <span className="text-xpx-muted">Check-in:</span>
+                <span className="font-medium text-xpx-text">
+                  {checkInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
               </div>
             )}
+
             {checkOutDate && (
-              <div className="xpx-concierge-folio-row">
-                <dt>Departure</dt>
-                <dd className="tabular-nums" style={{ color: 'var(--lux-ink)' }}>
-                  {checkOutDate.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </dd>
+              <div className="flex justify-between text-xs sm:text-sm">
+                <span className="text-xpx-muted">Check-out:</span>
+                <span className="font-medium text-xpx-text">
+                  {checkOutDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
               </div>
             )}
+
             {checkInDate && checkOutDate && (
-              <div className="xpx-concierge-folio-total">
-                <dt>
-                  {getTotalNights()} night{getTotalNights() > 1 ? 's' : ''}
-                </dt>
-                <dd>₹{getTotalPrice().toLocaleString()}</dd>
-              </div>
+              <>
+                <div className="flex justify-between text-xs sm:text-sm">
+                  <span className="text-xpx-muted">{getTotalNights()} night{getTotalNights() > 1 ? 's' : ''}</span>
+                  <span className="font-medium text-xpx-text">₹{getTotalPrice().toLocaleString()}</span>
+                </div>
+
+                <div className="flex justify-between text-sm sm:text-base font-semibold pt-2 sm:pt-3 xpx-divider">
+                  <span className="text-xpx-text">Total Price</span>
+                  <span style={{ color: 'var(--xpx-warm)' }}>₹{getTotalPrice().toLocaleString()}</span>
+                </div>
+              </>
             )}
-          </dl>
+          </div>
         </div>
       )}
+
+      <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-xpx-muted">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded flex-shrink-0" style={{ background: 'var(--xpx-warm)' }} />
+          <span>Selected</span>
+        </div>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded flex-shrink-0" style={{ background: 'rgba(80,200,120,0.18)' }} />
+          <span>In range</span>
+        </div>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded flex-shrink-0" style={{ background: 'rgba(15,23,42,0.08)' }} />
+          <span>Unavailable</span>
+        </div>
+      </div>
     </div>
   );
 }

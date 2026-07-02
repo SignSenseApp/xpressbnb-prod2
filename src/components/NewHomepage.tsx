@@ -438,7 +438,7 @@ export default function NewHomepage() {
         {HERO_SLIDES.map((slide, i) => (
           <div
             key={i}
-            className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
+            className="absolute inset-0 z-0 bg-cover bg-center transition-opacity duration-1000"
             style={{
               backgroundImage: `url(${slide.image})`,
               opacity: i === heroIndex ? 1 : 0,
@@ -448,16 +448,30 @@ export default function NewHomepage() {
 
         {/* Gradient overlay */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 z-[1]"
           style={{
             background: `linear-gradient(170deg, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.1) 25%, rgba(0,0,0,0.52) 65%, rgba(0,0,0,0.80) 100%)`,
           }}
         />
 
+        {/* Top scrim — neutral header zone (no green foliage / tint behind logo) */}
+        <div
+          className="absolute top-0 left-0 right-0 z-[2] pointer-events-none"
+          style={{
+            height: 'calc(var(--xpx-safe-top) + 5.5rem)',
+            background:
+              'linear-gradient(to bottom, rgba(15,23,42,0.5) 0%, rgba(15,23,42,0.22) 45%, transparent 100%)',
+          }}
+          aria-hidden
+        />
+
         {/* Floating Header */}
-        <div className="absolute top-0 left-0 right-0 z-50 h-16 px-[18px] flex items-center justify-between">
+        <div
+          className="absolute left-0 right-0 z-50 h-16 px-[18px] flex items-center justify-between"
+          style={{ top: 'var(--xpx-safe-top)' }}
+        >
           {/* Logo pill */}
-          <div className="flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-2xl px-3 py-2 shadow-sm">
+          <div className="flex items-center gap-2 bg-white backdrop-blur-md rounded-2xl px-3 py-2 shadow-sm">
             <img
               src={XPRESSBNB_LOGO_PATH}
               alt=""

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Tag, MessageCircle, Mail, User, ArrowDown, Sparkles } from 'lucide-react';
+import { theme } from '../lib/theme';
 import type { Property } from '../lib/database.types';
 import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStorage';
 import InquiryConfidenceStrip from './inquiry/InquiryConfidenceStrip';
@@ -27,7 +28,7 @@ import {
   trackXpressEvent,
   type AnalyticsScope,
 } from '../lib/analytics';
-import { INQUIRY_SENDING_LABEL, inquiryCtaLabel } from '../lib/inquiryCopy';
+import { inquiryCtaLabel } from '../lib/inquiryCopy';
 import {
   buildInquiryAbusePayload,
   createInquiryFormOpenedAt,
@@ -158,27 +159,21 @@ export default function OfferModal({
     setError(null);
 
     if (!name.trim()) {
-      setError('Tell us the name we should address your offer to.');
+      setError('Please share your name so the host can reply.');
       return;
     }
     const emailErr = guestEmailError(email);
     if (emailErr) {
-      if (!email.trim()) {
-        setError('Share an email address where we may follow up.');
-        return;
-      }
-      setError('That email address doesn’t look quite right — please check and try again.');
+      setError(emailErr);
       return;
     }
     if (offer < minOffer || offer > maxOffer) {
-      setError(
-        `Your offer should fall between ₹${minOffer.toLocaleString()} and ₹${maxOffer.toLocaleString()} per night.`,
-      );
+      setError(`Offer must be between ₹${minOffer.toLocaleString()} and ₹${maxOffer.toLocaleString()} per night.`);
       return;
     }
     const phoneDigits = normalizePhoneDigits(phone);
     if (phoneDigits.length !== 10) {
-      setError('A mobile number helps our team reach you — please share a 10-digit number.');
+      setError('Please enter a valid 10-digit mobile number.');
       return;
     }
     const cooldownRemaining = getInquiryCooldownRemainingMs();
@@ -191,7 +186,7 @@ export default function OfferModal({
       return;
     }
     if (honeypot.trim()) {
-      setError('We couldn’t send your offer just now — please try again in a moment.');
+      setError('Could not submit your inquiry. Please try again.');
       return;
     }
 
@@ -213,7 +208,7 @@ export default function OfferModal({
         : fmt(new Date(today.getTime() + inferredNights * 24 * 60 * 60 * 1000));
 
     if (!property.host_id) {
-      setError('We’re unable to reach the host for this stay — please try again shortly.');
+      setError('This listing is missing host details. Please try again later.');
       setSubmitting(false);
       setTransitionPhase(null);
       return;
@@ -240,7 +235,7 @@ export default function OfferModal({
     });
 
     if (!submitRes.ok) {
-      const errMsg = submitRes.error || 'We couldn’t send your offer just now — please try again in a moment.';
+      const errMsg = submitRes.error || 'Could not send your offer. Please try again.';
       setError(errMsg);
       trackXpressEvent('inquiry_submit_failed', {
         ...analyticsScope,
@@ -339,7 +334,7 @@ export default function OfferModal({
       navigatedRef,
     });
     } catch (err) {
-      const errMsg = err instanceof Error ? err.message : 'We couldn’t send your offer just now — please try again in a moment.';
+      const errMsg = err instanceof Error ? err.message : 'Could not send your offer. Please try again.';
       setError(errMsg);
       trackXpressEvent('inquiry_submit_failed', {
         ...analyticsScope,
@@ -357,18 +352,26 @@ export default function OfferModal({
       className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-0 sm:p-4"
       role="dialog"
       aria-modal="true"
-      aria-label="Private offer"
+      aria-label="Make an offer"
     >
       <button
         type="button"
         aria-label="Close"
-        className="xpx-concierge-modal-overlay absolute inset-0"
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-md animate-fade-in-up"
         onClick={onClose}
       />
 
       <div
-        className="xpx-concierge-modal relative flex w-full max-h-[92svh] flex-col overflow-hidden rounded-t-3xl sm:max-w-md sm:rounded-3xl"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        // svh respects mobile browser chrome; max-h prevents the sheet from
+        // ever pushing past the viewport. Inner form scrolls within.
+        className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col animate-sheet-up sm:animate-fade-in-up"
+        style={{
+          background: 'var(--xpx-surface)',
+          border: '1px solid var(--xpx-border)',
+          boxShadow: '0 24px 64px rgba(15,23,42,0.18)',
+          maxHeight: '92svh',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
       >
         {/* Drag handle (mobile) — affords "this is a swipe-able sheet" to
             the user. Visible against the white sheet. */}
@@ -376,18 +379,20 @@ export default function OfferModal({
           <div className="w-12 h-1.5 rounded-full" style={{ background: 'rgba(15,23,42,0.18)' }} />
         </div>
 
-        <div className="flex flex-shrink-0 items-start justify-between px-6 pt-4 pb-2">
+        <div className="flex items-start justify-between px-6 pt-4 pb-2 flex-shrink-0">
           <div>
-            <p className="xpx-lux-eyebrow">Private arrangement</p>
-            <h2 className="xpx-lux-heading">Propose your offer</h2>
+            <p className="xpx-eyebrow">Open to negotiation</p>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-xpx-text tracking-tight mt-1">
+              Make your offer
+            </h2>
           </div>
           <button
-            type="button"
             onClick={onClose}
-            className="xpx-concierge-calendar-nav -m-2 p-2"
+            className="p-2 -m-2 rounded-full text-xpx-muted hover:text-xpx-text hover:bg-slate-100 active:scale-90 transition-transform"
+            style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
             aria-label="Close"
           >
-            <X className="h-5 w-5" strokeWidth={1.25} />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -395,39 +400,59 @@ export default function OfferModal({
             submit button — the form scrolls inside the sheet. */}
         <div className="overflow-y-auto overscroll-contain flex-1" style={{ WebkitOverflowScrolling: 'touch' }}>
 
-        <form onSubmit={handleSubmit} className="relative px-5 sm:px-6 pb-6 pt-2">
+        <form onSubmit={handleSubmit} className="relative px-5 sm:px-6 pb-6 pt-2 space-y-5">
             <InquiryHoneypotField value={honeypot} onChange={setHoneypot} />
-            <div className="xpx-reservation-stack">
-            <div className="py-4" style={{ borderBottom: '1px solid var(--lux-divider)' }}>
-              <div className="grid grid-cols-3 items-end gap-2 sm:gap-3">
+            {/* Listed vs Your offer comparison.
+                On the smallest widths the labels could collide — switch to a
+                single column stack below 360px (custom Tailwind class via min-w). */}
+            <div
+              className="rounded-2xl p-4"
+              style={{
+                background:
+                  'linear-gradient(135deg, rgba(80,200,120,0.10) 0%, var(--xpx-surface-light) 100%)',
+                border: '1px solid rgba(80,200,120,0.28)',
+              }}
+            >
+              {/* Listed | Offered | Total — three stat columns, comfortable
+                  even on a 320px phone because we use gap-2 + min-w-0. */}
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 items-end">
                 <div className="min-w-0">
-                  <p className="xpx-concierge-hint">Listed rate</p>
-                  <p className="mt-1 truncate text-sm tabular-nums line-through opacity-50" style={{ color: 'var(--lux-ink-muted)' }}>
+                  <p className="text-[10px] sm:text-xs uppercase tracking-wide text-xpx-muted font-semibold">Listed</p>
+                  <p className="mt-1 text-sm sm:text-base font-semibold text-xpx-text line-through opacity-70 truncate">
                     ₹{listPrice.toLocaleString()}
                   </p>
                 </div>
                 <div className="min-w-0 text-center">
-                  <p className="xpx-concierge-hint">Your proposal</p>
-                  <p className="mt-1 text-lg font-normal leading-none tabular-nums sm:text-xl" style={{ color: 'var(--lux-ink)' }}>
+                  <p className="xpx-eyebrow text-[10px] sm:text-[11px]">Offered</p>
+                  <p className="mt-1 text-lg sm:text-2xl font-extrabold text-xpx-text leading-none truncate">
                     ₹{offer.toLocaleString()}
                   </p>
-                  <p className="xpx-concierge-hint mt-0.5">per night</p>
+                  <p className="text-[10px] text-xpx-subtle mt-0.5">/night</p>
                 </div>
                 <div className="min-w-0 text-right">
-                  <p className="xpx-concierge-hint">Your stay</p>
-                  <p className="mt-1 text-sm font-normal tabular-nums sm:text-base" style={{ color: 'var(--lux-ink)' }}>
+                  <p className="text-[10px] sm:text-xs uppercase tracking-wide text-xpx-muted font-semibold">Total</p>
+                  <p className="mt-1 text-sm sm:text-base font-extrabold truncate" style={{ color: theme.accentDark }}>
                     ₹{totalOffer.toLocaleString()}
                   </p>
-                  <p className="xpx-concierge-hint mt-0.5">{inferredNights} nights</p>
+                  <p className="text-[10px] text-xpx-subtle mt-0.5">{inferredNights}n</p>
                 </div>
               </div>
               {discountPct > 0 && (
-                <p className="xpx-concierge-hint mt-3 text-center">
-                  {discountPct}% below the listed rate
-                </p>
+                <div
+                  className="mt-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
+                  style={{
+                    background: 'rgba(80,200,120,0.12)',
+                    color: '#3dae68',
+                    border: '1px solid rgba(80,200,120,0.32)',
+                  }}
+                >
+                  <ArrowDown className="w-3 h-3" />
+                  {discountPct}% below list
+                </div>
               )}
             </div>
 
+            {/* Slider — keeps the experience tactile */}
             <div>
               <input
                 type="range"
@@ -436,18 +461,21 @@ export default function OfferModal({
                 step={50}
                 value={offer}
                 onChange={(e) => setOffer(Number(e.target.value))}
-                aria-label="Nightly proposal"
-                className="w-full accent-[var(--lux-accent)]"
+                aria-label="Offer per night"
+                className="w-full accent-[var(--accent)]"
               />
-              <div className="mt-1 flex justify-between text-[10px] font-mono" style={{ color: 'var(--lux-ink-whisper)' }}>
+              <div className="mt-1 flex justify-between text-[10px] text-xpx-subtle font-mono">
                 <span>₹{minOffer.toLocaleString()}</span>
                 <span>₹{maxOffer.toLocaleString()}</span>
               </div>
             </div>
 
-            <div>
+            {/* Numeric input + nights summary */}
+            <div className="grid grid-cols-2 gap-3">
               <label className="block">
-                <span className="xpx-concierge-label">Per night</span>
+                <span className="block text-xs uppercase tracking-wide font-bold text-xpx-muted mb-2">
+                  Per night (₹)
+                </span>
                 <input
                   type="number"
                   min={minOffer}
@@ -455,82 +483,108 @@ export default function OfferModal({
                   step={50}
                   value={offer}
                   onChange={(e) => setOffer(Math.max(minOffer, Math.min(maxOffer, Number(e.target.value) || 0)))}
-                  className="xpx-concierge-field"
+                  className="xpx-input"
                   inputMode="numeric"
                   pattern="[0-9]*"
                 />
               </label>
+              <div>
+                <span className="block text-xs uppercase tracking-wide font-bold text-xpx-muted mb-2">
+                  For
+                </span>
+                <div
+                  className="rounded-xl px-4 py-3 text-sm text-xpx-text flex items-center justify-between"
+                  style={{ background: 'var(--xpx-surface-light)', border: '1px solid var(--xpx-border)' }}
+                >
+                  <span>{inferredNights} {inferredNights === 1 ? 'night' : 'nights'}</span>
+                  <span className="font-bold" style={{ color: theme.accentDark }}>
+                    ₹{totalOffer.toLocaleString()}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <span className="xpx-concierge-label">Duration</span>
-              <p className="xpx-concierge-field flex items-center justify-between tabular-nums font-normal">
-                <span>{inferredNights} {inferredNights === 1 ? 'night' : 'nights'}</span>
-                <span style={{ color: 'var(--lux-ink-muted)' }}>₹{totalOffer.toLocaleString()}</span>
-              </p>
-            </div>
-
-            <InquiryConfidenceStrip />
-
             <label className="block">
-              <span className="xpx-concierge-label">Your name</span>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="As we should address you"
-                className="xpx-concierge-field"
-                required
-                autoComplete="name"
-                autoCapitalize="words"
-              />
-            </label>
-
-            <label className="block">
-              <span className="xpx-concierge-label">Email</span>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Where we may follow up"
-                className="xpx-concierge-field"
-                required
-                autoComplete="email"
-                autoCapitalize="off"
-                autoCorrect="off"
-                spellCheck={false}
-                inputMode="email"
-              />
-            </label>
-
-            <label className="block">
-              <span className="xpx-concierge-label">Mobile</span>
+              <span className="block text-xs uppercase tracking-wide font-bold text-xpx-muted mb-2">
+                Mobile number
+              </span>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="10-digit mobile"
-                className="xpx-concierge-field"
+                className="xpx-input"
                 required
                 inputMode="numeric"
                 autoComplete="tel"
               />
             </label>
 
+            <InquiryConfidenceStrip className="mb-1" />
+
+            {/* Contact details */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className="block">
+                <span className="block text-xs uppercase tracking-wide font-bold text-xpx-muted mb-2">
+                  Your name
+                </span>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-xpx-subtle" />
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Aarav Mehta"
+                    className="xpx-input pl-9"
+                    required
+                    autoComplete="name"
+                    autoCapitalize="words"
+                  />
+                </div>
+              </label>
+              <label className="block">
+                <span className="block text-xs uppercase tracking-wide font-bold text-xpx-muted mb-2">
+                  Email
+                </span>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-xpx-subtle" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@email.com"
+                    className="xpx-input pl-9"
+                    required
+                    autoComplete="email"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    inputMode="email"
+                  />
+                </div>
+              </label>
+            </div>
+
+            {/* Optional message — quietly humanizes the offer */}
             <label className="block">
-              <span className="xpx-concierge-label">A note for the host <span className="font-normal text-lux-whisper">(optional)</span></span>
-              <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                rows={4}
-                placeholder="Anniversary, work retreat, travelling with family — a line helps the host respond thoughtfully."
-                className="xpx-concierge-field resize-none"
-                maxLength={300}
-              />
+              <span className="block text-xs uppercase tracking-wide font-bold text-xpx-muted mb-2">
+                Note to host (optional)
+              </span>
+              <div className="relative">
+                <MessageCircle className="absolute left-3 top-3 w-4 h-4 text-xpx-subtle" />
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  rows={3}
+                  placeholder="A line about your stay helps hosts say yes — anniversary, work trip, group of 4, etc."
+                  className="xpx-input pl-9 resize-none"
+                  maxLength={300}
+                />
+              </div>
             </label>
 
             {error && (
-              <p className="xpx-concierge-guidance" role="status" aria-live="polite">
+              <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                 {error}
               </p>
             )}
@@ -538,16 +592,27 @@ export default function OfferModal({
             <button
               type="submit"
               disabled={submitting}
-              aria-busy={submitting}
-              className="xpx-concierge-cta disabled:cursor-not-allowed disabled:opacity-70"
+              className="w-full py-4 rounded-2xl font-bold text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                background: theme.accent,
+                color: '#ffffff',
+                boxShadow: '0 8px 32px rgba(80,200,120,0.32)',
+              }}
             >
-              {submitting ? INQUIRY_SENDING_LABEL : inquiryCtaLabel('offer_submit')}
+              <span className="inline-flex items-center justify-center gap-2">
+                {submitting ? 'Sending…' : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    {inquiryCtaLabel('offer_submit')}
+                  </>
+                )}
+              </span>
             </button>
 
-            <p className="xpx-concierge-hint text-center">
-              Your host receives the proposal with your dates and note. No payment is taken now.
+            <p className="text-[11px] text-xpx-subtle text-center">
+              <Tag className="w-3 h-3 inline mr-1" />
+              Hosts see your offer with the dates and message. No payment is taken yet.
             </p>
-            </div>
           </form>
         </div>
       </div>
