@@ -4,7 +4,6 @@ import App from './App.tsx';
 import { AuthProvider } from './contexts/AuthContext';
 import SmoothScrollRoot from './components/SmoothScrollRoot';
 import './index.css';
-import './styles/mobile-spec.css';
 import { registerServiceWorker } from './lib/pwa';
 import { initCookieConsent } from './lib/cookieConsent';
 import { reportClientEnvIssues } from './lib/env';

@@ -5,11 +5,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#FAF8F4',
-        foreground: '#111827',
-        primary: '#0B8A5A',
+        background: '#FAFAF8',
+        foreground: '#0F172A',
+        primary: '#059669',
         xpx: {
-          base: '#FAF8F4',
+          base: '#FAFAF8',
           surface: '#FFFFFF',
           'surface-light': '#F8FAFC',
           'surface-elevated': '#F8FAFC',
@@ -32,16 +32,6 @@ export default {
           subtle: '#94A3B8',
           border: '#E5E7EB',
           'border-strong': '#D1D5DB',
-        },
-        lux: {
-          base: '#F7F5F0',
-          ink: '#1A1814',
-          muted: '#6B6560',
-          whisper: '#9C9690',
-          faint: '#C8C2BA',
-          divider: '#E8E4DD',
-          accent: '#2D5A4A',
-          'accent-hover': '#234A3C',
         },
       },
       boxShadow: {

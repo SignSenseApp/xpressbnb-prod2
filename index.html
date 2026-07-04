@@ -4,19 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <!-- Homepage hero LCP — Pexels origin + first active slide only (Gurgaon, photo 1571460) -->
-    <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://images.pexels.com" />
+    <link rel="preconnect" href="https://images.pexels.com" crossorigin />
     <link
-      href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&f[]=satoshi@500,700,900&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      as="image"
+      type="image/jpeg"
+      href="https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&amp;w=375"
+      imagesrcset="
+        https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=375 375w,
+        https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=768 768w,
+        https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1280 1280w
+      "
+      imagesizes="100vw"
+      fetchpriority="high"
     />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="preload" as="image" href="/images/home/hero-mobile.png" media="(max-width: 767px)" fetchpriority="high" />
-    <link rel="preload" as="image" href="/images/home/hero-rishikesh.png" media="(min-width: 768px)" fetchpriority="high" />
     <!-- Favicons: Google crawls /favicon.ico and rel=icon (48×48+). See developers.google.com/search/docs/appearance/favicon-in-search -->
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="shortcut icon" href="/favicon.ico" />
@@ -26,7 +28,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content="#0B8A5A" />
+    <meta name="theme-color" content="#059669" />
     <meta name="application-name" content="XpressBnB" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
