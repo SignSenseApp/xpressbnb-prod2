@@ -43,15 +43,22 @@ export default function HowItWorksWalkthrough({ id = 'how-it-works' }: HowItWork
             style={{ borderColor: '#E5E7EB', boxShadow: '0 8px 28px rgba(15,23,42,0.05)' }}
           >
             <div className="relative aspect-[16/10] overflow-hidden">
-              <img
-                src={item.image}
-                alt=""
-                width={item.width}
-                height={item.height}
-                className="h-full w-full object-cover"
-                loading="lazy"
-                decoding="async"
-              />
+              <picture>
+                <source
+                  type="image/webp"
+                  srcSet={`${item.image.replace('.jpg', '-800.webp')} 800w, ${item.image.replace('.jpg', '.webp')} 1200w`}
+                  sizes="(min-width: 768px) 33vw, 100vw"
+                />
+                <img
+                  src={item.image}
+                  alt=""
+                  width={item.width}
+                  height={item.height}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </picture>
             </div>
             <div className="flex flex-1 flex-col p-5 sm:p-6">
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-700">

@@ -23,6 +23,7 @@ const CITY_DISPLAY_NAMES: Record<string, string> = {
   'greater-noida': 'Greater Noida',
   'ghaziabad': 'Ghaziabad',
   'rishikesh': 'Rishikesh',
+  'dehradun': 'Dehradun',
 };
 
 /** Nearby destinations when a city has zero listings (copy-only recovery). */
@@ -53,8 +54,13 @@ const NEARBY_CITY_SUGGESTIONS: Record<string, { slug: string; label: string }[]>
     { slug: 'gurgaon', label: 'Gurgaon' },
   ],
   rishikesh: [
+    { slug: 'dehradun', label: 'Dehradun' },
     { slug: 'delhi', label: 'Delhi' },
     { slug: 'gurgaon', label: 'Gurgaon' },
+  ],
+  dehradun: [
+    { slug: 'rishikesh', label: 'Rishikesh' },
+    { slug: 'delhi', label: 'Delhi' },
     { slug: 'noida', label: 'Noida' },
   ],
 };
@@ -66,6 +72,7 @@ const CITY_TAGLINES: Record<string, string> = {
   'Greater Noida': 'The escape nobody talks about. Yet.',
   Rishikesh: "The mountains won't tell anyone.",
   Ghaziabad: "Closer than you think. Quieter than you'd expect.",
+  Dehradun: 'The valley keeps its secrets.',
 };
 
 const QUICK_FILTERS = [
@@ -104,7 +111,6 @@ const RISHIKESH_EXPERIENCE_RATES = [
 
 export default function CityListingPage({ city }: CityListingPageProps) {
   const [properties, setProperties] = useState<Property[]>([]);
-  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [listingsError, setListingsError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -143,10 +149,6 @@ export default function CityListingPage({ city }: CityListingPageProps) {
     return formatTripChip(trip.checkin ?? '', trip.checkout ?? '', g);
   }, [trip]);
 
-  useEffect(() => {
-    applyFiltersAndSort();
-  }, [properties, filters, sortBy, trip.guests]);
-
   const loadProperties = async (requestId: number, forceRefresh = false) => {
     setLoading(true);
     setListingsError(null);
@@ -170,7 +172,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
     }
   };
 
-  const applyFiltersAndSort = () => {
+  const filteredProperties = useMemo(() => {
     let filtered = [...properties];
 
     const guestMin = trip.guests;
@@ -197,8 +199,8 @@ export default function CityListingPage({ city }: CityListingPageProps) {
         break;
     }
 
-    setFilteredProperties(filtered);
-  };
+    return filtered;
+  }, [properties, filters, sortBy, trip.guests]);
 
   const toggleQuickFilter = (key: FilterKey) => {
     setFilters(prev => ({ ...prev, [key]: !prev[key] }));
@@ -280,6 +282,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value as typeof sortBy)}
+            aria-label="Sort stays"
             className="flex-shrink-0 px-3 py-2 rounded-full text-sm font-semibold cursor-pointer focus:outline-none"
             style={{
               background: '#FFFFFF',
@@ -551,7 +554,8 @@ export default function CityListingPage({ city }: CityListingPageProps) {
               <h2 className="text-xl font-bold text-xpx-text">Filters</h2>
               <button
                 onClick={() => setShowFilters(false)}
-                className="p-2 hover:bg-slate-100 rounded-full transition-colors text-xpx-text"
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors text-xpx-text min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
+                aria-label="Close filters"
               >
                 <X className="w-5 h-5" />
               </button>

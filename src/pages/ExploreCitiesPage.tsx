@@ -9,6 +9,7 @@ import {
   type ExploreCity,
 } from '../config/exploreCities';
 import { XPRESSBNB_LOGO_IMG_CLASS, XPRESSBNB_LOGO_PATH } from '../lib/branding';
+import { propertyCardImageUrl, propertyHeroImageSrcSet } from '../lib/propertyImages';
 
 interface ExploreCitiesPageProps {
   onNavigate: (path: string) => void;
@@ -35,9 +36,12 @@ function LiveCityCard({
       <div className="relative aspect-[16/10] w-full overflow-hidden">
         <img
           src={city.image}
+          srcSet={propertyHeroImageSrcSet(city.image)}
+          sizes="(max-width: 767px) 100vw, 640px"
           alt=""
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-active:scale-[1.02]"
           loading={index < 2 ? 'eager' : 'lazy'}
+          decoding="async"
         />
         <div
           className="absolute inset-0 bg-gradient-to-t from-emerald-950/70 via-emerald-950/15 to-transparent"
@@ -79,7 +83,13 @@ function ComingSoonRow({
       className="flex w-full items-center gap-3 rounded-xl border border-xpx-border bg-xpx-surface px-3 py-3 text-left transition-colors active:bg-emerald-50/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600"
     >
       <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-emerald-50 ring-1 ring-emerald-100">
-        <img src={city.image} alt="" className="h-full w-full object-cover opacity-45 grayscale" loading="lazy" />
+        <img
+          src={propertyCardImageUrl(city.image, 320)}
+          alt=""
+          className="h-full w-full object-cover opacity-45 grayscale"
+          loading="lazy"
+          decoding="async"
+        />
         <span className="absolute inset-0 flex items-center justify-center bg-emerald-50/50">
           <Lock className="h-4 w-4 text-emerald-600/70" strokeWidth={2} />
         </span>
@@ -105,9 +115,9 @@ export default function ExploreCitiesPage({ onNavigate }: ExploreCitiesPageProps
     <div className="xpx-page pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]">
       <SEOHead
         config={{
-          title: 'Explore Cities — Delhi NCR, Rishikesh & More | XpressBnB',
+          title: 'Explore Cities — Delhi NCR, Rishikesh, Dehradun & More | XpressBnB',
           description:
-            'Pick your city — verified stays in Delhi, Gurgaon, Noida, Greater Noida and Rishikesh.',
+            'Pick your city — verified stays in Delhi, Gurgaon, Noida, Greater Noida, Rishikesh and Dehradun.',
           canonical: 'https://xpressbnb.com/explore',
         }}
       />

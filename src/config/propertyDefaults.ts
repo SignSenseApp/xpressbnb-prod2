@@ -25,7 +25,7 @@ import { listPropertyAmenities } from '../lib/amenities';
 export function inferStateFromCity(city: string | null | undefined): string {
   const c = (city ?? '').trim().toLowerCase();
   if (!c) return '';
-  if (c === 'rishikesh') return 'Uttarakhand';
+  if (c === 'rishikesh' || c === 'dehradun' || c === 'dehra dun') return 'Uttarakhand';
   if (c === 'delhi' || c === 'new delhi') return 'Delhi';
   if (c === 'gurgaon' || c === 'gurugram') return 'Haryana';
   if (c === 'noida' || c === 'greater noida') return 'Uttar Pradesh';
@@ -301,6 +301,13 @@ export function getNearbyPlaces(property: Property): NearbyPlace[] {
       { name: 'Pari Chowk', category: 'Hub', distance: '3 km' },
       { name: 'Surajpur Bird Sanctuary', category: 'Nature', distance: '7 km' },
       { name: 'IGI Airport', category: 'Airport', distance: '38 km' },
+    ],
+    dehradun: [
+      { name: 'Robber\u2019s Cave', category: 'Nature', distance: '8 km' },
+      { name: 'Sahastradhara', category: 'Waterfalls', distance: '11 km' },
+      { name: 'Forest Research Institute', category: 'Heritage', distance: '6 km' },
+      { name: 'Rajpur Road', category: 'Cafés & shopping', distance: '3 km' },
+      { name: 'Jolly Grant Airport', category: 'Airport', distance: '25 km' },
     ],
   };
   return (

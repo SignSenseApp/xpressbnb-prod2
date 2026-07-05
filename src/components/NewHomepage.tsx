@@ -80,7 +80,7 @@ const HERO_SLIDES = HERO_SLIDE_META.map(({ city, tagline, photoId }) => ({
   srcSet: heroPexelsSrcSet(photoId),
 }));
 
-const CITIES = ['Delhi', 'Gurgaon', 'Noida', 'Greater Noida', 'Ghaziabad', 'Rishikesh'];
+const CITIES = ['Delhi', 'Gurgaon', 'Noida', 'Greater Noida', 'Ghaziabad', 'Rishikesh', 'Dehradun'];
 
 import { INQUIRY_GUEST_TAGLINE } from '../lib/inquiryCopy';
 

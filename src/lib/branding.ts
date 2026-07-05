@@ -1,13 +1,8 @@
-/** Primary XpressBnB logo — transparent PNG in `public/main-xpx-logo.png`. */
-export const XPRESSBNB_LOGO_PATH = '/main-xpx-logo.png' as const;
-
-export const xpLogoAbsoluteUrl = (origin = 'https://xpressbnb.com') =>
-  `${origin}${XPRESSBNB_LOGO_PATH}`;
-
-/** Square logo for Google Search / Open Graph (48×48+ required for favicon in SERP). */
-export const XPRESSBNB_SEO_LOGO_PATH = '/favicon-192.png' as const;
-export const xpSeoLogoAbsoluteUrl = (origin = 'https://xpressbnb.com') =>
-  `${origin}${XPRESSBNB_SEO_LOGO_PATH}`;
+/**
+ * Primary in-app logo — 144px PNG generated from `public/main-xpx-logo.png`
+ * by scripts/generate-favicon.mjs (max render 48px CSS × 3x DPR).
+ */
+export const XPRESSBNB_LOGO_PATH = '/logo-144.png' as const;
 
 /**
  * Icon size tracks the wordmark: set font-size on the flex row that wraps

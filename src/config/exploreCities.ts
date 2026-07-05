@@ -69,6 +69,17 @@ export const LIVE_EXPLORE_CITIES: ExploreCity[] = [
     image:
       'https://images.pexels.com/photos/2422259/pexels-photo-2422259.jpeg?auto=compress&w=1200',
   },
+  {
+    id: 'dehradun',
+    name: 'Dehradun',
+    slug: 'dehradun',
+    status: 'live',
+    tagline: 'Doon valley homes & hill escapes',
+    vibe: 'Valley · calm',
+    hook: 'Gateway to the hills — direct from hosts',
+    image:
+      'https://images.pexels.com/photos/167699/pexels-photo-167699.jpeg?auto=compress&w=1200',
+  },
 ];
 
 export const COMING_SOON_EXPLORE_CITIES: ExploreCity[] = [

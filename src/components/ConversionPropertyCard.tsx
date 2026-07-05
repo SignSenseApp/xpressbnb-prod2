@@ -108,7 +108,7 @@ export default memo(function ConversionPropertyCard({
   nearbySource,
   carouselSuppressClickRef,
 }: ConversionPropertyCardProps) {
-  const cardRef = useRef<HTMLElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const swipeRef = useRef(false);
   const [isHovered, setIsHovered] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
@@ -187,7 +187,8 @@ export default memo(function ConversionPropertyCard({
   };
 
   return (
-    <article
+    // div (not article) — role="link" is not an allowed ARIA role on <article>
+    <div
       ref={cardRef}
       onClick={handleClick}
       onMouseEnter={() => {
@@ -269,7 +270,7 @@ export default memo(function ConversionPropertyCard({
           </button>
         </div>
       </div>
-    </article>
+    </div>
   );
 });
 

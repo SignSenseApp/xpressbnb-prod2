@@ -32,7 +32,6 @@ export const MARKETPLACE_SURFACE_FILES = [
   'pages/CityListingPage.tsx',
   'pages/RishikeshStaysPage.tsx',
   'pages/SavedListingsPage.tsx',
-  'PublicSite.tsx',
 ] as const;
 
 export const EDITORIAL_DISCOVERY_IMPORT_PATTERN =

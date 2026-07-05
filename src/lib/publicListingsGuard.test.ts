@@ -11,7 +11,6 @@ const GUEST_PATH_PREFIXES = [
   'pages/CityListingPage.tsx',
   'pages/PropertyPage.tsx',
   'pages/RishikeshStaysPage.tsx',
-  'PublicSite.tsx',
   'pages/ExploreCitiesPage.tsx',
 ];
 
@@ -80,7 +79,7 @@ describe('public listings static guard', () => {
   it('allows host/admin dashboards to query properties directly', () => {
     const hostFiles = collectHostAdminFiles(join(SRC_ROOT, 'pages'));
     const hostComponentFiles = collectAllTsxUnder(join(SRC_ROOT, 'components')).filter((f) =>
-      f.includes('AdminDashboard') || f.includes('PropertyListingForm') || f.includes('PropertyUpgradeModal'),
+      f.includes('PropertyListingForm') || f.includes('PropertyUpgradeModal'),
     );
     const candidates = [...hostFiles, ...hostComponentFiles];
     expect(candidates.some((f) => RAW_QUERY_PATTERN.test(readFileSync(f, 'utf8')))).toBe(true);

@@ -10,6 +10,7 @@ export const HOMEPAGE_CITY_BUCKETS = [
   'Greater Noida',
   'Ghaziabad',
   'Rishikesh',
+  'Dehradun',
 ] as const;
 
 export type HomepageCityBucket = (typeof HOMEPAGE_CITY_BUCKETS)[number];
@@ -22,6 +23,7 @@ export const CITY_VALUE_VARIANTS: Record<string, string[]> = {
   'Greater Noida': ['Greater Noida', 'greater noida'],
   Ghaziabad: ['Ghaziabad', 'ghaziabad'],
   Rishikesh: ['Rishikesh', 'rishikesh'],
+  Dehradun: ['Dehradun', 'dehradun', 'Dehra Dun', 'dehra dun', 'DEHRADUN'],
 };
 
 /**
@@ -36,6 +38,7 @@ export function normalizeCityBucket(city: string | null | undefined): string | n
   if (c === 'greater noida') return 'Greater Noida';
   if (c === 'rishikesh') return 'Rishikesh';
   if (c === 'ghaziabad') return 'Ghaziabad';
+  if (c === 'dehradun' || c === 'dehra dun') return 'Dehradun';
   return null;
 }
 

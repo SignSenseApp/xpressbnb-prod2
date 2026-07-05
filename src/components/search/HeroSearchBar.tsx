@@ -126,7 +126,6 @@ export default function HeroSearchBar({
             type="button"
             onClick={() => setMobileOpen(true)}
             className="min-w-0 flex-1 text-left rounded-xl px-1 py-1"
-            aria-label="Open search filters"
           >
             <div className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: '#6B7280' }}>
               {isCompact ? 'Search' : 'Where to?'}
@@ -316,6 +315,7 @@ export default function HeroSearchBar({
               onChange={(e) => onCityChange(e.target.value)}
               className="appearance-none bg-transparent border-0 p-0 text-[14px] outline-none cursor-pointer w-full truncate"
               style={{ color: '#111827', fontWeight: 700 }}
+              aria-label="City"
             >
               {cities.map((c) => (
                 <option key={c} value={c}>

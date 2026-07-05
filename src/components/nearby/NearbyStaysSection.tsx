@@ -7,6 +7,7 @@ import NearbyStaysSkeleton from './NearbyStaysSkeleton';
 import ComingSoonPanel from './ComingSoonPanel';
 import NearbyDestinationsFallback from './NearbyDestinationsFallback';
 import { firstImageUrl } from '../../lib/savedListingsStorage';
+import { propertyCardImageUrl } from '../../lib/propertyImages';
 
 type NearbyStaysSectionProps = {
   onNavigate: (path: string) => void;
@@ -390,12 +391,13 @@ function CompactNearbyGrid({
             <div className="relative h-[120px] bg-gray-100 overflow-hidden">
               {firstImageUrl(property.images) ? (
                 <img
-                  src={firstImageUrl(property.images)!}
+                  src={propertyCardImageUrl(firstImageUrl(property.images)!, 480)}
                   alt={property.title}
                   className="w-full h-full object-cover"
                   loading="lazy"
+                  decoding="async"
                   onError={(e) => {
-                    e.currentTarget.src = '/placeholder.svg';
+                    e.currentTarget.style.display = 'none';
                   }}
                 />
               ) : (
@@ -455,7 +457,7 @@ function TrendingBlock({
 }) {
   return (
     <div className="mt-8">
-      <h3 className="text-lg font-extrabold text-xpx-text mb-4">Trending stays</h3>
+      <h2 className="text-lg font-extrabold text-xpx-text mb-4">Trending stays</h2>
       <FeaturedStaysCarousel
         properties={properties}
         distanceByPropertyId={distanceByPropertyId}
@@ -483,9 +485,9 @@ function NearbyLocationCTA({
         <MapPin className="h-5 w-5" />
       </div>
       <div className="flex-1 min-w-0">
-        <h3 className="text-lg font-extrabold text-xpx-text">
+        <h2 className="text-lg font-extrabold text-xpx-text">
           {blocked ? 'Location is turned off' : 'Show rentals near you'}
-        </h3>
+        </h2>
         <p className="mt-1.5 text-sm text-xpx-muted leading-relaxed">
           {blocked
             ? 'Turn on location in your browser to see nearby homes — or pick a destination below.'

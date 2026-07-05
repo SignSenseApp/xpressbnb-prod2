@@ -143,15 +143,22 @@ export default function WelcomeOfferModal({
         }}
       >
         <div className="relative aspect-[16/10] w-full overflow-hidden">
-          <img
-            src={HERO_IMAGE}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-            width={1040}
-            height={650}
-            decoding="async"
-            fetchPriority="high"
-          />
+          <picture>
+            <source
+              type="image/webp"
+              srcSet={`${HERO_IMAGE.replace('.jpg', '-640.webp')} 640w, ${HERO_IMAGE.replace('.jpg', '.webp')} 1040w`}
+              sizes="(min-width: 640px) 560px, 100vw"
+            />
+            <img
+              src={HERO_IMAGE}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+              width={1040}
+              height={650}
+              decoding="async"
+              fetchPriority="high"
+            />
+          </picture>
           <div
             className="absolute inset-0"
             style={{

@@ -99,7 +99,7 @@ export default function XpModeSwitch({ variant = 'dark', className = '' }: XpMod
           href={XPRESSBNB_AI_URL}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Open XpressBNB AI Concierge on xpressbnbai.in"
+          aria-label=".in — open XpressBNB AI Concierge on xpressbnbai.in"
           className="xp-mode-ai group relative inline-flex items-center gap-1 rounded-full px-2 py-1.5 sm:px-2.5 sm:py-1.5 transition-[transform,background,box-shadow] duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
           style={{
             color: isLight ? 'rgba(255,255,255,0.75)' : '#64748b',

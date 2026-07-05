@@ -30,9 +30,13 @@ let installListenersAttached = false;
 export function registerServiceWorker(): void {
   if (!('serviceWorker' in navigator)) return;
 
+  // Only reload on a genuine SW update. On a first visit `clients.claim()`
+  // also fires `controllerchange`; reloading there restarted every new
+  // visitor's session mid-load (double network cost, ~3.5s penalty).
+  const hadController = Boolean(navigator.serviceWorker.controller);
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing || !navigator.serviceWorker.controller) return;
+    if (refreshing || !hadController || !navigator.serviceWorker.controller) return;
     trackXpressEvent('pwa_update_applied');
     refreshing = true;
     window.location.reload();

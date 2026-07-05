@@ -76,7 +76,7 @@ export default function DiscoveryPropertyWindow({
   ctaLabel = 'Open this story',
   headingLevel = 'h3',
 }: DiscoveryPropertyWindowProps) {
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const onboarding = useGuestOnboardingOptional();
   const TitleTag = headingLevel;
   const location = formatDiscoveryLocation(property.city, property.state);
@@ -94,7 +94,8 @@ export default function DiscoveryPropertyWindow({
   };
 
   return (
-    <article
+    // div (not article) — role="link" is not an allowed ARIA role on <article>
+    <div
       ref={ref}
       className={`xpx-discovery-window xpx-discovery-window--${variant}`}
       onClick={open}
@@ -117,6 +118,6 @@ export default function DiscoveryPropertyWindow({
         <p className="xpx-discovery-window-location">{location}</p>
         <span className="xpx-discovery-window-cta">{ctaLabel}</span>
       </div>
-    </article>
+    </div>
   );
 }

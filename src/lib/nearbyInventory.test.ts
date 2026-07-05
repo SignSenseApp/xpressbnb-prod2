@@ -105,8 +105,21 @@ describe('matchDetectedCityToBucket', () => {
     expect(matchDetectedCityToBucket('Gurugram')).toBe('Gurgaon');
   });
 
+  it('maps Dehradun (including Dehra Dun spelling) to Dehradun bucket', () => {
+    expect(matchDetectedCityToBucket('Dehradun')).toBe('Dehradun');
+    expect(matchDetectedCityToBucket('Dehra Dun')).toBe('Dehradun');
+  });
+
   it('returns null for unserviced cities', () => {
     expect(matchDetectedCityToBucket('Mumbai')).toBeNull();
+  });
+});
+
+describe('findNearestServicedCities — Dehradun', () => {
+  it('returns Dehradun as nearest serviced city from Dehradun coords', () => {
+    const cities = findNearestServicedCities(30.3165, 78.0322, 2);
+    expect(cities[0].city).toBe('Dehradun');
+    expect(cities[1].city).toBe('Rishikesh');
   });
 });
 

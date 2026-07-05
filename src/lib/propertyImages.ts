@@ -56,6 +56,10 @@ function toSupabaseRenderUrl(url: string, width: number, quality = CARD_IMAGE_QU
   try {
     const parsed = new URL(renderUrl);
     parsed.searchParams.set('width', String(width));
+    // `contain` scales to the requested width preserving aspect ratio.
+    // The default (`cover`) keeps the original height when `height` is
+    // omitted, so portrait photos came back as e.g. 640×4032 (~4× payload).
+    parsed.searchParams.set('resize', 'contain');
     parsed.searchParams.set('quality', String(quality));
     return parsed.toString();
   } catch {

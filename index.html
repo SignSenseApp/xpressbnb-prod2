@@ -8,19 +8,23 @@
     <link rel="preconnect" href="https://images.pexels.com" crossorigin />
     <link rel="dns-prefetch" href="https://arettgcwbvryrtpjtkjo.supabase.co" />
     <link rel="preconnect" href="https://arettgcwbvryrtpjtkjo.supabase.co" crossorigin />
-    <link
-      rel="preload"
-      as="image"
-      type="image/jpeg"
-      href="https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&amp;w=375"
-      imagesrcset="
-        https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=375 375w,
-        https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=768 768w,
-        https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1280 1280w
-      "
-      imagesizes="100vw"
-      fetchpriority="high"
-    />
+    <script>
+      // Preload the hero image only on the homepage — a static <link rel=preload>
+      // fires on every route (SPA serves this HTML everywhere) and logs
+      // "preloaded but not used" warnings on city/property pages.
+      (function () {
+        if (location.pathname !== '/' && location.pathname !== '/index.html') return;
+        var base = 'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=';
+        var link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = base + '375';
+        link.imageSrcset = base + '375 375w, ' + base + '768 768w, ' + base + '1280 1280w';
+        link.imageSizes = '100vw';
+        link.fetchPriority = 'high';
+        document.head.appendChild(link);
+      })();
+    </script>
     <!-- Favicons: Google crawls /favicon.ico and rel=icon (48×48+). See developers.google.com/search/docs/appearance/favicon-in-search -->
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="shortcut icon" href="/favicon.ico" />

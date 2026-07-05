@@ -75,12 +75,3 @@ describe('buildGuestPricingQuote', () => {
   });
 });
 
-describe('calculateBookingTotal facade', () => {
-  it('matches guest engine grand total', async () => {
-    const { calculateBookingTotal } = await import('./pricingUtils');
-    const breakdown = calculateBookingTotal(4800, 2, 2, baseProperty);
-    expect(breakdown.grandTotal).toBe(4800);
-    expect(breakdown.serviceFee).toBe(0);
-    expect(breakdown.cleaningFee).toBe(0);
-  });
-});

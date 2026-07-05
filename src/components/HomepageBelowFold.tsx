@@ -14,6 +14,7 @@ import FeaturedStaysCarousel from './FeaturedStaysCarousel';
 import NearbyStaysSection from './nearby/NearbyStaysSection';
 import { OnboardingListingsEngagement } from './onboarding/OnboardingListingsEngagement';
 import { firstImageUrl } from '../lib/savedListingsStorage';
+import { propertyCardImageSrcSet } from '../lib/propertyImages';
 import { getPublicListings, invalidatePublicListingsCache } from '../lib/publicListings';
 import { warmPublicHostCache } from '../lib/hostPublicCache';
 import { INQUIRY_HOST_TAGLINE } from '../lib/inquiryCopy';
@@ -38,7 +39,7 @@ function pexelsPhotoUrl(photoId: string, width: number) {
   return `https://images.pexels.com/photos/${photoId}/pexels-photo-${photoId}.jpeg?auto=compress&cs=tinysrgb&w=${width}`;
 }
 
-const CITIES = ['Delhi', 'Gurgaon', 'Noida', 'Greater Noida', 'Ghaziabad', 'Rishikesh'];
+const CITIES = ['Delhi', 'Gurgaon', 'Noida', 'Greater Noida', 'Ghaziabad', 'Rishikesh', 'Dehradun'];
 
 const CITY_TAGLINES: Record<string, string> = {
   Delhi: 'Capital stays, direct host pricing.',
@@ -47,6 +48,7 @@ const CITY_TAGLINES: Record<string, string> = {
   'Greater Noida': 'Spacious homes, quiet neighborhoods.',
   Rishikesh: 'Riverside retreats, calm stays.',
   Ghaziabad: 'Comfortable stays near Delhi NCR.',
+  Dehradun: 'Doon valley homes, hill escapes.',
 };
 
 const CITY_IMAGES: Record<string, string> = {
@@ -56,6 +58,7 @@ const CITY_IMAGES: Record<string, string> = {
   'Greater Noida': pexelsPhotoUrl('1643383', 600),
   Ghaziabad: pexelsPhotoUrl('2506988', 600),
   Rishikesh: pexelsPhotoUrl('2161449', 600),
+  Dehradun: pexelsPhotoUrl('167699', 600),
 };
 
 export type HomepageBelowFoldProps = {
@@ -325,10 +328,13 @@ export default function HomepageBelowFold({
                   }}
                 >
                   <img
-                    src="https://images.pexels.com/photos/6585618/pexels-photo-6585618.jpeg?auto=compress&cs=tinysrgb&w=1200"
+                    src={pexelsPhotoUrl('6585618', 960)}
+                    srcSet={`${pexelsPhotoUrl('6585618', 480)} 480w, ${pexelsPhotoUrl('6585618', 960)} 960w`}
+                    sizes="(max-width: 639px) 100vw, 470px"
                     alt="Modern premium room for hosting"
                     className="h-[248px] w-full object-cover sm:h-[278px] md:h-[304px]"
                     loading="lazy"
+                    decoding="async"
                   />
                   <div
                     className="absolute inset-0"
@@ -577,13 +583,22 @@ function TopDestinationCardInner({
     firstImageUrl(propertiesByCity[city]?.[0]?.images ?? null) || CITY_IMAGES[city];
   const citySize = variant === 'hero' ? 30 : variant === 'wide' ? 24 : 19;
   const cardHeight = variant === 'hero' ? 'min-h-[470px]' : variant === 'wide' ? 'min-h-[240px]' : 'h-full';
+  const coverSizes =
+    variant === 'hero'
+      ? '(max-width: 767px) 50vw, 44vw'
+      : variant === 'wide'
+        ? '(max-width: 767px) 50vw, 58vw'
+        : '(max-width: 767px) 50vw, 20vw';
   return (
     <div className={`relative w-full h-full ${cardHeight}`}>
       <img
         src={cover}
+        srcSet={propertyCardImageSrcSet(cover)}
+        sizes={coverSizes}
         alt={city}
         className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-[1.06] transition-transform duration-700"
         loading="lazy"
+        decoding="async"
       />
       <div
         className="absolute inset-0 pointer-events-none"

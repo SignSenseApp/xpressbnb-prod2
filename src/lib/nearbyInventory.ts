@@ -22,6 +22,7 @@ export const SERVICED_CITY_COORDS: ServicedCityCoord[] = [
   { city: 'Greater Noida', slug: 'greater-noida', lat: 28.4744, lng: 77.504 },
   { city: 'Ghaziabad', slug: 'ghaziabad', lat: 28.6692, lng: 77.4538 },
   { city: 'Rishikesh', slug: 'rishikesh', lat: 30.0869, lng: 78.2676 },
+  { city: 'Dehradun', slug: 'dehradun', lat: 30.3165, lng: 78.0322 },
 ];
 
 const EARTH_RADIUS_KM = 6_371;

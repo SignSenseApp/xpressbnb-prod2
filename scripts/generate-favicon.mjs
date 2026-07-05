@@ -31,6 +31,8 @@ const exports = [
   { name: 'favicon-192.png', size: 192 },
   { name: 'apple-touch-icon.png', size: 180 },
   { name: 'icon-512.png', size: 512 },
+  // In-app nav/header logo — max render 48px CSS × 3x DPR
+  { name: 'logo-144.png', size: 144 },
 ];
 
 for (const { name, size } of exports) {
