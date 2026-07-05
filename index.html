@@ -6,6 +6,8 @@
     <!-- Homepage hero LCP — Pexels origin + first active slide only (Gurgaon, photo 1571460) -->
     <link rel="dns-prefetch" href="https://images.pexels.com" />
     <link rel="preconnect" href="https://images.pexels.com" crossorigin />
+    <link rel="dns-prefetch" href="https://arettgcwbvryrtpjtkjo.supabase.co" />
+    <link rel="preconnect" href="https://arettgcwbvryrtpjtkjo.supabase.co" crossorigin />
     <link
       rel="preload"
       as="image"
@@ -97,8 +99,122 @@
          It is lazy-loaded by src/lib/razorpay.ts only on the host
          subscription upgrade path, so guest pages do not ship the
          payment SDK or trigger Razorpay's risk-detection iframe. -->
+    <style>
+      #app-skeleton {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: #fafaf8;
+        overflow: hidden;
+        transition: opacity 120ms ease-out;
+      }
+      #app-skeleton.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .sk-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: calc(56px + env(safe-area-inset-top, 0px));
+        padding-top: env(safe-area-inset-top, 0px);
+        background: #ffffff;
+        border-bottom: 1px solid rgba(226, 232, 240, 0.65);
+      }
+      .sk-hero {
+        position: absolute;
+        top: calc(56px + env(safe-area-inset-top, 0px));
+        left: 0;
+        right: 0;
+        height: clamp(380px, 65svh, 520px);
+        background: #cbd5e1;
+        animation: sk-pulse 1.5s ease-in-out infinite;
+      }
+      .sk-trust {
+        position: absolute;
+        top: calc(56px + env(safe-area-inset-top, 0px) + clamp(380px, 65svh, 520px) - 28px);
+        left: 16px;
+        right: 16px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      @media (min-width: 1024px) {
+        .sk-trust {
+          grid-template-columns: repeat(4, 1fr);
+          left: max(16px, calc((100% - 1280px) / 2 + 16px));
+          right: max(16px, calc((100% - 1280px) / 2 + 16px));
+        }
+      }
+      .sk-trust-chip {
+        height: 72px;
+        border-radius: 16px;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        animation: sk-pulse 1.5s ease-in-out infinite;
+      }
+      .sk-cards {
+        position: absolute;
+        top: calc(56px + env(safe-area-inset-top, 0px) + clamp(380px, 65svh, 520px) + 88px);
+        left: 0;
+        right: 0;
+        display: flex;
+        gap: 12px;
+        padding: 0 16px;
+        overflow: hidden;
+      }
+      .sk-card {
+        min-width: min(85vw, 320px);
+        height: 280px;
+        border-radius: 16px;
+        background: #e5e7eb;
+        animation: sk-pulse 1.5s ease-in-out infinite;
+        flex-shrink: 0;
+      }
+      .sk-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: calc(64px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        background: rgba(255, 255, 255, 0.85);
+        border-top: 1px solid #e5e7eb;
+      }
+      @media (min-width: 768px) {
+        .sk-nav {
+          display: none;
+        }
+      }
+      @keyframes sk-pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.55;
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="app-skeleton" aria-hidden="true">
+      <div class="sk-header"></div>
+      <div class="sk-hero"></div>
+      <div class="sk-trust">
+        <div class="sk-trust-chip"></div>
+        <div class="sk-trust-chip"></div>
+        <div class="sk-trust-chip"></div>
+        <div class="sk-trust-chip"></div>
+      </div>
+      <div class="sk-cards">
+        <div class="sk-card"></div>
+        <div class="sk-card"></div>
+        <div class="sk-card"></div>
+      </div>
+      <div class="sk-nav"></div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

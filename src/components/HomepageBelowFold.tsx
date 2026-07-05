@@ -26,7 +26,6 @@ const SURFACE = '#FFFFFF';
 const SURFACE_LIGHT = '#F8FAFC';
 const TEXT = '#0F172A';
 const TEXT_MUTED = '#64748B';
-const TEXT_SUBTLE = '#94A3B8';
 const BORDER = '#E5E7EB';
 const FOOTER_HEADING = '#FFFFFF';
 const FOOTER_BODY = 'rgba(255,255,255,0.6)';
@@ -159,8 +158,20 @@ export default function HomepageBelowFold({
               </button>
             </div>
           ) : featuredProperties.length === 0 ? (
-            <div className="py-16 text-center text-sm" style={{ color: TEXT_SUBTLE }}>
-              No properties available right now.
+            <div className="py-16 text-center px-4">
+              <p className="text-[17px] font-bold text-xpx-text mb-2">No stays listed yet</p>
+              <p className="text-sm text-xpx-muted mb-5 max-w-sm mx-auto leading-relaxed">
+                We&apos;re growing fast across Delhi NCR. Explore another city while we add more
+                homes here.
+              </p>
+              <button
+                type="button"
+                onClick={() => onCityClick('Delhi')}
+                className="inline-flex items-center justify-center px-5 py-2.5 rounded-full text-[13px] font-semibold text-white"
+                style={{ background: ACCENT }}
+              >
+                Explore Delhi →
+              </button>
             </div>
           ) : (
             <FeaturedStaysCarousel properties={featuredProperties} />

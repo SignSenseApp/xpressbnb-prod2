@@ -11,7 +11,7 @@ import {
   Phone,
 } from 'lucide-react';
 import type { Property } from '../lib/database.types';
-import { supabase } from '../lib/supabase';
+import { logSupabaseError, supabase } from '../lib/supabase';
 import { findPromoCode, type PromoCodeDef } from '../lib/offers';
 import { buildGuestPricingQuote, getInquirySubmitAmount } from '../lib/guestPricingEngine';
 import { GUEST_PRICING_INQUIRY_TOTAL_NOTE, GUEST_PRICING_NO_COMMISSION } from '../lib/guestPricingCopy';
@@ -51,6 +51,7 @@ import {
   markInquirySubmitCooldown,
 } from '../lib/inquiryAbuseProtection';
 import { INQUIRY_SENDING_LABEL, inquiryCtaLabel } from '../lib/inquiryCopy';
+import { buildTeamWhatsAppLink } from '../lib/team';
 import {
   subscribeToInquiryPushNotifications,
   isPushSupported,
@@ -146,6 +147,7 @@ export default function BookingForm({
   });
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showWhatsAppFallback, setShowWhatsAppFallback] = useState(false);
   const inquirySubmittedRef = useRef(false);
 
   const [promoInput, setPromoInput] = useState('');
@@ -380,6 +382,7 @@ export default function BookingForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+    setShowWhatsAppFallback(false);
 
     const validationError = validateForm();
     if (validationError) {
@@ -452,6 +455,7 @@ export default function BookingForm({
       if (!submitRes.ok) {
         const userMsg = submitRes.error;
         setErrorMessage(userMsg);
+        setShowWhatsAppFallback(true);
         trackXpressEvent('inquiry_submit_failed', {
           ...analyticsScope,
           error_category: categorizeBookingError(userMsg),
@@ -479,10 +483,11 @@ export default function BookingForm({
 
       completeInquiry(inquiry, checkIn, checkOut);
     } catch (error) {
-      if (import.meta.env.DEV) console.error('Booking error:', error);
+      logSupabaseError('BookingForm inquiry submit', error);
       const errMsg =
         error instanceof Error ? error.message : 'Something went wrong. Please try again.';
       setErrorMessage(errMsg);
+      setShowWhatsAppFallback(true);
       trackXpressEvent('inquiry_submit_failed', {
         property_id: property.id,
         property_slug: property.slug ?? undefined,
@@ -526,6 +531,26 @@ export default function BookingForm({
   }, [analyticsScope, hasDates, hasDetails, loading, transitionPhase]);
 
   const bookingStep = hasDetails ? 4 : hasDates ? 3 : 1;
+
+  const inquiryWhatsAppUrl = useMemo(() => {
+    if (!checkInDate || !checkOutDate) return buildTeamWhatsAppLink('Hi, I want to book a stay on XpressBnB.');
+    const guestName = formData.guest_name.trim() || 'Guest';
+    const message = [
+      `Hi, I'd like to book "${property.title}" on XpressBnB.`,
+      `Dates: ${formatDate(checkInDate)} to ${formatDate(checkOutDate)}`,
+      `Guests: ${safeGuestCount}`,
+      `Name: ${guestName}`,
+      `Phone: ${formData.guest_phone.trim() || '—'}`,
+    ].join('\n');
+    return buildTeamWhatsAppLink(message);
+  }, [
+    checkInDate,
+    checkOutDate,
+    formData.guest_name,
+    formData.guest_phone,
+    property.title,
+    safeGuestCount,
+  ]);
 
   return (
     <>
@@ -754,6 +779,32 @@ export default function BookingForm({
       </div>
 
       {errorMessage && <ErrorBanner message={errorMessage} />}
+
+      {showWhatsAppFallback && errorMessage && (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/80 px-4 py-4 text-center">
+          <p className="text-sm font-semibold text-xpx-text mb-1">
+            Verification temporarily unavailable
+          </p>
+          <p className="text-xs text-xpx-muted mb-3 leading-relaxed">
+            Contact us directly on WhatsApp to complete your booking request.
+          </p>
+          <a
+            href={inquiryWhatsAppUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-white"
+            style={{ background: '#25D366' }}
+            onClick={() => {
+              trackXpressEvent('inquiry_whatsapp_fallback', {
+                ...analyticsScope,
+                booking_step: 'send',
+              });
+            }}
+          >
+            Continue on WhatsApp →
+          </a>
+        </div>
+      )}
 
       <div className="sticky bottom-0 z-10 -mx-1 px-1 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-[var(--xpx-surface)] via-[var(--xpx-surface)] to-transparent" id="booking-step-submit">
         <button

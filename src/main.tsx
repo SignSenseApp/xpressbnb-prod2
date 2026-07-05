@@ -12,6 +12,13 @@ registerServiceWorker();
 initCookieConsent();
 reportClientEnvIssues();
 
+function dismissAppSkeleton() {
+  const skeleton = document.getElementById('app-skeleton');
+  if (!skeleton) return;
+  skeleton.classList.add('hidden');
+  window.setTimeout(() => skeleton.remove(), 150);
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <SmoothScrollRoot>
@@ -21,3 +28,5 @@ createRoot(document.getElementById('root')!).render(
     </SmoothScrollRoot>
   </StrictMode>
 );
+
+dismissAppSkeleton();

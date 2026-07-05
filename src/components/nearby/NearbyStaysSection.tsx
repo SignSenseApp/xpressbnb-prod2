@@ -6,6 +6,7 @@ import FeaturedStaysCarousel from '../FeaturedStaysCarousel';
 import NearbyStaysSkeleton from './NearbyStaysSkeleton';
 import ComingSoonPanel from './ComingSoonPanel';
 import NearbyDestinationsFallback from './NearbyDestinationsFallback';
+import { firstImageUrl } from '../../lib/savedListingsStorage';
 
 type NearbyStaysSectionProps = {
   onNavigate: (path: string) => void;
@@ -387,9 +388,9 @@ function CompactNearbyGrid({
           >
             {/* Image */}
             <div className="relative h-[120px] bg-gray-100 overflow-hidden">
-              {property.images && Array.isArray(property.images) && property.images[0] ? (
+              {firstImageUrl(property.images) ? (
                 <img
-                  src={property.images[0]}
+                  src={firstImageUrl(property.images)!}
                   alt={property.title}
                   className="w-full h-full object-cover"
                   loading="lazy"

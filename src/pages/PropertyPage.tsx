@@ -25,7 +25,7 @@ import Header from '../components/Header';
 import SEOHead from '../components/SEOHead';
 import PropertyGallery from '../components/property/PropertyGallery';
 import DeferredMount from '../components/property/DeferredMount';
-import { supabase } from '../lib/supabase';
+import { logSupabaseError, supabase } from '../lib/supabase';
 import { getPublicPropertyById } from '../lib/publicListings';
 import { fetchPublicHost } from '../lib/hostPublicCache';
 import { getAmenityIcon, listPropertyAmenities } from '../lib/amenities';
@@ -219,12 +219,12 @@ export default function PropertyPage() {
         referrer: document.referrer || null,
       });
       if (error) {
-        console.error('Error tracking view:', error);
+        logSupabaseError('Error tracking property view', error);
         return;
       }
       sessionStorage.setItem(viewedKey, 'true');
     } catch (error) {
-      console.error('Error tracking property view:', error);
+      logSupabaseError('Error tracking property view', error);
     }
   };
 
@@ -261,9 +261,7 @@ export default function PropertyPage() {
 
       setLoadError(true);
     } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('Error loading property:', error);
-      }
+      logSupabaseError('Error loading property', error);
       setLoadError(true);
       trackXpressEvent('property_load_failed', {
         property_id: propertyId,
@@ -285,7 +283,7 @@ export default function PropertyPage() {
         setHostName(safeHostDisplayName(row.name, 'Host'));
       }
     } catch (err) {
-      console.error('PropertyPage: host name fetch threw', err);
+      logSupabaseError('PropertyPage host name fetch', err);
     }
   };
 
@@ -297,7 +295,7 @@ export default function PropertyPage() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy link:', err);
+      logSupabaseError('Failed to copy property link', err);
     }
   };
 

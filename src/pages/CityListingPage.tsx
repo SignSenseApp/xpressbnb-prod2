@@ -25,6 +25,40 @@ const CITY_DISPLAY_NAMES: Record<string, string> = {
   'rishikesh': 'Rishikesh',
 };
 
+/** Nearby destinations when a city has zero listings (copy-only recovery). */
+const NEARBY_CITY_SUGGESTIONS: Record<string, { slug: string; label: string }[]> = {
+  delhi: [
+    { slug: 'gurgaon', label: 'Gurgaon' },
+    { slug: 'noida', label: 'Noida' },
+    { slug: 'rishikesh', label: 'Rishikesh' },
+  ],
+  gurgaon: [
+    { slug: 'delhi', label: 'Delhi' },
+    { slug: 'noida', label: 'Noida' },
+    { slug: 'ghaziabad', label: 'Ghaziabad' },
+  ],
+  noida: [
+    { slug: 'delhi', label: 'Delhi' },
+    { slug: 'gurgaon', label: 'Gurgaon' },
+    { slug: 'greater-noida', label: 'Greater Noida' },
+  ],
+  'greater-noida': [
+    { slug: 'noida', label: 'Noida' },
+    { slug: 'delhi', label: 'Delhi' },
+    { slug: 'gurgaon', label: 'Gurgaon' },
+  ],
+  ghaziabad: [
+    { slug: 'delhi', label: 'Delhi' },
+    { slug: 'noida', label: 'Noida' },
+    { slug: 'gurgaon', label: 'Gurgaon' },
+  ],
+  rishikesh: [
+    { slug: 'delhi', label: 'Delhi' },
+    { slug: 'gurgaon', label: 'Gurgaon' },
+    { slug: 'noida', label: 'Noida' },
+  ],
+};
+
 const CITY_TAGLINES: Record<string, string> = {
   Delhi: 'The city that never asks questions.',
   Gurgaon: 'All glass. No noise. No one knows.',
@@ -344,7 +378,7 @@ export default function CityListingPage({ city }: CityListingPageProps) {
             <p className="text-xpx-muted text-sm mb-5 max-w-xs leading-relaxed">
               {hasActiveFilters
                 ? 'Try removing some filters to see more results.'
-                : `We don't have listings in ${cityName} yet. Check back soon!`}
+                : `We don't have listings in ${cityName} yet. Try a nearby destination below.`}
             </p>
             {hasActiveFilters && (
               <button
@@ -354,6 +388,24 @@ export default function CityListingPage({ city }: CityListingPageProps) {
               >
                 Clear all filters
               </button>
+            )}
+            {!hasActiveFilters && (NEARBY_CITY_SUGGESTIONS[city] ?? []).length > 0 && (
+              <div className="flex flex-wrap items-center justify-center gap-2 max-w-sm">
+                {(NEARBY_CITY_SUGGESTIONS[city] ?? []).map((nearbyCity) => (
+                  <button
+                    key={nearbyCity.slug}
+                    type="button"
+                    onClick={() => {
+                      window.history.pushState({}, '', `/stays/${nearbyCity.slug}`);
+                      window.dispatchEvent(new PopStateEvent('popstate'));
+                    }}
+                    className="px-4 py-2 rounded-full text-[13px] font-semibold text-white"
+                    style={{ background: theme.warm, boxShadow: '0 6px 18px rgba(80,200,120,0.28)' }}
+                  >
+                    Explore {nearbyCity.label} →
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         ) : (

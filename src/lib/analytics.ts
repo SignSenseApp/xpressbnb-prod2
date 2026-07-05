@@ -20,6 +20,7 @@ export type XpressEventName =
   | 'inquiry_submit_started'
   | 'inquiry_submit_success'
   | 'inquiry_submit_failed'
+  | 'inquiry_whatsapp_fallback'
   | 'inquiry_success'
   | 'host_whatsapp_click'
   | 'host_call_click'
