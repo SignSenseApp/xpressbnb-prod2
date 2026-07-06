@@ -23,7 +23,7 @@ export default function PropertyReviews({ property }: PropertyReviewsProps) {
       style={{
         background: 'var(--xpx-surface)',
         border: '1px solid var(--xpx-border)',
-        boxShadow: '0 12px 40px rgba(15,23,42,0.05)',
+        boxShadow: 'var(--xpx-shadow-floating)',
       }}
     >
       <p className="xpx-eyebrow mb-1">External reviews</p>

@@ -50,7 +50,7 @@ export default function GuestMemberTimeline({ className = '' }: GuestMemberTimel
               {index < steps.length - 1 && (
                 <span
                   className={`w-0.5 flex-1 min-h-[1.35rem] my-1 rounded-full ${
-                    step.state === 'done' ? 'bg-emerald-600' : 'bg-slate-200'
+                    step.state === 'done' ? 'bg-[var(--accent)]' : 'bg-[var(--xpx-border)]'
                   }`}
                   aria-hidden
                 />
@@ -60,10 +60,10 @@ export default function GuestMemberTimeline({ className = '' }: GuestMemberTimel
               <p
                 className={`text-sm font-semibold leading-snug ${
                   step.state === 'upcoming'
-                    ? 'text-slate-400'
+                    ? 'text-xpx-subtle'
                     : step.state === 'active'
                       ? 'text-xpx-text'
-                      : 'text-emerald-800'
+                      : 'text-[var(--accent-dark)]'
                 }`}
               >
                 {step.state === 'done' && (
@@ -91,7 +91,8 @@ function StepDot({ state }: { state: JourneyStep['state'] }) {
   if (state === 'done') {
     return (
       <span
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white"
+        style={{ background: 'var(--accent)' }}
         aria-hidden
       >
         <Check className="h-3.5 w-3.5" strokeWidth={3} />
@@ -101,19 +102,21 @@ function StepDot({ state }: { state: JourneyStep['state'] }) {
   if (state === 'active') {
     return (
       <span
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-emerald-600 bg-white"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 bg-white"
+        style={{ borderColor: 'var(--accent)' }}
         aria-hidden
       >
-        <span className="h-2 w-2 rounded-full bg-emerald-600" />
+        <span className="h-2 w-2 rounded-full" style={{ background: 'var(--accent)' }} />
       </span>
     );
   }
   return (
     <span
-      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-slate-200 bg-white"
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 bg-white"
+      style={{ borderColor: 'var(--xpx-border)' }}
       aria-hidden
     >
-      <span className="h-2 w-2 rounded-full bg-slate-200" />
+      <span className="h-2 w-2 rounded-full bg-[var(--xpx-border)]" />
     </span>
   );
 }

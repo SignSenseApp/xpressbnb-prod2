@@ -103,7 +103,7 @@ export default function PropertySidebar({
       style={{
         background: 'var(--xpx-surface)',
         border: '1px solid var(--xpx-border-strong)',
-        boxShadow: '0 12px 40px rgba(15,23,42,0.08)',
+        boxShadow: 'var(--xpx-shadow-floating)',
       }}
     >
       {/* Headline price */}
@@ -130,13 +130,13 @@ export default function PropertySidebar({
           className="mt-4 rounded-xl p-3 flex items-start gap-2.5"
           style={{
             background:
-              'linear-gradient(120deg, rgba(80,200,120,0.18) 0%, rgba(80,200,120,0.06) 60%, var(--xpx-surface-light) 100%)',
-            border: '1px solid rgba(80,200,120,0.36)',
+              'linear-gradient(120deg, var(--xpx-accent-a18) 0%, var(--xpx-accent-a12) 60%, var(--xpx-surface-light) 100%)',
+            border: '1px solid var(--xpx-accent-a32)',
           }}
         >
           <div
             className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: 'rgba(80,200,120,0.12)', color: 'var(--accent-dark)' }}
+            style={{ background: 'var(--xpx-accent-a12)', color: 'var(--accent-dark)' }}
           >
             <Tag className="w-3.5 h-3.5" />
           </div>
@@ -153,7 +153,7 @@ export default function PropertySidebar({
       {/* Calendar */}
       <div className="mt-4" id="booking-step-calendar">
         <p className="text-[11px] uppercase tracking-[0.18em] font-bold text-xpx-subtle mb-2">
-          Check availability
+          Book your stay
         </p>
         <BookingCalendar
           propertyId={property.id}
@@ -203,12 +203,8 @@ export default function PropertySidebar({
           <button
             type="button"
             onClick={hasValidDates ? onRequestToBook : onCheckAvailability}
-            className="mt-5 w-full py-3.5 rounded-2xl font-bold text-[15px] text-white xpx-press touch-manipulation"
-            style={{
-              background: 'var(--xpx-cta)',
-              boxShadow: 'var(--xpx-cta-glow)',
-              minHeight: 52,
-            }}
+            className="xpx-btn-primary mt-5 w-full rounded-2xl py-3.5 text-[15px] touch-manipulation"
+            style={{ minHeight: 52 }}
           >
             <span className="inline-flex items-center justify-center gap-2">
               <Sparkles className="w-4 h-4" />

@@ -40,9 +40,9 @@ export default function GuestWelcomeExperience({ snapshot, hostName }: GuestWelc
 
   return (
     <div className="mx-auto w-full max-w-2xl">
-      <header className="flex items-start justify-between gap-3 mb-6 sm:mb-8 inquiry-reveal motion-reduce:animate-none">
+      <header className="flex items-start justify-between gap-3 mb-8 sm:mb-10 inquiry-reveal motion-reduce:animate-none">
         <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-800">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--accent-dark)' }}>
             Request sent
           </p>
           <h1 className="mt-1.5 text-2xl sm:text-3xl font-extrabold text-xpx-text tracking-tight leading-[1.12] text-balance">
@@ -104,8 +104,8 @@ export default function GuestWelcomeExperience({ snapshot, hostName }: GuestWelc
               onClick={() => navigateTo(trackPath)}
               className="w-full min-h-[52px] rounded-2xl px-5 text-base font-bold text-white transition-transform active:scale-[0.98] motion-reduce:transition-none"
               style={{
-                background: 'var(--xpx-warm, #059669)',
-                boxShadow: '0 10px 32px rgba(5,150,105,0.28)',
+                background: 'var(--xpx-cta)',
+                boxShadow: 'var(--xpx-cta-glow)',
               }}
             >
               Track inquiry

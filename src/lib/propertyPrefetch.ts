@@ -6,14 +6,16 @@
 import type { Property } from './database.types';
 import {
   listPropertyImages,
-  PROPERTY_HERO_IMAGE_WIDTHS,
+  PROPERTY_HERO_DEFAULT_WIDTH,
+  PROPERTY_HERO_IMAGE_SIZES,
+  propertyHeroImageSrcSet,
   propertyHeroImageUrl,
 } from './propertyImages';
 import { prefetchPublicPropertyById } from './publicListings';
 import { loadPropertyPageModule } from './propertyRouteChunk';
 
 /** Mobile-first hero width for gallery warm (768w). */
-const PREFETCH_HERO_WIDTH = PROPERTY_HERO_IMAGE_WIDTHS[1];
+const PREFETCH_HERO_WIDTH = PROPERTY_HERO_DEFAULT_WIDTH;
 const GALLERY_PREFETCH_COUNT = 2;
 
 let propertyPageChunkPromise: Promise<unknown> | null = null;
@@ -77,4 +79,31 @@ function prefetchPropertyGalleryImages(
 /** Test / diagnostics — whether route chunk import was started. */
 export function isPropertyPageChunkPrefetchStarted(): boolean {
   return propertyPageChunkPromise != null;
+}
+
+const preloadedHeroLinks = new Set<string>();
+
+/**
+ * Inject `<link rel="preload">` for the LCP hero image after property data loads.
+ * Dynamic per listing — cannot live in static index.html.
+ */
+export function preloadPropertyHeroImage(images: Property['images']): void {
+  const first = listPropertyImages(images)[0];
+  if (!first) return;
+
+  const href = propertyHeroImageUrl(first, PROPERTY_HERO_DEFAULT_WIDTH);
+  if (!href || preloadedHeroLinks.has(href)) return;
+  preloadedHeroLinks.add(href);
+
+  const link = document.createElement('link');
+  link.rel = 'preload';
+  link.as = 'image';
+  link.href = href;
+  const srcSet = propertyHeroImageSrcSet(first);
+  if (srcSet) {
+    link.setAttribute('imagesrcset', srcSet);
+    link.setAttribute('imagesizes', PROPERTY_HERO_IMAGE_SIZES);
+  }
+  link.fetchPriority = 'high';
+  document.head.appendChild(link);
 }

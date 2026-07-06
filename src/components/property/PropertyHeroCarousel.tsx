@@ -12,10 +12,15 @@ import {
   propertyHeroImageSrcSet,
 } from '../../lib/propertyImages';
 
-/** Cinematic crossfade — slow editorial pacing (1100–1400ms). */
-const FADE_MS = 1250;
-const REVEAL_MS = 680;
-const FADE_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
+import {
+  PROPERTY_HERO_FADE_MS,
+  PROPERTY_HERO_REVEAL_MS,
+  PROPERTY_MOTION_EASE,
+} from '../../lib/propertyMotion';
+
+const FADE_MS = PROPERTY_HERO_FADE_MS;
+const REVEAL_MS = PROPERTY_HERO_REVEAL_MS;
+const FADE_EASING = PROPERTY_MOTION_EASE;
 const SWIPE_THRESHOLD_PX = 52;
 const DESKTOP_LAYOUT_PX = 640;
 
@@ -100,6 +105,8 @@ function HeroImage({
       srcSet={srcSet}
       sizes={srcSet ? PROPERTY_HERO_IMAGE_SIZES : undefined}
       alt={alt}
+      width={1280}
+      height={800}
       className={`${className ?? ''} ${orientationClass} xpx-cinema-hero-image`.trim()}
       style={{
         ...revealStyle,

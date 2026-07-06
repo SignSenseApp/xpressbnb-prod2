@@ -31,6 +31,8 @@ type GuestOnboardingContextValue = {
   activeOverlay: OnboardingOverlay;
   isOnboardingSettled: boolean;
   canShowInstallPrompt: boolean;
+  propertyBookingActive: boolean;
+  setPropertyBookingActive: (active: boolean) => void;
   recordPropertyRowVisible: () => void;
   recordListingEngagement: () => void;
   dismissWelcome: () => void;
@@ -71,11 +73,17 @@ export function GuestOnboardingProvider({
   const [listingBrowseCount, setListingBrowseCount] = useState(
     () => getOnboardingEngagement().listingBrowseCount,
   );
+  const [propertyBookingActive, setPropertyBookingActiveState] = useState(false);
+  const latchPropertyBookingActive = useCallback(() => {
+    setPropertyBookingActiveState(true);
+  }, []);
   const welcomePauseRef = useRef<number | null>(null);
   const locationOpenedRef = useRef(false);
   const prevPromptOpenRef = useRef(nearby.isPromptOpen);
 
-  const activeOverlay = enabled ? overlayForPhase(phase) : null;
+  const rawOverlay = enabled ? overlayForPhase(phase) : null;
+  const activeOverlay =
+    propertyBookingActive && rawOverlay === 'welcome' ? null : rawOverlay;
 
   const advanceAfterLocation = useCallback(() => {
     if (!hasWelcomeOfferSeen()) {
@@ -180,6 +188,8 @@ export function GuestOnboardingProvider({
       activeOverlay,
       isOnboardingSettled,
       canShowInstallPrompt,
+      propertyBookingActive,
+      setPropertyBookingActive: latchPropertyBookingActive,
       recordPropertyRowVisible,
       recordListingEngagement,
       dismissWelcome,
@@ -190,6 +200,8 @@ export function GuestOnboardingProvider({
       activeOverlay,
       isOnboardingSettled,
       canShowInstallPrompt,
+      propertyBookingActive,
+      latchPropertyBookingActive,
       recordPropertyRowVisible,
       recordListingEngagement,
       dismissWelcome,

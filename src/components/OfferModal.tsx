@@ -368,7 +368,7 @@ export default function OfferModal({
         style={{
           background: 'var(--xpx-surface)',
           border: '1px solid var(--xpx-border)',
-          boxShadow: '0 24px 64px rgba(15,23,42,0.18)',
+          boxShadow: 'var(--xpx-shadow-overlay)',
           maxHeight: '92svh',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
@@ -409,8 +409,8 @@ export default function OfferModal({
               className="rounded-2xl p-4"
               style={{
                 background:
-                  'linear-gradient(135deg, rgba(80,200,120,0.10) 0%, var(--xpx-surface-light) 100%)',
-                border: '1px solid rgba(80,200,120,0.28)',
+                  'linear-gradient(135deg, var(--xpx-accent-a12) 0%, var(--xpx-surface-light) 100%)',
+                border: '1px solid var(--xpx-accent-a28)',
               }}
             >
               {/* Listed | Offered | Total — three stat columns, comfortable
@@ -441,9 +441,9 @@ export default function OfferModal({
                 <div
                   className="mt-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
                   style={{
-                    background: 'rgba(80,200,120,0.12)',
+                    background: 'var(--xpx-accent-a12)',
                     color: '#3dae68',
-                    border: '1px solid rgba(80,200,120,0.32)',
+                    border: '1px solid var(--xpx-accent-a32)',
                   }}
                 >
                   <ArrowDown className="w-3 h-3" />
@@ -596,7 +596,7 @@ export default function OfferModal({
               style={{
                 background: theme.accent,
                 color: '#ffffff',
-                boxShadow: '0 8px 32px rgba(80,200,120,0.32)',
+                boxShadow: 'var(--xpx-cta-glow)',
               }}
             >
               <span className="inline-flex items-center justify-center gap-2">

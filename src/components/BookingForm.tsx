@@ -79,12 +79,7 @@ function formatDate(date: Date): string {
 function ErrorBanner({ message }: { message: string }) {
   return (
     <div
-      className="mt-3 rounded-xl border px-4 py-3 text-sm font-medium"
-      style={{
-        background: 'rgba(254,242,242,0.9)',
-        borderColor: 'rgba(254,202,202,0.9)',
-        color: '#991B1B',
-      }}
+      className="mt-3 rounded-xl px-4 py-3 text-sm font-medium xpx-error-banner"
       role="alert"
     >
       {message}
@@ -115,7 +110,7 @@ function BookingStepLabels({
           <span
             className={
               step.done
-                ? 'text-emerald-700'
+                ? 'text-[var(--accent-dark)]'
                 : step.active
                   ? 'text-xpx-text'
                   : 'text-xpx-subtle'
@@ -155,9 +150,29 @@ export default function BookingForm({
   const [promoError, setPromoError] = useState<string | null>(null);
   const [honeypot, setHoneypot] = useState('');
   const formOpenedAtRef = useRef(createInquiryFormOpenedAt());
+  const [submitGuardMessage, setSubmitGuardMessage] = useState<string | null>(null);
+  const [showFieldErrors, setShowFieldErrors] = useState(false);
 
   useEffect(() => {
     formOpenedAtRef.current = createInquiryFormOpenedAt();
+  }, [property.id]);
+
+  useEffect(() => {
+    const tick = () => {
+      const cooldown = getInquiryCooldownRemainingMs();
+      if (cooldown > 0) {
+        setSubmitGuardMessage(inquiryCooldownMessage(cooldown));
+        return;
+      }
+      if (isInquiryInteractionTooFast(formOpenedAtRef.current)) {
+        setSubmitGuardMessage(inquiryTooFastMessage());
+        return;
+      }
+      setSubmitGuardMessage(null);
+    };
+    tick();
+    const id = window.setInterval(tick, 500);
+    return () => window.clearInterval(id);
   }, [property.id]);
   const [transitionPhase, setTransitionPhase] = useState<InquiryTransitionPhase | null>(null);
   const pendingSuccessRef = useRef<InquirySuccessSnapshot | null>(null);
@@ -386,6 +401,7 @@ export default function BookingForm({
 
     const validationError = validateForm();
     if (validationError) {
+      setShowFieldErrors(true);
       setErrorMessage(validationError);
       trackXpressEvent('inquiry_submit_failed', {
         ...analyticsScope,
@@ -410,7 +426,7 @@ export default function BookingForm({
     try {
       const available = await assertDatesAvailable(checkIn, checkOut);
       if (!available) {
-        setErrorMessage('Booking unavailable');
+        setErrorMessage('Those dates are no longer available — please pick different dates.');
         trackXpressEvent('inquiry_submit_failed', {
           ...analyticsScope,
           error_category: 'availability',
@@ -485,7 +501,9 @@ export default function BookingForm({
     } catch (error) {
       logSupabaseError('BookingForm inquiry submit', error);
       const errMsg =
-        error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+        error instanceof Error
+          ? error.message
+          : 'Oops, something went wrong — please try again or continue via WhatsApp below.';
       setErrorMessage(errMsg);
       setShowWhatsAppFallback(true);
       trackXpressEvent('inquiry_submit_failed', {
@@ -507,6 +525,10 @@ export default function BookingForm({
   const hasDetails = Boolean(
     formData.guest_name.trim() && formData.guest_email.trim() && formData.guest_phone.trim(),
   );
+  const nameInvalid = showFieldErrors && !formData.guest_name.trim();
+  const emailInvalid = showFieldErrors && Boolean(guestEmailError(formData.guest_email));
+  const phoneInvalid =
+    showFieldErrors && normalizePhoneDigits(formData.guest_phone).length !== 10;
 
   const prevGuestsStepRef = useRef(false);
   useEffect(() => {
@@ -560,9 +582,9 @@ export default function BookingForm({
     >
       <InquiryHoneypotField value={honeypot} onChange={setHoneypot} />
       {numberOfDays > 0 && (
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-xl -mt-1">
-          <span className="text-sm text-gray-500">Total</span>
-          <span className="text-base font-bold text-gray-900 tabular-nums">
+        <div className="flex items-center justify-between px-4 py-3 border-b rounded-t-xl -mt-1" style={{ borderColor: 'var(--xpx-border)', background: 'var(--xpx-surface-light)' }}>
+          <span className="text-sm text-xpx-muted">Total</span>
+          <span className="text-base font-bold text-xpx-text tabular-nums">
             ₹{totalPrice.toLocaleString('en-IN')}
           </span>
         </div>
@@ -621,7 +643,14 @@ export default function BookingForm({
             className="xpx-input"
             placeholder="Your name"
             autoComplete="name"
+            aria-invalid={nameInvalid || undefined}
+            aria-describedby={nameInvalid ? 'guest-name-error' : undefined}
           />
+          {nameInvalid && (
+            <p id="guest-name-error" className="mt-1.5 text-xs text-red-600">
+              Please enter your name
+            </p>
+          )}
         </div>
 
         <div>
@@ -637,7 +666,14 @@ export default function BookingForm({
             className="xpx-input"
             placeholder="you@email.com"
             autoComplete="email"
+            aria-invalid={emailInvalid || undefined}
+            aria-describedby={emailInvalid ? 'guest-email-error' : undefined}
           />
+          {emailInvalid && (
+            <p id="guest-email-error" className="mt-1.5 text-xs text-red-600">
+              {guestEmailError(formData.guest_email)}
+            </p>
+          )}
         </div>
 
         <div className="md:col-span-2">
@@ -654,10 +690,18 @@ export default function BookingForm({
             onChange={(e) => setFormData({ ...formData, guest_phone: e.target.value })}
             className="xpx-input"
             placeholder="10-digit mobile"
+            aria-invalid={phoneInvalid || undefined}
+            aria-describedby={phoneInvalid ? 'guest-phone-error' : 'guest-phone-hint'}
           />
-          <p className="text-[11px] text-xpx-subtle mt-1.5 leading-relaxed">
-            Used so we can reach you about your inquiry.
-          </p>
+          {phoneInvalid ? (
+            <p id="guest-phone-error" className="text-[11px] text-red-600 mt-1.5 leading-relaxed">
+              Please enter a valid 10-digit phone number
+            </p>
+          ) : (
+            <p id="guest-phone-hint" className="text-[11px] text-xpx-subtle mt-1.5 leading-relaxed">
+              Used so we can reach you about your inquiry.
+            </p>
+          )}
         </div>
       </div>
 
@@ -670,7 +714,7 @@ export default function BookingForm({
             type="checkbox"
             checked={includeDecoration}
             onChange={(e) => setIncludeDecoration(e.target.checked)}
-            className="w-5 h-5 mt-0.5 rounded border-xpx-border text-emerald-600 focus:ring-emerald-500"
+            className="w-5 h-5 mt-0.5 rounded border-xpx-border accent-[var(--accent)]"
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -717,9 +761,12 @@ export default function BookingForm({
           )}
         </div>
         {appliedPromo ? (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 flex items-start gap-3">
-            <Tag className="w-4 h-4 text-emerald-700 mt-0.5 shrink-0" aria-hidden />
-            <div className="text-sm text-emerald-900 min-w-0">
+          <div
+            className="rounded-xl p-3 flex items-start gap-3"
+            style={{ border: '1px solid var(--xpx-accent-a28)', background: 'var(--xpx-accent-a12)' }}
+          >
+            <Tag className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--accent-dark)' }} aria-hidden />
+            <div className="text-sm min-w-0" style={{ color: 'var(--accent-dark)' }}>
               <p className="font-semibold">
                 <span className="font-mono">{appliedPromo.code}</span> applied
               </p>
@@ -765,7 +812,7 @@ export default function BookingForm({
               guestTotal={pricingQuote.guestTotal}
             />
             {totalSaved > 0 && (
-              <p className="text-xs font-semibold text-emerald-700 text-right mt-2">
+              <p className="text-xs font-semibold text-right mt-2" style={{ color: 'var(--accent-dark)' }}>
                 You save ₹{totalSaved.toLocaleString('en-IN')}
               </p>
             )}
@@ -781,19 +828,23 @@ export default function BookingForm({
       {errorMessage && <ErrorBanner message={errorMessage} />}
 
       {showWhatsAppFallback && errorMessage && (
-        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/80 px-4 py-4 text-center">
+        <div
+          className="rounded-2xl px-4 py-4 text-center"
+          style={{ border: '1px solid var(--xpx-accent-a28)', background: 'var(--xpx-accent-a12)' }}
+        >
           <p className="text-sm font-semibold text-xpx-text mb-1">
-            Verification temporarily unavailable
+            Oops, something went wrong
           </p>
           <p className="text-xs text-xpx-muted mb-3 leading-relaxed">
-            Contact us directly on WhatsApp to complete your booking request.
+            We couldn&apos;t send your inquiry right now. You can try again or continue on
+            WhatsApp — we&apos;ll help you finish.
           </p>
           <a
             href={inquiryWhatsAppUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-white"
-            style={{ background: '#25D366' }}
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            style={{ background: 'var(--xpx-whatsapp)', minHeight: 44 }}
             onClick={() => {
               trackXpressEvent('inquiry_whatsapp_fallback', {
                 ...analyticsScope,
@@ -801,7 +852,7 @@ export default function BookingForm({
               });
             }}
           >
-            Continue on WhatsApp →
+            Continue on WhatsApp
           </a>
         </div>
       )}
@@ -809,10 +860,10 @@ export default function BookingForm({
       <div className="sticky bottom-0 z-10 -mx-1 px-1 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-[var(--xpx-surface)] via-[var(--xpx-surface)] to-transparent" id="booking-step-submit">
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || Boolean(submitGuardMessage)}
           aria-busy={loading}
-          className="w-full py-3.5 rounded-2xl font-bold text-[15px] text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 motion-reduce:transition-none xpx-press"
-          style={{ background: 'var(--xpx-cta)', boxShadow: 'var(--xpx-cta-glow)', minHeight: 52 }}
+          className="xpx-btn-primary w-full rounded-2xl py-3.5 text-[15px] disabled:opacity-50 disabled:cursor-not-allowed motion-reduce:transition-none"
+          style={{ minHeight: 52 }}
         >
           {loading ? (
             <>
@@ -823,6 +874,11 @@ export default function BookingForm({
             inquiryCtaLabel('form_submit')
           )}
         </button>
+        {submitGuardMessage && (
+          <p className="text-[11px] text-xpx-muted text-center mt-2 leading-relaxed" role="status">
+            {submitGuardMessage}
+          </p>
+        )}
         <p className="text-[11px] text-xpx-subtle text-center mt-2 leading-relaxed">
           {GUEST_PRICING_NO_COMMISSION} {GUEST_PRICING_INQUIRY_TOTAL_NOTE}
         </p>

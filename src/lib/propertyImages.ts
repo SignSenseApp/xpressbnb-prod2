@@ -7,9 +7,19 @@ export const PROPERTY_CARD_IMAGE_SIZES =
   '(max-width: 639px) 85vw, (max-width: 1023px) 45vw, 380px';
 
 /** Property page hero — full-bleed gallery above the fold. */
-export const PROPERTY_HERO_IMAGE_WIDTHS = [480, 768, 1280, 1600] as const;
+export const PROPERTY_HERO_IMAGE_WIDTHS = [375, 480, 768, 1280, 1600] as const;
 
 export const PROPERTY_HERO_IMAGE_SIZES = '100vw';
+
+/** Default hero `src` width — mobile-first LCP (not the largest srcset entry). */
+export const PROPERTY_HERO_DEFAULT_WIDTH = PROPERTY_HERO_IMAGE_WIDTHS[2];
+
+/**
+ * Lightbox / fullscreen viewer — progressive widths for pinch-zoom quality.
+ */
+export const PROPERTY_LIGHTBOX_IMAGE_WIDTHS = [768, 1280, 1920] as const;
+
+export const PROPERTY_LIGHTBOX_IMAGE_SIZES = '92vw';
 
 /**
  * Desktop PropertyGallery side-column thumbnails — ~⅓ grid width, ~⅓ gallery height.
@@ -109,10 +119,9 @@ export function propertyHeroImageUrl(url: string, width: number): string {
   return buildResizedImageUrl(url, width, HERO_IMAGE_QUALITY);
 }
 
-/** Fallback `src` for property page hero — largest hero width. */
+/** Fallback `src` for property page hero — mobile-first default width. */
 export function propertyHeroImageSrc(url: string): string {
-  const maxW = PROPERTY_HERO_IMAGE_WIDTHS[PROPERTY_HERO_IMAGE_WIDTHS.length - 1];
-  return propertyHeroImageUrl(url, maxW);
+  return propertyHeroImageUrl(url, PROPERTY_HERO_DEFAULT_WIDTH);
 }
 
 /** Responsive srcset for property page hero images. */
@@ -151,5 +160,29 @@ export function propertyGalleryThumbSrcSet(url: string): string | undefined {
 
   return PROPERTY_GALLERY_THUMB_WIDTHS.map(
     (w) => `${propertyGalleryThumbUrl(trimmed, w)} ${w}w`,
+  ).join(', ');
+}
+
+/** Resize-aware URL for lightbox at a given width. */
+export function propertyLightboxImageUrl(url: string, width: number): string {
+  return buildResizedImageUrl(url, width, HERO_IMAGE_QUALITY);
+}
+
+/** Fallback `src` for lightbox — mid-width for fast open. */
+export function propertyLightboxImageSrc(url: string): string {
+  return propertyLightboxImageUrl(url, PROPERTY_LIGHTBOX_IMAGE_WIDTHS[1]);
+}
+
+/** Responsive srcset for lightbox images. */
+export function propertyLightboxImageSrcSet(url: string): string | undefined {
+  const trimmed = url.trim();
+  if (!trimmed) return undefined;
+
+  const canResize =
+    trimmed.includes('/storage/v1/object/public/') || trimmed.includes('images.pexels.com');
+  if (!canResize) return undefined;
+
+  return PROPERTY_LIGHTBOX_IMAGE_WIDTHS.map(
+    (w) => `${propertyLightboxImageUrl(trimmed, w)} ${w}w`,
   ).join(', ');
 }

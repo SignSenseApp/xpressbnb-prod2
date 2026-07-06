@@ -1,12 +1,12 @@
 /**
- * Inquiry-first product language — single source for guest CTAs.
- * Avoid OTA terms (Book Now, Reserve, Instant Book) on the guest path.
+ * Guest-facing CTA copy — direct, short, property-page first.
  */
 
 export type InquiryCtaContext =
   | 'property_no_dates'
   | 'property_with_dates'
   | 'host_card'
+  | 'host_concierge'
   | 'form_submit'
   | 'offer_submit'
   | 'modal_entry'
@@ -20,25 +20,27 @@ export function openingArrivalCtaLabel(hasDates: boolean): string {
 export function inquiryCtaLabel(context: InquiryCtaContext): string {
   switch (context) {
     case 'property_no_dates':
-      return 'Choose your stay';
+      return 'Book now';
     case 'property_with_dates':
-      return 'Send your request';
+      return 'Book now';
     case 'host_card':
-      return 'Request to book';
+      return 'Book now';
+    case 'host_concierge':
+      return 'Text us on WhatsApp';
     case 'form_submit':
-      return 'Send your request';
+      return 'Book now';
     case 'offer_submit':
       return 'Send your offer';
     case 'modal_entry':
-      return 'Request to book';
+      return 'Book now';
     case 'artist_whatsapp':
       return 'Request via WhatsApp';
     default:
-      return 'Send inquiry';
+      return 'Book now';
   }
 }
 
-export const INQUIRY_SENDING_LABEL = 'Preparing your request…';
+export const INQUIRY_SENDING_LABEL = 'Sending your inquiry…';
 
 export const INQUIRY_HOST_TAGLINE =
   'We bring genuine travel inquiries directly to hosts.';

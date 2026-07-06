@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle, MapPin, Shield, Sparkles, Headphones } from 'lucide-react';
+import { CheckCircle, MapPin, Shield, Headphones } from 'lucide-react';
 import { fetchPublicHost } from '../lib/hostPublicCache';
 import { theme } from '../lib/theme';
 import { safeHostDisplayName, safeHostInitial, stripPhoneLike } from '../lib/host';
 import { TRUST_BADGE_COPY } from '../lib/trustBadgeCopy';
-import { inquiryCtaLabel } from '../lib/inquiryCopy';
-import { buildTeamWhatsAppLink, TEAM_BRAND_NAME } from '../lib/team';
+import { buildTeamWhatsAppLink } from '../lib/team';
 import { scrollToId } from '../lib/smoothScroll';
-import PropertyTrustNotes from './property/PropertyTrustNotes';
+import { inquiryCtaLabel } from '../lib/inquiryCopy';
 
 interface HostInfo {
   id: string;
@@ -31,8 +30,8 @@ interface HostCardProps {
 
 /**
  * HostCard renders a trustworthy snapshot of the property host using real
- * data from the `hosts` table. Before quality review: no host phone — primary CTA routes
- * to inquiry submit; optional concierge line is labeled clearly.
+ * data from the `hosts` table. Before quality review: no host phone — optional
+ * concierge line is labeled clearly. Primary inquiry CTA lives in the sidebar.
  */
 export default function HostCard({
   hostId,
@@ -68,7 +67,7 @@ export default function HostCard({
     };
   }, [hostId]);
 
-  const handleRequestToBook = () => {
+  const handleViewBooking = () => {
     if (onRequestToBook) {
       onRequestToBook();
       return;
@@ -108,8 +107,8 @@ export default function HostCard({
       <div
         className={`rounded-2xl p-6 text-sm ${className}`}
         style={{
-          background: 'rgba(80,200,120,0.08)',
-          border: '1px solid rgba(80,200,120,0.3)',
+          background: 'var(--xpx-accent-a12)',
+          border: '1px solid var(--xpx-accent-a28)',
           color: theme.accentDark,
         }}
       >
@@ -160,9 +159,9 @@ export default function HostCard({
               <span
                 className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full"
                 style={{
-                  background: 'rgba(80,200,120,0.12)',
+                  background: 'var(--xpx-accent-a12)',
                   color: theme.accentDark,
-                  border: '1px solid rgba(80,200,120,0.3)',
+                  border: '1px solid var(--xpx-accent-a28)',
                 }}
                 title={TRUST_BADGE_COPY.hostKyc.title}
               >
@@ -198,15 +197,14 @@ export default function HostCard({
       <div className="mt-5 space-y-2.5">
         <button
           type="button"
-          onClick={handleRequestToBook}
-          className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition-all hover:scale-[1.01]"
+          onClick={handleViewBooking}
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm text-white transition-colors"
           style={{
             background: 'var(--xpx-cta)',
-            color: '#ffffff',
-            boxShadow: '0 10px 32px rgba(255,56,92,0.28)',
+            boxShadow: 'var(--xpx-cta-glow)',
+            minHeight: 48,
           }}
         >
-          <Sparkles className="w-4 h-4" />
           {inquiryCtaLabel('host_card')}
         </button>
         <button
@@ -216,16 +214,15 @@ export default function HostCard({
           style={{
             background: 'var(--xpx-surface)',
             border: '1px solid var(--xpx-border-strong)',
+            minHeight: 48,
           }}
         >
           <Headphones className="w-4 h-4" />
-          Ask {TEAM_BRAND_NAME}
+          {inquiryCtaLabel('host_concierge')}
         </button>
         <p className="text-[11px] text-xpx-muted text-center leading-snug pt-0.5">
-          Quality-reviewed inquiries share host contact after XpressBNB Operations review. Questions
-          first? Use concierge — not direct host messaging yet.
+          Book first — we&apos;ll connect you with the host after your request goes through.
         </p>
-        <PropertyTrustNotes />
       </div>
     </section>
   );

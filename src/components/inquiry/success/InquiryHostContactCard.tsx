@@ -34,19 +34,15 @@ export default function InquiryHostContactCard({
       className={`relative overflow-hidden rounded-3xl text-left ${className}`}
       style={{
         background: prominent
-          ? 'linear-gradient(165deg, #ffffff 0%, #ecfdf5 100%)'
-          : 'var(--xpx-surface, #fff)',
-        border: prominent ? '1px solid rgba(5,150,105,0.28)' : '1px solid var(--xpx-border)',
-        boxShadow: prominent
-          ? '0 20px 56px rgba(5,150,105,0.14), 0 0 0 1px rgba(5,150,105,0.06)'
-          : '0 16px 48px rgba(15,23,42,0.06)',
+          ? 'linear-gradient(165deg, var(--xpx-surface) 0%, var(--xpx-verified-bg) 100%)'
+          : 'var(--xpx-surface)',
+        border: prominent ? '1px solid var(--xpx-accent-a28)' : '1px solid var(--xpx-border)',
+        boxShadow: prominent ? 'var(--xpx-shadow-floating)' : 'var(--xpx-shadow-card)',
       }}
       aria-labelledby="host-contact-heading"
     >
       <div className="p-5 sm:p-6">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-800">
-          Your host
-        </p>
+        <p className="xpx-eyebrow">Your host</p>
         <h3
           id="host-contact-heading"
           className={`mt-1 font-extrabold text-xpx-text tracking-tight ${
@@ -104,7 +100,7 @@ export default function InquiryHostContactCard({
               style={{
                 background: 'var(--xpx-surface)',
                 border: '2px solid var(--xpx-border-strong)',
-                boxShadow: '0 8px 24px rgba(15,23,42,0.06)',
+                boxShadow: 'var(--xpx-shadow-card)',
               }}
             >
               <Phone className="h-5 w-5" aria-hidden />
@@ -112,7 +108,7 @@ export default function InquiryHostContactCard({
             </a>
           </div>
         ) : (
-          <p className="mt-4 text-sm text-xpx-muted leading-relaxed rounded-2xl px-4 py-3.5 bg-slate-50 border border-slate-100">
+          <p className="mt-4 text-sm text-xpx-muted leading-relaxed rounded-2xl px-4 py-3.5 border" style={{ background: 'var(--xpx-surface-light)', borderColor: 'var(--xpx-border)' }}>
             We couldn&apos;t load the host number right now. Your request was saved — our team will
             share contact details shortly.
           </p>

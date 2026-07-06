@@ -3,10 +3,11 @@ import { inquiryCtaLabel, openingArrivalCtaLabel } from './inquiryCopy';
 
 describe('inquiryCopy', () => {
   it('uses inquiry labels per context', () => {
-    expect(inquiryCtaLabel('property_no_dates')).toBe('Choose your stay');
-    expect(inquiryCtaLabel('property_with_dates')).toBe('Send your request');
-    expect(inquiryCtaLabel('host_card')).toBe('Request to book');
-    expect(inquiryCtaLabel('form_submit')).toBe('Send your request');
+    expect(inquiryCtaLabel('property_no_dates')).toBe('Book now');
+    expect(inquiryCtaLabel('property_with_dates')).toBe('Book now');
+    expect(inquiryCtaLabel('host_card')).toBe('Book now');
+    expect(inquiryCtaLabel('host_concierge')).toBe('Text us on WhatsApp');
+    expect(inquiryCtaLabel('form_submit')).toBe('Book now');
   });
 
   it('uses editorial arrival labels for the opening spread', () => {

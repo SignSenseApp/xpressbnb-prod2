@@ -58,6 +58,7 @@ html.lenis body {
   --cta-red-dark: #047857;
 
   --xpx-base: #fafaf8;
+  --xpx-page: #fafaf8;
   --xpx-surface: #ffffff;
   --xpx-surface-light: #f8fafc;
   --xpx-surface-elevated: #f8fafc;
@@ -89,6 +90,25 @@ html.lenis body {
 
   --xpx-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 24px rgba(15, 23, 42, 0.06);
   --xpx-shadow-hover: 0 8px 24px rgba(15, 23, 42, 0.1);
+  --xpx-shadow-floating: 0 12px 40px rgba(15, 23, 42, 0.08);
+  --xpx-shadow-overlay: 0 16px 40px rgba(15, 23, 42, 0.14);
+
+  --xpx-overlay-dark: rgba(15, 23, 42, 0.6);
+  --xpx-overlay-scrim: rgba(15, 23, 42, 0.32);
+  --xpx-overlay-lightbox: rgba(15, 23, 42, 0.95);
+  --xpx-on-dark: #ffffff;
+  --xpx-whatsapp: #25d366;
+
+  --xpx-error: #991b1b;
+  --xpx-error-bg: rgba(254, 242, 242, 0.9);
+  --xpx-error-border: rgba(254, 202, 202, 0.9);
+
+  --xpx-accent-a12: rgba(5, 150, 105, 0.12);
+  --xpx-accent-a14: rgba(5, 150, 105, 0.14);
+  --xpx-accent-a18: rgba(5, 150, 105, 0.18);
+  --xpx-accent-a28: rgba(5, 150, 105, 0.28);
+  --xpx-accent-a32: rgba(5, 150, 105, 0.32);
+  --xpx-accent-a36: rgba(5, 150, 105, 0.36);
 
   /** Layout rhythm — 8pt grid, Apple-like section breathing room */
   --xpx-safe-top: env(safe-area-inset-top, 0px);
@@ -150,8 +170,8 @@ html.lenis body {
 }
 
 @keyframes glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(80, 200, 120, 0.22); }
-  50%       { box-shadow: 0 0 40px rgba(80, 200, 120, 0.36); }
+  0%, 100% { box-shadow: 0 0 20px var(--xpx-accent-a28); }
+  50%       { box-shadow: 0 0 40px var(--xpx-accent-a36); }
 }
 
 /* ── Base ── */
@@ -577,6 +597,52 @@ html.lenis body {
 
   .xpx-mobile-booking-bar {
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  .xpx-property-section-h2 {
+    @apply text-lg sm:text-xl font-extrabold tracking-tight text-xpx-text;
+  }
+
+  .xpx-error-banner {
+    background: var(--xpx-error-bg);
+    border: 1px solid var(--xpx-error-border);
+    color: var(--xpx-error);
+  }
+
+  .xpx-property-gallery-lightbox {
+    background: var(--xpx-overlay-lightbox);
+  }
+
+  .xpx-mobile-booking-bar-surface {
+    background: rgba(255, 255, 255, 0.96);
+    border-top: 1px solid var(--xpx-border);
+    box-shadow: var(--xpx-shadow-floating);
+  }
+
+  .xpx-cinema-hero {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .xpx-cinema-hero-nav {
+    @apply absolute top-1/2 z-10 -translate-y-1/2 rounded-full p-2 transition-colors;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--xpx-border);
+    box-shadow: var(--xpx-shadow-card);
+    color: var(--xpx-text);
+  }
+
+  .xpx-cinema-hero-nav:hover {
+    background: #ffffff;
+    box-shadow: var(--xpx-shadow-hover);
+  }
+
+  .xpx-cinema-hero-nav--left {
+    left: 0.75rem;
+  }
+
+  .xpx-cinema-hero-nav--right {
+    right: 0.75rem;
   }
   .xpx-card {
     background: var(--xpx-surface);

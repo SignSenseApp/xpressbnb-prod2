@@ -27,7 +27,6 @@ import PropertyGallery from '../components/property/PropertyGallery';
 import DeferredMount from '../components/property/DeferredMount';
 import { logSupabaseError, supabase } from '../lib/supabase';
 import { getPublicPropertyById } from '../lib/publicListings';
-import { fetchPublicHost } from '../lib/hostPublicCache';
 import { getAmenityIcon, listPropertyAmenities } from '../lib/amenities';
 import { listPropertyImages } from '../lib/propertyImages';
 import { generatePropertyStructuredData, generateBreadcrumbStructuredData } from '../lib/seo';
@@ -46,17 +45,18 @@ import {
 import { buildGuestPricingQuote, formatInr } from '../lib/guestPricingEngine';
 import { GUEST_PRICING_TRIP_HINT } from '../lib/guestPricingCopy';
 import { inquiryCtaLabel } from '../lib/inquiryCopy';
-import { safeHostDisplayName } from '../lib/host';
 import { parseTripFromSearch } from '../lib/tripSearch';
 import { navigateTo } from '../lib/navigation';
 import { orchestratedScrollTo, orchestratedScrollToId } from '../lib/scrollOrchestrator';
 import { scrollToElement } from '../lib/smoothScroll';
 import { recordRecentlyViewed } from '../lib/recentlyViewed';
 import { trackXpressEvent } from '../lib/analytics';
+import { preloadPropertyHeroImage } from '../lib/propertyPrefetch';
 import PropertySocialProofBand from '../components/property/PropertySocialProofBand';
-import PropertyGuestsAlsoViewed from '../components/property/PropertyGuestsAlsoViewed';
 import SaveListingButton from '../components/SaveListingButton';
 import PropertyTrustLine from '../components/PropertyTrustLine';
+import { useGuestOnboardingOptional } from '../contexts/GuestOnboardingContext';
+import { scrollToId } from '../lib/smoothScroll';
 import { snapshotFromProperty } from '../lib/savedListingsStorage';
 import { useInViewport } from '../hooks/useGalleryMotion';
 import {
@@ -81,9 +81,9 @@ function SidebarFallback() {
 }
 
 /**
- * PropertyPage — redesigned around an Apple / Expedia-grade reading flow:
- *   gallery → title + stats → trust pills → about → amenities → host →
- *   why-guests-love → location & nearby → reviews → house rules.
+ * PropertyPage — narrative reading flow:
+ *   gallery → title + stats → about → amenities → host → location →
+ *   confidence (trust + highlights + reviews) → house rules → similar stays.
  *
  * The right column hosts a sticky booking sidebar with the existing
  * BookingCalendar / BookingForm / OfferModal pipelines wired in.
@@ -103,12 +103,16 @@ export default function PropertyPage() {
   const [selectedCheckOut, setSelectedCheckOut] = useState<Date | null>(null);
   const [totalPrice, setTotalPrice] = useState(0);
   const [showOfferModal, setShowOfferModal] = useState(false);
-  const [hostName, setHostName] = useState<string | null>(null);
   const [sidebarForced, setSidebarForced] = useState(false);
   const [numGuests, setNumGuests] = useState(2);
   const [isMobileLayout, setIsMobileLayout] = useState(
     () => typeof window !== 'undefined' && window.innerWidth < 1024,
   );
+  const guestOnboarding = useGuestOnboardingOptional();
+
+  const latchWelcomeSuppression = useCallback(() => {
+    guestOnboarding?.setPropertyBookingActive(true);
+  }, [guestOnboarding]);
 
   const sidebarRef = useRef<HTMLElement>(null);
   const sidebarNearView = useInViewport(sidebarRef, 0, SIDEBAR_MOUNT_ROOT_MARGIN);
@@ -244,9 +248,7 @@ export default function PropertyPage() {
           property_slug: data.slug ?? undefined,
           city: data.city,
         });
-        if (data.host_id) {
-          loadHostName(data.host_id);
-        }
+        preloadPropertyHeroImage(data.images);
         return;
       }
 
@@ -272,27 +274,13 @@ export default function PropertyPage() {
     }
   };
 
-  // Tiny separate query for the title block's "Hosted by …" line. The
-  // HostCard performs its own (richer) fetch for the host section further
-  // down — the duplicate select is intentional so the two surfaces remain
-  // independently re-renderable.
-  const loadHostName = async (hostId: string) => {
-    try {
-      const row = await fetchPublicHost(hostId);
-      if (row?.name) {
-        setHostName(safeHostDisplayName(row.name, 'Host'));
-      }
-    } catch (err) {
-      logSupabaseError('PropertyPage host name fetch', err);
-    }
-  };
-
   const getPropertyUrl = () => window.location.href;
 
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(getPropertyUrl());
       setCopied(true);
+      trackXpressEvent('share_clicked', { share_method: 'copy_link' });
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       logSupabaseError('Failed to copy property link', err);
@@ -303,6 +291,7 @@ export default function PropertyPage() {
     const text = `Check out this property: ${property?.title}\n${getPropertyUrl()}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, '_blank');
+    trackXpressEvent('share_clicked', { share_method: 'whatsapp' });
     setShowShareMenu(false);
   };
 
@@ -314,6 +303,9 @@ export default function PropertyPage() {
 
   const handleDateRangeSelect = useCallback(
     (checkIn: Date | null, checkOut: Date | null, price: number) => {
+      if (checkIn) {
+        latchWelcomeSuppression();
+      }
       setSelectedCheckIn(checkIn);
       setSelectedCheckOut(checkOut);
       setTotalPrice(price);
@@ -324,7 +316,7 @@ export default function PropertyPage() {
         });
       }
     },
-    [],
+    [latchWelcomeSuppression],
   );
 
   // Smooth-scroll the user from the mobile bottom action bar down to the
@@ -350,6 +342,7 @@ export default function PropertyPage() {
   }, [scrollToSidebar]);
 
   const handleCheckAvailability = useCallback(() => {
+    latchWelcomeSuppression();
     setSidebarForced(true);
     if (property) {
       trackXpressEvent('check_availability_click', {
@@ -357,12 +350,16 @@ export default function PropertyPage() {
         property_slug: property.slug ?? undefined,
         city: property.city,
       });
+      trackXpressEvent('booking_calendar_open', {
+        property_id: property.id,
+      });
     }
     scrollToBookingCalendar();
-  }, [property, scrollToBookingCalendar]);
+  }, [property, scrollToBookingCalendar, latchWelcomeSuppression]);
 
   const handleOpenBookingForm = useCallback(() => {
     if (!hasValidDates) return;
+    latchWelcomeSuppression();
     setSidebarForced(true);
     if (property) {
       trackXpressEvent('request_to_book_click', {
@@ -395,7 +392,7 @@ export default function PropertyPage() {
         orchestratedScrollTo('booking_contact', { highlight: true, skipIfVisible: true });
       });
     });
-  }, [hasValidDates, property, scrollToSidebar]);
+  }, [hasValidDates, property, scrollToSidebar, latchWelcomeSuppression]);
 
   const handlePrimaryBookingCta = useCallback(() => {
     if (hasValidDates) {
@@ -404,6 +401,14 @@ export default function PropertyPage() {
       handleCheckAvailability();
     }
   }, [hasValidDates, handleOpenBookingForm, handleCheckAvailability]);
+
+  const handleMobileBarCta = useCallback(() => {
+    if (showBooking) {
+      scrollToId('booking-step-submit', { offset: -100, duration: 0.8 });
+      return;
+    }
+    handlePrimaryBookingCta();
+  }, [showBooking, handlePrimaryBookingCta]);
 
   const handleEditDates = useCallback(() => {
     scrollToBookingCalendar();
@@ -430,6 +435,41 @@ export default function PropertyPage() {
     tripFromSearch.checkout,
     scrollToBookingCalendar,
   ]);
+
+  useEffect(() => {
+    if (!property || loading) return;
+
+    const sections: { id: string; depth: string }[] = [
+      { id: 'about-section', depth: '25' },
+      { id: 'amenities-section', depth: '50' },
+      { id: 'confidence-heading', depth: '75' },
+      { id: 'house-rules', depth: '100' },
+    ];
+
+    const seen = new Set<string>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const match = sections.find((s) => s.id === entry.target.id);
+          if (!match || seen.has(match.depth)) continue;
+          seen.add(match.depth);
+          trackXpressEvent('property_scroll_depth', {
+            property_id: property.id,
+            scroll_depth: match.depth,
+          });
+        }
+      },
+      { threshold: 0.35 },
+    );
+
+    for (const { id } of sections) {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    }
+
+    return () => observer.disconnect();
+  }, [property, loading]);
 
   const renderBookingColumn = () => (
     <>
@@ -461,7 +501,7 @@ export default function PropertyPage() {
               style={{
                 background: 'var(--xpx-surface)',
                 border: '1px solid var(--xpx-border-strong)',
-                boxShadow: '0 18px 56px rgba(15,23,42,0.10)',
+                boxShadow: 'var(--xpx-shadow-floating)',
               }}
             >
               <p className="xpx-eyebrow mb-3">Send inquiry</p>
@@ -628,7 +668,7 @@ export default function PropertyPage() {
         onHostLoginClick={() => navigateToPage('/auth/login')}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-5 xpx-property-page-main flex flex-col">
+      <main className="xpx-container pt-3 sm:pt-5 xpx-property-page-main flex flex-col">
         {/* Top action row — Back link on the left, Share menu on the right. */}
         <div className="flex items-center justify-between gap-3">
           <button
@@ -673,7 +713,7 @@ export default function PropertyPage() {
                   style={{
                     background: 'var(--xpx-surface)',
                     border: '1px solid var(--xpx-border)',
-                    boxShadow: '0 16px 40px rgba(15,23,42,0.14)',
+                    boxShadow: 'var(--xpx-shadow-overlay)',
                   }}
                 >
                   <button
@@ -741,7 +781,7 @@ export default function PropertyPage() {
           <div className="min-w-0 space-y-9 sm:space-y-12">
             {/* 1. TITLE BLOCK */}
             <header>
-              <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-extrabold tracking-tight text-xpx-text leading-[1.1]">
+              <h1 className="text-2xl sm:text-[26px] lg:text-[28px] font-extrabold tracking-tight text-xpx-text leading-[1.2]">
                 {propertyTitle}
               </h1>
               {(subtitle || property.is_verified) && (
@@ -755,7 +795,7 @@ export default function PropertyPage() {
                       style={{
                         background: 'var(--xpx-verified-bg)',
                         color: 'var(--xpx-verified)',
-                        border: '1px solid rgba(80, 200, 120, 0.28)',
+                        border: '1px solid var(--xpx-accent-a28)',
                       }}
                       title="Host has an active paid plan on XpressBnB — badge on this listing."
                     >
@@ -771,10 +811,6 @@ export default function PropertyPage() {
                 <span>
                   {[property.address, property.city, stateLabel].filter(Boolean).join(', ')}
                 </span>
-              </p>
-
-              <p className="mt-4 text-[15px] sm:text-base text-xpx-muted leading-relaxed line-clamp-2">
-                {firstParagraph(property.description)}
               </p>
 
               {/* Stats strip — uses inline dot separators on desktop, wraps to
@@ -800,69 +836,14 @@ export default function PropertyPage() {
                     {property.bathrooms === 1 ? 'bathroom' : 'bathrooms'}
                   </span>
                 </li>
-                <li className="inline-flex items-center gap-1.5 text-xpx-muted">
-                  Hosted by{' '}
-                  <span className="font-semibold text-xpx-text">
-                    {hostName ?? 'Host'}
-                  </span>
-                </li>
               </ul>
               <PropertySocialProofBand propertyId={property.id} city={property.city} />
             </header>
 
             <DeferredMount rootMargin="400px 0px">
-            {/* 2. TRUST PILLS ROW */}
-            <section>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                {getTrustPillsForProperty(property).map((pill) => (
-                  <div
-                    key={pill.title}
-                    className="rounded-2xl p-4 sm:p-5 flex items-start gap-3"
-                    style={{
-                      background: 'var(--xpx-surface)',
-                      border: '1px solid var(--xpx-border)',
-                      boxShadow: 'var(--xpx-shadow-card)',
-                    }}
-                  >
-                    <div
-                      className="shrink-0 mt-0.5 inline-flex items-center justify-center w-8 h-8 rounded-xl"
-                      style={{
-                        background:
-                          pill.tone === 'verified' ? 'var(--xpx-verified-bg)' : 'var(--xpx-trust-bg)',
-                      }}
-                    >
-                      {pill.tone === 'verified' ? (
-                        <CheckCircle
-                          className="w-4 h-4"
-                          style={{ color: 'var(--xpx-verified)' }}
-                          fill="rgba(80, 200, 120, 0.15)"
-                        />
-                      ) : (
-                        <ShieldCheck
-                          className="w-4 h-4"
-                          style={{ color: 'var(--xpx-trust)' }}
-                          fill="rgba(37, 99, 235, 0.12)"
-                        />
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-bold text-[13px] sm:text-sm text-xpx-text leading-snug">
-                        {pill.title}
-                      </p>
-                      <p className="text-xs text-xpx-muted mt-0.5 leading-snug">
-                        {pill.subtitle}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* 3. ABOUT THIS STAY */}
-            <section>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-xpx-text">
-                About this stay
-              </h2>
+            {/* About + amenities */}
+            <section id="about-section">
+              <h2 className="xpx-property-section-h2">About this stay</h2>
               <p className="mt-4 text-[15px] sm:text-base text-xpx-muted leading-relaxed whitespace-pre-line">
                 {property.description}
               </p>
@@ -873,9 +854,9 @@ export default function PropertyPage() {
                       key={h}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold"
                       style={{
-                        background: 'rgba(80,200,120,0.12)',
+                        background: 'var(--xpx-accent-a12)',
                         color: 'var(--xpx-warm-dark)',
-                        border: '1px solid rgba(80,200,120,0.32)',
+                        border: '1px solid var(--xpx-accent-a32)',
                       }}
                     >
                       <Sparkles className="w-3 h-3" />
@@ -886,13 +867,10 @@ export default function PropertyPage() {
               )}
             </section>
 
-            {/* 4. AMENITIES */}
             {amenitiesAll.length > 0 && (
-              <section>
+              <section id="amenities-section">
                 <div className="flex items-end justify-between gap-3 flex-wrap">
-                  <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-xpx-text">
-                    Amenities
-                  </h2>
+                  <h2 className="xpx-property-section-h2">Amenities</h2>
                   {moreAmenities > 0 && (
                     <a
                       href="#all-amenities"
@@ -918,7 +896,7 @@ export default function PropertyPage() {
                       >
                         <div
                           className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center"
-                          style={{ background: 'rgba(80,200,120,0.12)' }}
+                          style={{ background: 'var(--xpx-accent-a12)' }}
                         >
                           <Icon
                             className="w-4 h-4"
@@ -932,7 +910,6 @@ export default function PropertyPage() {
                     );
                   })}
                 </div>
-                {/* Hidden anchor target for "View all amenities" — full list. */}
                 {moreAmenities > 0 && (
                   <details
                     id="all-amenities"
@@ -941,10 +918,13 @@ export default function PropertyPage() {
                       background: 'var(--xpx-surface-light)',
                       border: '1px solid var(--xpx-border)',
                     }}
+                    onToggle={(e) => {
+                      if ((e.target as HTMLDetailsElement).open) {
+                        trackXpressEvent('amenities_toggled', { property_id: property.id });
+                      }
+                    }}
                   >
-                    <summary
-                      className="cursor-pointer text-sm font-semibold text-xpx-text inline-flex items-center gap-2 list-none"
-                    >
+                    <summary className="cursor-pointer text-sm font-semibold text-xpx-text inline-flex items-center gap-2 list-none">
                       <span>Show all {amenitiesAll.length} amenities</span>
                       <span
                         className="ml-auto transition-transform group-open:rotate-180 text-xpx-muted text-xs"
@@ -972,13 +952,8 @@ export default function PropertyPage() {
               </section>
             )}
 
-            <PropertyGuestsAlsoViewed property={property} placement="amenities" />
-
-            {/* 5. MEET YOUR HOST */}
             <section>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-xpx-text mb-5">
-                Meet your host
-              </h2>
+              <h2 className="xpx-property-section-h2 mb-5">Meet your host</h2>
               <Suspense fallback={null}>
                 <HostCard
                   hostId={property.host_id}
@@ -989,49 +964,8 @@ export default function PropertyPage() {
               </Suspense>
             </section>
 
-            {/* 6. WHY GUESTS LOVE STAYING HERE */}
             <section>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-xpx-text">
-                Why guests love staying here
-              </h2>
-              <div className="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                {WHY_LOVE_DEFAULTS.map((item) => {
-                  const Icon = WhyLoveIcon[item.icon];
-                  return (
-                    <div
-                      key={item.title}
-                      className="rounded-2xl p-4 sm:p-5"
-                      style={{
-                        background: 'var(--xpx-surface)',
-                        border: '1px solid var(--xpx-border)',
-                      }}
-                    >
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center"
-                        style={{
-                          background: 'rgba(80,200,120,0.14)',
-                          color: 'var(--xpx-warm-dark)',
-                        }}
-                      >
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <h3 className="mt-3 text-[15px] font-bold text-xpx-text leading-snug">
-                        {item.title}
-                      </h3>
-                      <p className="mt-1 text-xs sm:text-[13px] text-xpx-muted leading-relaxed">
-                        {item.subcopy}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* 7. LOCATION & NEARBY INSIGHTS */}
-            <section>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-xpx-text">
-                Location &amp; nearby insights
-              </h2>
+              <h2 className="xpx-property-section-h2">Location &amp; nearby insights</h2>
               <div className="mt-5 grid lg:grid-cols-[1fr_320px] gap-4 sm:gap-5 items-stretch">
                 <div
                   className="relative rounded-2xl overflow-hidden aspect-[16/10] lg:aspect-auto lg:min-h-[340px]"
@@ -1083,7 +1017,7 @@ export default function PropertyPage() {
                     className="mt-5 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold text-white transition-transform active:scale-[0.97]"
                     style={{
                       background: 'var(--accent)',
-                      boxShadow: '0 6px 18px rgba(80,200,120,0.28)',
+                      boxShadow: 'var(--xpx-cta-glow)',
                     }}
                   >
                     <MapPin className="w-3.5 h-3.5" />
@@ -1093,30 +1027,63 @@ export default function PropertyPage() {
               </div>
             </section>
 
-            {/* 8. REVIEWS */}
-            <Suspense fallback={null}>
-              <PropertyReviews property={property} />
-            </Suspense>
+            <section aria-labelledby="confidence-heading">
+              <h2 id="confidence-heading" className="xpx-property-section-h2">
+                Why book with confidence
+              </h2>
+              <ul className="mt-4 flex flex-col gap-3 sm:gap-2.5">
+                {getTrustPillsForProperty(property).map((pill) => (
+                  <li key={pill.title} className="flex items-start gap-2.5 text-sm">
+                    {pill.tone === 'verified' ? (
+                      <CheckCircle
+                        className="w-4 h-4 shrink-0 mt-0.5"
+                        style={{ color: 'var(--xpx-verified)' }}
+                      />
+                    ) : (
+                      <ShieldCheck
+                        className="w-4 h-4 shrink-0 mt-0.5"
+                        style={{ color: 'var(--xpx-trust)' }}
+                      />
+                    )}
+                    <span>
+                      <span className="font-semibold text-xpx-text">{pill.title}</span>
+                      <span className="text-xpx-muted"> — {pill.subtitle}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
 
-            {/* 8b. SIMILAR STAYS NEARBY */}
-            <Suspense fallback={null}>
-              <NearbyPropertiesSection originProperty={property} />
-            </Suspense>
-
-            {/* 9. HOUSE RULES */}
-            <section>
-              <div className="flex items-end justify-between gap-3 flex-wrap">
-                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-xpx-text">
-                  House rules
-                </h2>
-                <a
-                  href="#all-amenities"
-                  className="text-sm font-semibold underline-offset-4 hover:underline"
-                  style={{ color: 'var(--xpx-warm-dark)' }}
-                >
-                  View all house rules →
-                </a>
+              <h3 className="mt-8 text-lg sm:text-xl font-extrabold tracking-tight text-xpx-text">
+                Why guests love staying here
+              </h3>
+              <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+                {WHY_LOVE_DEFAULTS.map((item) => {
+                  const Icon = WhyLoveIcon[item.icon];
+                  return (
+                    <div key={item.title} className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Icon className="w-4 h-4 shrink-0" style={{ color: 'var(--accent)' }} />
+                        <h4 className="text-sm font-bold text-xpx-text leading-snug">
+                          {item.title}
+                        </h4>
+                      </div>
+                      <p className="mt-1 text-xs sm:text-[13px] text-xpx-muted leading-relaxed">
+                        {item.subcopy}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
+
+              <div className="mt-8">
+                <Suspense fallback={null}>
+                  <PropertyReviews property={property} />
+                </Suspense>
+              </div>
+            </section>
+
+            <section id="house-rules">
+              <h2 className="xpx-property-section-h2">House rules</h2>
               <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                 {houseRules.map((rule) => {
                   const Icon = HouseRuleIcon[rule.icon];
@@ -1132,8 +1099,9 @@ export default function PropertyPage() {
                       <div
                         className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center mt-0.5"
                         style={{
-                          background: 'rgba(15,23,42,0.04)',
+                          background: 'var(--xpx-surface-light)',
                           color: 'var(--xpx-text)',
+                          border: '1px solid var(--xpx-border)',
                         }}
                       >
                         <Icon className="w-4 h-4" />
@@ -1151,6 +1119,10 @@ export default function PropertyPage() {
                 })}
               </div>
             </section>
+
+            <Suspense fallback={null}>
+              <NearbyPropertiesSection originProperty={property} />
+            </Suspense>
             </DeferredMount>
           </div>
 
@@ -1170,59 +1142,48 @@ export default function PropertyPage() {
       {/* Mobile-only fixed bottom action bar — replaces the global
           MobileBottomNav (which auto-hides on /property/* routes). Keeps
           the user one tap away from the booking sidebar at all times. */}
-      {!showBooking && (
-        <div
-          className="lg:hidden fixed bottom-0 left-0 right-0 z-40 xpx-mobile-booking-bar"
-          style={{
-            background: 'rgba(255,255,255,0.96)',
-            borderTop: '1px solid var(--xpx-border)',
-            boxShadow: '0 -4px 20px rgba(15,23,42,0.08)',
-          }}
-        >
-          <div className="px-4 py-3 flex items-center justify-between gap-3 max-w-7xl mx-auto">
-            <div className="min-w-0">
-              {hasValidDates ? (
-                <>
-                  <div className="flex items-baseline gap-1 flex-wrap">
-                    <span className="text-lg font-extrabold text-xpx-text tabular-nums">
-                      {formatInr(tripQuote?.guestTotal ?? 0)}
-                    </span>
-                    <span className="text-xs text-xpx-muted">total</span>
-                  </div>
-                  <p className="text-xs text-xpx-subtle leading-snug">
-                    {GUEST_PRICING_TRIP_HINT(bookingNights)}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-lg font-extrabold text-xpx-text tabular-nums">
-                      ₹{basePrice.toLocaleString('en-IN')}
-                    </span>
-                    <span className="text-xs text-xpx-muted">/ night</span>
-                  </div>
-                  <p className="text-xs text-xpx-subtle leading-snug">
-                    Starting price · host sets the rate
-                  </p>
-                </>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={handlePrimaryBookingCta}
-              className="shrink-0 px-5 py-3 rounded-full font-bold text-sm text-white xpx-press min-h-[48px] min-w-[44px] touch-manipulation"
-              style={{
-                background: 'var(--xpx-cta)',
-                boxShadow: 'var(--xpx-cta-glow)',
-              }}
-            >
-              {hasValidDates
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 xpx-mobile-booking-bar xpx-mobile-booking-bar-surface">
+        <div className="xpx-container py-3 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            {hasValidDates ? (
+              <>
+                <div className="flex items-baseline gap-1 flex-wrap">
+                  <span className="text-lg font-extrabold text-xpx-text tabular-nums">
+                    {formatInr(tripQuote?.guestTotal ?? 0)}
+                  </span>
+                  <span className="text-xs text-xpx-muted">total</span>
+                </div>
+                <p className="text-xs text-xpx-subtle leading-snug">
+                  {GUEST_PRICING_TRIP_HINT(bookingNights)}
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-lg font-extrabold text-xpx-text tabular-nums">
+                    ₹{basePrice.toLocaleString('en-IN')}
+                  </span>
+                  <span className="text-xs text-xpx-muted">/ night</span>
+                </div>
+                <p className="text-xs text-xpx-subtle leading-snug">
+                  Starting price · host sets the rate
+                </p>
+              </>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleMobileBarCta}
+            className="xpx-btn-primary shrink-0 rounded-2xl px-5 py-3 text-sm min-h-[48px] min-w-[44px] touch-manipulation"
+          >
+            {showBooking
+              ? 'Finish booking'
+              : hasValidDates
                 ? inquiryCtaLabel('property_with_dates')
                 : inquiryCtaLabel('property_no_dates')}
-            </button>
-          </div>
+          </button>
         </div>
-      )}
+      </div>
 
       {showOfferModal && property && (
         <Suspense fallback={null}>
@@ -1237,16 +1198,4 @@ export default function PropertyPage() {
       )}
     </div>
   );
-}
-
-/**
- * Pull the first paragraph from a host-supplied description. We fall back
- * to the entire description if there are no blank-line breaks. Used in the
- * title block so the short blurb under the location stays meaningful.
- */
-function firstParagraph(description: string): string {
-  if (!description) return '';
-  const trimmed = description.trim();
-  const split = trimmed.split(/\n\s*\n/);
-  return (split[0] ?? trimmed).trim();
 }

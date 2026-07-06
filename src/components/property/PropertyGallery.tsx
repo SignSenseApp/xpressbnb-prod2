@@ -3,9 +3,13 @@ import { Camera, X, ChevronLeft, ChevronRight, Bed } from 'lucide-react';
 import {
   listPropertyImages,
   PROPERTY_GALLERY_THUMB_SIZES,
+  PROPERTY_LIGHTBOX_IMAGE_SIZES,
   propertyGalleryThumbSrc,
   propertyGalleryThumbSrcSet,
+  propertyLightboxImageSrc,
+  propertyLightboxImageSrcSet,
 } from '../../lib/propertyImages';
+import { trackXpressEvent } from '../../lib/analytics';
 import PropertyHeroCarousel from './PropertyHeroCarousel';
 
 interface PropertyGalleryProps {
@@ -57,6 +61,7 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
   const openAt = (i: number) => {
     setIndex(i);
     setOpen(true);
+    trackXpressEvent('gallery_opened', { photo_index: i + 1, photo_total: total });
   };
 
   const thumbs = safeImages.slice(1, 4);
@@ -84,7 +89,7 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
           />
           <div
             className="absolute inset-x-0 bottom-0 h-20 pointer-events-none"
-            style={{ background: 'linear-gradient(180deg, transparent, rgba(15,23,42,0.32))' }}
+            style={{ background: 'linear-gradient(180deg, transparent, var(--xpx-overlay-scrim))' }}
           />
           <span
             className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-xpx-text pointer-events-none"
@@ -92,7 +97,7 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
               background: 'rgba(255,255,255,0.92)',
               backdropFilter: 'blur(12px) saturate(1.4)',
               WebkitBackdropFilter: 'blur(12px) saturate(1.4)',
-              boxShadow: '0 6px 18px rgba(15,23,42,0.10)',
+              boxShadow: 'var(--xpx-shadow-hover)',
             }}
           >
             <Camera className="w-3.5 h-3.5" />
@@ -120,16 +125,19 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
                 srcSet={thumbSrcSet}
                 sizes={thumbSrcSet ? PROPERTY_GALLERY_THUMB_SIZES : undefined}
                 alt={`${title} — photo ${i + 2}`}
-                className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+                width={640}
+                height={427}
+                className="w-full h-full object-cover transition-transform ease-out group-hover:scale-[1.04]"
+                style={{ transitionDuration: '200ms', aspectRatio: '3 / 2' }}
                 loading="lazy"
                 decoding="async"
               />
               {showOverlay && (
                 <div
                   className="absolute inset-0 flex items-center justify-center"
-                  style={{ background: 'rgba(15,23,42,0.5)' }}
+                  style={{ background: 'var(--xpx-overlay-dark)' }}
                 >
-                  <div className="text-center text-white">
+                  <div className="text-center" style={{ color: 'var(--xpx-on-dark)' }}>
                     <p className="text-2xl font-extrabold tabular-nums leading-none">+{remaining}</p>
                     <p className="text-[10px] uppercase tracking-wider opacity-80 mt-1">View all</p>
                   </div>
@@ -154,8 +162,8 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
         <span
           className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold tabular-nums pointer-events-none"
           style={{
-            background: 'rgba(15,23,42,0.6)',
-            color: '#FFFFFF',
+            background: 'var(--xpx-overlay-dark)',
+            color: 'var(--xpx-on-dark)',
             backdropFilter: 'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
           }}
@@ -171,19 +179,23 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
           role="dialog"
           aria-modal="true"
           aria-label="Photo viewer"
-          className="fixed inset-0 z-[80] bg-slate-900/95 flex items-center justify-center"
+          className="fixed inset-0 z-[80] xpx-property-gallery-lightbox flex items-center justify-center"
           onClick={() => setOpen(false)}
         >
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="absolute top-4 right-4 z-[90] w-12 h-12 bg-white/15 hover:bg-white/25 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors"
+            className="absolute top-4 right-4 z-[90] w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+            style={{ background: 'rgba(255,255,255,0.15)', minHeight: 44, minWidth: 44 }}
             aria-label="Close gallery"
           >
-            <X className="w-6 h-6 text-white" />
+            <X className="w-6 h-6" style={{ color: 'var(--xpx-on-dark)' }} />
           </button>
 
-          <div className="absolute top-4 left-4 z-[90] bg-black/40 text-white px-4 py-2 rounded-full backdrop-blur-sm font-semibold tabular-nums">
+          <div
+            className="absolute top-4 left-4 z-[90] px-4 py-2 rounded-full backdrop-blur-sm font-semibold tabular-nums"
+            style={{ background: 'rgba(0,0,0,0.4)', color: 'var(--xpx-on-dark)' }}
+          >
             {index + 1} / {total}
           </div>
 
@@ -195,10 +207,11 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
                   e.stopPropagation();
                   setIndex((i) => (i - 1 + total) % total);
                 }}
-                className="absolute left-4 z-[90] w-12 h-12 sm:w-16 sm:h-16 bg-white/15 hover:bg-white/25 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors"
+                className="absolute left-4 z-[90] w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                style={{ background: 'rgba(255,255,255,0.15)', minHeight: 44, minWidth: 44 }}
                 aria-label="Previous photo"
               >
-                <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: 'var(--xpx-on-dark)' }} />
               </button>
               <button
                 type="button"
@@ -206,25 +219,34 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
                   e.stopPropagation();
                   setIndex((i) => (i + 1) % total);
                 }}
-                className="absolute right-4 z-[90] w-12 h-12 sm:w-16 sm:h-16 bg-white/15 hover:bg-white/25 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors"
+                className="absolute right-4 z-[90] w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                style={{ background: 'rgba(255,255,255,0.15)', minHeight: 44, minWidth: 44 }}
                 aria-label="Next photo"
               >
-                <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: 'var(--xpx-on-dark)' }} />
               </button>
             </>
           )}
 
           <img
-            src={safeImages[index]}
+            src={propertyLightboxImageSrc(safeImages[index])}
+            srcSet={propertyLightboxImageSrcSet(safeImages[index])}
+            sizes={propertyLightboxImageSrcSet(safeImages[index]) ? PROPERTY_LIGHTBOX_IMAGE_SIZES : undefined}
             alt={`${title} — photo ${index + 1}`}
+            width={1280}
+            height={800}
             onClick={(e) => e.stopPropagation()}
             className="max-w-[92vw] max-h-[85vh] object-contain rounded-lg select-none"
+            loading="eager"
+            decoding="async"
           />
 
           {total > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[90] max-w-full overflow-x-auto scrollbar-hide">
               <div className="flex gap-2 px-4">
-                {safeImages.map((img, i) => (
+                {safeImages.map((img, i) => {
+                  const lbThumb = propertyGalleryThumbSrc(img);
+                  return (
                   <button
                     key={`lb-${i}`}
                     type="button"
@@ -232,16 +254,26 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
                       e.stopPropagation();
                       setIndex(i);
                     }}
-                    className={`shrink-0 w-14 h-14 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                    className={`shrink-0 w-14 h-14 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
                       i === index
                         ? 'border-white scale-110'
                         : 'border-transparent opacity-60 hover:opacity-100'
                     }`}
                     aria-label={`Jump to photo ${i + 1}`}
+                    aria-current={i === index ? 'true' : undefined}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img
+                      src={lbThumb}
+                      alt=""
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </button>
-                ))}
+                );
+                })}
               </div>
             </div>
           )}

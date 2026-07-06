@@ -55,11 +55,9 @@ export default function InquirySubmitTransition({ phase, onComplete }: InquirySu
 
   return (
     <div
-      className="fixed inset-0 z-[90] flex flex-col items-center justify-center px-6 overflow-hidden"
+      className="fixed inset-0 z-[90] flex flex-col items-center justify-center px-6 overflow-hidden xpx-glass"
       style={{
-        background: 'rgba(248, 250, 252, 0.92)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        background: 'var(--xpx-page)',
         paddingTop: 'env(safe-area-inset-top)',
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}
@@ -79,13 +77,13 @@ export default function InquirySubmitTransition({ phase, onComplete }: InquirySu
         <div
           className="mx-auto mb-8 h-28 w-28 rounded-3xl overflow-hidden"
           style={{
-            border: '1px solid rgba(5,150,105,0.18)',
-            boxShadow: '0 20px 48px rgba(5,150,105,0.12)',
+            border: '1px solid var(--xpx-accent-a18)',
+            boxShadow: 'var(--xpx-shadow-floating)',
           }}
         >
           <img
             src="/images/inquiry/host-introduction.svg"
-            alt=""
+            alt="Host introduction illustration"
             width={112}
             height={112}
             className="h-full w-full object-cover"
@@ -108,7 +106,8 @@ export default function InquirySubmitTransition({ phase, onComplete }: InquirySu
               style={{
                 width: index === displayPhase ? '1.75rem' : '0.375rem',
                 background:
-                  index <= displayPhase ? 'var(--xpx-verified, #059669)' : 'rgba(148,163,184,0.45)',
+                  index <= displayPhase ? 'var(--xpx-cta)' : 'var(--xpx-subtle)',
+                opacity: index <= displayPhase ? 1 : 0.45,
               }}
             />
           ))}

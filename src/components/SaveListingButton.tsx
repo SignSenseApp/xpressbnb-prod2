@@ -2,6 +2,7 @@ import { Heart } from 'lucide-react';
 import { useSavedListings } from '../hooks/useSavedListings';
 import type { SavedListingSnapshot } from '../lib/savedListingsStorage';
 import { theme } from '../lib/theme';
+import { trackXpressEvent } from '../lib/analytics';
 import { HeartOutlineIcon } from './icons/PropertyCardIcons';
 
 type SaveListingButtonProps = {
@@ -55,7 +56,12 @@ export default function SaveListingButton({
       type="button"
       onClick={(e) => {
         e.stopPropagation();
+        const nextSaved = !saved;
         toggleSnapshot(getSnapshot());
+        trackXpressEvent('save_clicked', {
+          property_id: propertyId,
+          action: nextSaved ? 'save' : 'unsave',
+        });
       }}
       className={`${positionClass} ${presentation === 'editorial' ? '' : 'rounded-full'} flex items-center justify-center ${interactionClass} ${inlineClass} ${className}`}
       style={

@@ -54,7 +54,7 @@ export default function PropertySocialProofBand({
       className={className}
       style={
         variant === 'card'
-          ? { borderColor: '#e5e7eb', background: '#fafafa' }
+          ? { borderColor: 'var(--xpx-border)', background: 'var(--xpx-base)' }
           : undefined
       }
     >
@@ -64,8 +64,9 @@ export default function PropertySocialProofBand({
           className={
             variant === 'whisper'
               ? 'text-[11px] sm:text-xs text-xpx-subtle leading-relaxed'
-              : 'text-sm font-medium text-[#047857]'
+              : 'text-sm font-medium'
           }
+          style={variant === 'whisper' ? undefined : { color: 'var(--accent-dark)' }}
         >
           {line}
         </p>
