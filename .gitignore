@@ -47,3 +47,6 @@ dist-ssr
 .mig_parts/
 .mcp_apply*.json
 .tmp_mig*.json
+.migration-state/
+.audit/
+.cleanup/

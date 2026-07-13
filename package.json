@@ -11,7 +11,10 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "test:stay-score": "vitest run src/lib/xpressbnbStayScore.test.ts",
     "test": "vitest run",
-    "generate:favicon": "node scripts/generate-favicon.mjs"
+    "generate:favicon": "node scripts/generate-favicon.mjs",
+    "migrate-property-images": "node scripts/migrate-property-images.mjs",
+    "audit-property-images": "node scripts/audit-property-images.mjs",
+    "cleanup-property-images": "node scripts/cleanup-property-images.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

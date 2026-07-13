@@ -1,12 +1,31 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Upload, MapPin, Home, DollarSign, Users, Bed, Bath, ImagePlus, Sparkles, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Database, Property } from '../lib/database.types';
 import { AMENITY_CATEGORIES, listPropertyAmenities } from '../lib/amenities';
 import { listPropertyImages } from '../lib/propertyImages';
+import {
+  optimizePropertyImageClient,
+  uploadOptimizedPropertyImage,
+  computeBatchUploadPercent,
+  containsBlobPreviewUrls,
+  deferRevokeBlobUrl,
+  isBlobUrl,
+  isOffline,
+  revokeBlobUrl,
+  terminateOptimizationWorker,
+  type OptimizationStage,
+} from '../lib/imageOptimization';
 import LocationPicker from './LocationPicker';
 import { hasValidHostPhone } from '../lib/host';
+
+const UPLOAD_STAGE_LABEL: Record<OptimizationStage, string> = {
+  preparing: 'Preparing image...',
+  optimizing: 'Optimizing...',
+  uploading: 'Uploading...',
+  done: 'Done',
+};
 
 interface PropertyListingFormProps {
   property?: Property | null;
@@ -32,6 +51,11 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
   const { host } = useAuth();
   const [loading, setLoading] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadStage, setUploadStage] = useState<OptimizationStage | null>(null);
+  const [uploadPercent, setUploadPercent] = useState(0);
+  const isMountedRef = useRef(true);
+  const uploadSessionRef = useRef(0);
+  const pendingBlobUrlsRef = useRef<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -56,6 +80,17 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
     is_active: true
   });
   const [imageUrl, setImageUrl] = useState('');
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      uploadSessionRef.current += 1;
+      pendingBlobUrlsRef.current.forEach((url) => revokeBlobUrl(url));
+      pendingBlobUrlsRef.current.clear();
+      terminateOptimizationWorker();
+    };
+  }, []);
 
   useEffect(() => {
     if (property) {
@@ -109,6 +144,10 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
 
       if (formData.images.length === 0) {
         throw new Error('Please add at least one image URL');
+      }
+
+      if (uploadingImages || containsBlobPreviewUrls(formData.images)) {
+        throw new Error('Please wait for image uploads to finish before saving');
       }
 
       if (!host?.id) {
@@ -186,71 +225,127 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
     }));
   };
 
+  const trackBlobUrl = (url: string) => {
+    if (isBlobUrl(url)) {
+      pendingBlobUrlsRef.current.add(url);
+    }
+  };
+
+  const untrackAndRevokeBlobUrl = (url: string, defer = false) => {
+    if (!isBlobUrl(url)) return;
+    pendingBlobUrlsRef.current.delete(url);
+    if (defer) {
+      deferRevokeBlobUrl(url);
+    } else {
+      revokeBlobUrl(url);
+    }
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    if (uploadingImages) {
+      e.target.value = '';
+      return;
+    }
+
+    if (isOffline()) {
+      setError('You appear to be offline. Reconnect and try again.');
+      e.target.value = '';
+      return;
+    }
+
     const remainingSlots = 10 - formData.images.length;
     if (remainingSlots === 0) {
       setError('Maximum 10 images allowed');
+      e.target.value = '';
       return;
     }
 
     const filesToUpload = Array.from(files).slice(0, remainingSlots);
-
-    // Validate file types and sizes
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
-
-    for (const file of filesToUpload) {
-      if (!validTypes.includes(file.type)) {
-        setError('Only JPEG, PNG, WEBP, and GIF images are allowed');
-        return;
-      }
-      if (file.size > maxSize) {
-        setError('Each image must be less than 5MB');
-        return;
-      }
-    }
+    const session = uploadSessionRef.current + 1;
+    uploadSessionRef.current = session;
+    const isActive = () => isMountedRef.current && uploadSessionRef.current === session;
 
     setUploadingImages(true);
+    setUploadStage('preparing');
+    setUploadPercent(0);
     setError(null);
 
+    const batchPreviewUrls: string[] = [];
+
     try {
-      const uploadedUrls: string[] = [];
+      for (let fileIndex = 0; fileIndex < filesToUpload.length; fileIndex += 1) {
+        if (!isActive()) break;
 
-      for (const file of filesToUpload) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-        const filePath = fileName;
+        const file = filesToUpload[fileIndex];
+        const reportProgress = (stage: OptimizationStage) => {
+          if (!isActive()) return;
+          setUploadStage(stage);
+          setUploadPercent(computeBatchUploadPercent(fileIndex, filesToUpload.length, stage));
+        };
 
-        const { data, error: uploadError } = await supabase.storage
-          .from('property-images')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
+        const optimized = await optimizePropertyImageClient(file, reportProgress);
+        if (!isActive()) {
+          if (optimized.previewUrl) untrackAndRevokeBlobUrl(optimized.previewUrl);
+          break;
+        }
 
-        if (uploadError) throw uploadError;
+        const previewUrl = optimized.previewUrl;
+        if (previewUrl) {
+          trackBlobUrl(previewUrl);
+          batchPreviewUrls.push(previewUrl);
+          setFormData((prev) => ({
+            ...prev,
+            images: [...prev.images, previewUrl],
+          }));
+        }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('property-images')
-          .getPublicUrl(data.path);
+        if (!isActive()) break;
 
-        uploadedUrls.push(publicUrl);
+        reportProgress('uploading');
+        const publicUrl = await uploadOptimizedPropertyImage(supabase, optimized);
+        if (!isActive()) break;
+
+        if (previewUrl) {
+          setFormData((prev) => ({
+            ...prev,
+            images: prev.images.map((url) => (url === previewUrl ? publicUrl : url)),
+          }));
+          untrackAndRevokeBlobUrl(previewUrl, true);
+          const batchIndex = batchPreviewUrls.indexOf(previewUrl);
+          if (batchIndex >= 0) batchPreviewUrls.splice(batchIndex, 1);
+        } else {
+          setFormData((prev) => ({
+            ...prev,
+            images: [...prev.images, publicUrl],
+          }));
+        }
+
+        reportProgress('done');
       }
 
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, ...uploadedUrls]
-      }));
-
-      // Reset file input
-      e.target.value = '';
+      if (isActive()) {
+        setUploadPercent(100);
+        setUploadStage('done');
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload images');
+      if (isActive()) {
+        setFormData((prev) => ({
+          ...prev,
+          images: prev.images.filter((url) => !batchPreviewUrls.includes(url)),
+        }));
+        batchPreviewUrls.forEach((url) => untrackAndRevokeBlobUrl(url));
+        setError(err instanceof Error ? err.message : 'Failed to upload images');
+      }
     } finally {
-      setUploadingImages(false);
+      e.target.value = '';
+      if (isActive()) {
+        setUploadingImages(false);
+        setUploadStage(null);
+        setUploadPercent(0);
+      }
     }
   };
 
@@ -270,10 +365,14 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
   };
 
   const handleRemoveImage = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
+    setFormData((prev) => {
+      const removed = prev.images[index];
+      if (removed) untrackAndRevokeBlobUrl(removed);
+      return {
+        ...prev,
+        images: prev.images.filter((_, i) => i !== index),
+      };
+    });
   };
 
   return (
@@ -285,8 +384,11 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
             <p className="text-white/90 mt-1 text-sm sm:text-base">{property ? 'Update your property details' : 'Share your space with travelers'}</p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 hover:bg-white/20 rounded-full transition-colors flex-shrink-0"
+            disabled={uploadingImages}
+            aria-label="Close property form"
+            className="p-2 hover:bg-white/20 rounded-full transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
@@ -542,7 +644,10 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
               </h3>
               <div className="space-y-4">
                 {/* File Upload */}
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 sm:p-6 hover:border-[#50C878] transition-colors">
+                <div
+                  className="border-2 border-dashed border-gray-300 rounded-xl p-4 sm:p-6 hover:border-[#50C878] transition-colors"
+                  aria-busy={uploadingImages}
+                >
                   <label className="flex flex-col items-center justify-center cursor-pointer">
                     <input
                       type="file"
@@ -551,13 +656,22 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
                       onChange={handleFileUpload}
                       disabled={formData.images.length >= 10 || uploadingImages}
                       className="hidden"
+                      aria-label="Upload property images"
                     />
-                    <ImagePlus className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mb-2" />
-                    <p className="text-sm sm:text-base font-semibold text-gray-700 mb-1">
-                      {uploadingImages ? 'Uploading...' : 'Click to upload images'}
+                    <ImagePlus className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mb-2" aria-hidden="true" />
+                    <p
+                      className="text-sm sm:text-base font-semibold text-gray-700 mb-1"
+                      aria-live="polite"
+                      aria-atomic="true"
+                    >
+                      {uploadingImages && uploadStage
+                        ? `${UPLOAD_STAGE_LABEL[uploadStage]}${uploadPercent > 0 ? ` ${uploadPercent}%` : ''}`
+                        : uploadingImages
+                          ? 'Uploading...'
+                          : 'Click to upload images'}
                     </p>
                     <p className="text-xs sm:text-sm text-gray-500 text-center">
-                      PNG, JPG, WEBP or GIF (max 5MB each)
+                      PNG, JPG, WEBP or GIF — optimized to WebP before upload
                     </p>
                     <p className="text-xs text-gray-400 mt-1">
                       You can select multiple images at once
@@ -601,16 +715,18 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
                 {formData.images.length > 0 && (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                     {formData.images.map((img, index) => (
-                      <div key={index} className="relative group">
+                      <div key={img} className="relative group">
                         <img
                           src={img}
-                          alt={`Property ${index + 1}`}
+                          alt={`Property image ${index + 1}`}
                           className="w-full h-32 object-cover rounded-xl"
                         />
                         <button
                           type="button"
                           onClick={() => handleRemoveImage(index)}
-                          className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          disabled={uploadingImages}
+                          aria-label={`Remove property image ${index + 1}`}
+                          className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-40"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -626,13 +742,15 @@ export default function PropertyListingForm({ property, onClose, onSuccess }: Pr
             <button
               type="button"
               onClick={onClose}
-              className="w-full sm:flex-1 px-6 py-3 sm:py-4 border-2 border-gray-300 text-gray-700 font-semibold text-sm sm:text-base rounded-xl hover:bg-gray-50 transition-all"
+              disabled={uploadingImages}
+              className="w-full sm:flex-1 px-6 py-3 sm:py-4 border-2 border-gray-300 text-gray-700 font-semibold text-sm sm:text-base rounded-xl hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={loading || (!hostHasPhone && wantsLive)}
+              disabled={loading || uploadingImages || (!hostHasPhone && wantsLive)}
+              aria-busy={loading || uploadingImages}
               className="w-full sm:flex-1 px-6 py-3 sm:py-4 bg-gradient-to-r from-[#50C878] to-[#3dae68] text-white font-semibold text-sm sm:text-base rounded-xl hover:from-[#3dae68] hover:to-[#3dae68] transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading
