@@ -17,6 +17,7 @@ import { readScrollAnchorOffset } from '../lib/layoutTokens';
 import XpModeSwitch from './XpModeSwitch';
 import HomepageBelowFoldGate from './HomepageBelowFoldGate';
 import HeroSearchBar from './search/HeroSearchBar';
+import InstitutionalCredibilityStrip from './InstitutionalCredibilityStrip';
 import { useNearbyLocationOptional } from '../contexts/NearbyLocationContext';
 import { useGuestOnboardingOptional } from '../contexts/GuestOnboardingContext';
 import { usePrefersReducedMotion } from '../hooks/useGalleryMotion';
@@ -570,6 +571,7 @@ export default function NewHomepage() {
               </div>
             ))}
           </div>
+          <InstitutionalCredibilityStrip />
         </div>
       </section>
 

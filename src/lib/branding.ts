@@ -15,3 +15,15 @@ export const XPRESSBNB_LOGO_IMG_CLASS =
 /** Primary nav / sticky headers — larger mark so it reads next to the wordmark */
 export const XPRESSBNB_LOGO_NAV_IMG_CLASS =
   'h-10 w-10 sm:h-11 sm:w-11 md:h-12 md:w-12 object-contain shrink-0 align-middle' as const;
+
+export const DPIIT_RECOGNIZED_BADGE_PATH =
+  '/images/institutional/dpiit-recognized-startup-badge.png' as const;
+
+export const IIT_ROORKEE_ECOSYSTEM_BADGE_PATH =
+  '/images/institutional/iit-roorkee-ecosystem-badge.png' as const;
+
+/** Emblem-only PNGs (transparent background) for homepage credibility strip */
+export const DPIIT_EMBLEM_PATH = '/images/institutional/dpiit-emblem.png' as const;
+
+export const IIT_ROORKEE_EMBLEM_PATH =
+  '/images/institutional/iit-roorkee-emblem.png' as const;
