@@ -60,6 +60,20 @@ export function safeHostDisplayName(
   return cleaned;
 }
 
+/** Guest label when the stored name is empty or a phone number. */
+export function guestHostFallbackName(city?: string | null): string {
+  const place = typeof city === 'string' ? city.trim() : '';
+  return place ? `Host in ${place}` : 'Host';
+}
+
+/** Guest-safe host name, preferring a real name then city (“Host in Delhi”). */
+export function guestHostDisplayName(
+  name: string | null | undefined,
+  city?: string | null,
+): string {
+  return safeHostDisplayName(name, guestHostFallbackName(city));
+}
+
 /**
  * Initial letter for the avatar bubble. Uses safeHostDisplayName so a phone
  * number in the name field doesn't render as a digit avatar.

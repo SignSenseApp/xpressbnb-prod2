@@ -1444,6 +1444,10 @@ export type Database = {
         Args: { p_check_in: string; p_check_out: string; p_property_id: string }
         Returns: boolean
       }
+      list_property_unavailable_dates: {
+        Args: { p_from: string; p_property_id: string; p_to: string }
+        Returns: { unavailable_date: string }[]
+      }
       update_property_analytics: {
         Args: { p_bookings?: number; p_property_id: string; p_views?: number }
         Returns: undefined

@@ -20,6 +20,7 @@ import { saveBookingConfirmationSnapshot } from '../lib/bookingConfirmationStora
 import BookingProgressBar from './booking/BookingProgressBar';
 import { BOOKING_STEP_LABELS } from './booking/bookingStepLabels';
 import { guestEmailError } from '../lib/guestValidation';
+import { toLocalYmd } from '../lib/formatBookingDate';
 import { normalizePhoneDigits } from '../lib/guestValidation';
 import {
   bucketResponseMs,
@@ -73,7 +74,7 @@ interface BookingFormProps {
 }
 
 function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0];
+  return toLocalYmd(date);
 }
 
 function ErrorBanner({ message }: { message: string }) {

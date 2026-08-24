@@ -29,6 +29,7 @@ import {
   type AnalyticsScope,
 } from '../lib/analytics';
 import { inquiryCtaLabel } from '../lib/inquiryCopy';
+import { addLocalDays, toLocalYmd } from '../lib/formatBookingDate';
 import {
   buildInquiryAbusePayload,
   createInquiryFormOpenedAt,
@@ -200,12 +201,10 @@ export default function OfferModal({
 
     try {
     const today = new Date();
-    const fmt = (d: Date) => d.toISOString().split('T')[0];
-    const checkin = checkInDate ? fmt(checkInDate) : fmt(today);
-    const checkout =
-      checkOutDate
-        ? fmt(checkOutDate)
-        : fmt(new Date(today.getTime() + inferredNights * 24 * 60 * 60 * 1000));
+    const checkin = checkInDate ? toLocalYmd(checkInDate) : toLocalYmd(today);
+    const checkout = checkOutDate
+      ? toLocalYmd(checkOutDate)
+      : toLocalYmd(addLocalDays(today, inferredNights));
 
     if (!property.host_id) {
       setError('This listing is missing host details. Please try again later.');

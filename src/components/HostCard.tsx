@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { CheckCircle, MapPin, Shield, Headphones } from 'lucide-react';
 import { fetchPublicHost } from '../lib/hostPublicCache';
 import { theme } from '../lib/theme';
-import { safeHostDisplayName, safeHostInitial, stripPhoneLike } from '../lib/host';
+import { guestHostDisplayName, safeHostInitial, stripPhoneLike } from '../lib/host';
 import { TRUST_BADGE_COPY } from '../lib/trustBadgeCopy';
 import { buildTeamWhatsAppLink } from '../lib/team';
 import { scrollToId } from '../lib/smoothScroll';
@@ -118,8 +118,8 @@ export default function HostCard({
   }
 
   const isVerified = host.kyc_status === 'verified';
-  const safeName = safeHostDisplayName(host.name);
-  const initial = safeHostInitial(host.name);
+  const safeName = guestHostDisplayName(host.name, host.city ?? fallbackCity);
+  const initial = safeHostInitial(host.name, safeName.charAt(0).toUpperCase() || 'H');
   const safeBio = host.bio ? stripPhoneLike(host.bio) : '';
   const memberSince = host.created_at ? new Date(host.created_at) : null;
   const memberSinceLabel = memberSince

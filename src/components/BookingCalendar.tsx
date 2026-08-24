@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { logSupabaseError, supabase } from '../lib/supabase';
+import { toLocalYmd } from '../lib/formatBookingDate';
 
 interface CalendarDay {
   date: Date;
@@ -64,7 +65,7 @@ export default function BookingCalendar({
     let total = 0;
     const cursor = new Date(inD);
     while (cursor < outD) {
-      const dateStr = cursor.toISOString().split('T')[0];
+      const dateStr = toLocalYmd(cursor);
       const calData = calendarData.get(dateStr);
       total += calData?.price ?? basePrice;
       cursor.setDate(cursor.getDate() + 1);
@@ -91,27 +92,49 @@ export default function BookingCalendar({
       const endDate = new Date(endOfMonth);
       endDate.setDate(endDate.getDate() + 7);
 
-      const { data, error } = await supabase
-        .from('property_calendar')
-        .select('date, is_available, price_override')
-        .eq('property_id', propertyId)
-        .gte('date', startDate.toISOString().split('T')[0])
-        .lte('date', endDate.toISOString().split('T')[0]);
+      const from = toLocalYmd(startDate);
+      const to = toLocalYmd(endDate);
+
+      const [{ data, error }, holds] = await Promise.all([
+        supabase
+          .from('property_calendar')
+          .select('date, is_available, price_override')
+          .eq('property_id', propertyId)
+          .gte('date', from)
+          .lte('date', to),
+        supabase.rpc('list_property_unavailable_dates', {
+          p_property_id: propertyId,
+          p_from: from,
+          p_to: to,
+        }),
+      ]);
 
       if (error) throw error;
+      if (holds.error) {
+        logSupabaseError('list_property_unavailable_dates', holds.error);
+      }
 
       const dataMap = new Map<string, { isAvailable: boolean; price: number }>();
 
-      data?.forEach(entry => {
+      data?.forEach((entry) => {
         dataMap.set(entry.date, {
           isAvailable: entry.is_available,
-          price: entry.price_override || basePrice
+          price: entry.price_override || basePrice,
         });
       });
 
+      const holdRows = (holds.data ?? []) as { unavailable_date?: string }[];
+      for (const row of holdRows) {
+        const dateKey = row.unavailable_date;
+        if (!dateKey) continue;
+        const existing = dataMap.get(dateKey);
+        dataMap.set(dateKey, {
+          isAvailable: false,
+          price: existing?.price ?? basePrice,
+        });
+      }
+
       setCalendarData(dataMap);
-    } catch (error) {
-      console.error('Error fetching calendar data:', error);
     } finally {
       setIsLoading(false);
     }
@@ -132,7 +155,7 @@ export default function BookingCalendar({
 
     for (let i = 0; i < startingDayOfWeek; i++) {
       const date = new Date(year, month, -startingDayOfWeek + i + 1);
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = toLocalYmd(date);
       const calData = calendarData.get(dateStr);
 
       days.push({
@@ -148,7 +171,7 @@ export default function BookingCalendar({
 
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = toLocalYmd(date);
       const calData = calendarData.get(dateStr);
       const isToday = date.getTime() === today.getTime();
       const isPast = date < today;
@@ -167,7 +190,7 @@ export default function BookingCalendar({
     const remainingDays = 42 - days.length;
     for (let i = 1; i <= remainingDays; i++) {
       const date = new Date(year, month + 1, i);
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = toLocalYmd(date);
       const calData = calendarData.get(dateStr);
 
       days.push({
@@ -233,7 +256,7 @@ export default function BookingCalendar({
     const current = new Date(start);
 
     while (current < end) {
-      const dateStr = current.toISOString().split('T')[0];
+      const dateStr = toLocalYmd(current);
       const calData = calendarData.get(dateStr);
       total += calData?.price ?? basePrice;
       current.setDate(current.getDate() + 1);
