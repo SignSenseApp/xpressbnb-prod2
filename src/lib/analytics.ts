@@ -47,7 +47,13 @@ export type XpressEventName =
   | 'destination_recommended'
   | 'booking_progress_step'
   | 'nearby_returning_user'
-  | 'check_availability_click';
+  | 'check_availability_click'
+  | 'share_clicked'
+  | 'booking_calendar_open'
+  | 'property_scroll_depth'
+  | 'amenities_toggled'
+  | 'gallery_opened'
+  | 'save_clicked';
 
 export type InquiryType = 'book_pay_later' | 'make_offer';
 
@@ -70,6 +76,11 @@ export type XpressEventParams = {
   abandonment_step?: string;
   feed_rail?: string;
   recommendation_type?: string;
+  share_method?: string;
+  photo_index?: number | string;
+  photo_total?: number | string;
+  scroll_depth?: number | string;
+  action?: string;
 };
 
 declare global {

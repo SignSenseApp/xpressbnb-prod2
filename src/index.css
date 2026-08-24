@@ -128,7 +128,7 @@ html.lenis body {
   --xpx-stack-lg: 1.5rem;
 
   /** Fixed mobile booking bar + cookie banner clearance */
-  --xpx-mobile-cta-h: 4.5rem;
+  --xpx-mobile-cta-h: 5.75rem;
   --xpx-mobile-nav-h: 4rem;
   --xpx-mobile-bottom-clearance: calc(var(--xpx-mobile-nav-h) + var(--xpx-safe-bottom));
 }
@@ -574,8 +574,8 @@ html.lenis body {
   @media (min-width: 1024px) and (min-height: 720px) {
     .xpx-booking-sidebar-sticky {
       position: sticky;
-      top: 6rem;
-      max-height: calc(100dvh - 7.5rem);
+      top: calc(var(--xpx-chrome-height) + 0.75rem);
+      max-height: calc(100dvh - var(--xpx-chrome-height) - 1.5rem);
       overflow-y: auto;
       overscroll-behavior-y: contain;
       -webkit-overflow-scrolling: touch;
@@ -601,6 +601,65 @@ html.lenis body {
 
   .xpx-property-section-h2 {
     @apply text-lg sm:text-xl font-extrabold tracking-tight text-xpx-text;
+  }
+
+  .xpx-property-sidebar-v2 {
+    background: var(--xpx-surface);
+    border: 1px solid var(--xpx-border);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.04);
+  }
+
+  .xpx-property-amenity-card {
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+  }
+
+  .xpx-property-inquiry-cta {
+    transition: background-color 180ms ease, box-shadow 180ms ease;
+    transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+
+  .xpx-property-bento button img {
+    transform: scale(1);
+    transition: transform 200ms ease-out;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .xpx-property-amenity-card:hover {
+      border-color: var(--xpx-border-strong);
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+    }
+    .xpx-property-inquiry-cta:hover {
+      box-shadow: 0 8px 20px rgba(5, 150, 105, 0.22);
+    }
+    .xpx-property-bento button:hover img {
+      transform: scale(1.025);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .xpx-property-bento button img {
+      transition: none !important;
+    }
+    .xpx-property-amenity-card,
+    .xpx-property-inquiry-cta {
+      transition: none !important;
+    }
+    .xpx-property-bento button:hover img {
+      transform: none;
+    }
+  }
+
+  .xpx-property-breadcrumb {
+    @apply text-xs sm:text-sm text-xpx-muted;
+  }
+
+  .xpx-property-breadcrumb a {
+    color: var(--accent-dark);
+    @apply hover:text-xpx-text hover:underline underline-offset-2 transition-colors duration-200;
+  }
+
+  .xpx-property-breadcrumb [aria-current='page'] {
+    @apply text-xpx-text font-medium truncate;
   }
 
   .xpx-error-banner {
@@ -632,16 +691,28 @@ html.lenis body {
     color: var(--xpx-text);
   }
 
+  @media (hover: hover) and (pointer: fine) {
+    .xpx-cinema-hero .xpx-cinema-hero-nav {
+      opacity: 0;
+    }
+    .xpx-cinema-hero:hover .xpx-cinema-hero-nav,
+    .xpx-cinema-hero:focus-within .xpx-cinema-hero-nav {
+      opacity: 1;
+    }
+  }
+
   .xpx-cinema-hero-nav:hover {
     background: #ffffff;
     box-shadow: var(--xpx-shadow-hover);
   }
 
-  .xpx-cinema-hero-nav--left {
+  .xpx-cinema-hero-nav--left,
+  .xpx-cinema-hero-nav--prev {
     left: 0.75rem;
   }
 
-  .xpx-cinema-hero-nav--right {
+  .xpx-cinema-hero-nav--right,
+  .xpx-cinema-hero-nav--next {
     right: 0.75rem;
   }
   .xpx-card {

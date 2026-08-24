@@ -3,8 +3,8 @@ import { inquiryCtaLabel, openingArrivalCtaLabel } from './inquiryCopy';
 
 describe('inquiryCopy', () => {
   it('uses inquiry labels per context', () => {
-    expect(inquiryCtaLabel('property_no_dates')).toBe('Book now');
-    expect(inquiryCtaLabel('property_with_dates')).toBe('Book now');
+    expect(inquiryCtaLabel('property_no_dates')).toBe('Check availability');
+    expect(inquiryCtaLabel('property_with_dates')).toBe('Send inquiry');
     expect(inquiryCtaLabel('host_card')).toBe('Book now');
     expect(inquiryCtaLabel('host_concierge')).toBe('Text us on WhatsApp');
     expect(inquiryCtaLabel('form_submit')).toBe('Book now');

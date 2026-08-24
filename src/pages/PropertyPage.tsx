@@ -2,9 +2,6 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import {
   ArrowLeft,
   MapPin,
-  Users,
-  Bed,
-  Bath,
   CheckCircle,
   ShieldCheck,
   Share2,
@@ -19,15 +16,17 @@ import {
   Music,
   PawPrint,
   ExternalLink,
+  ChevronDown,
 } from 'lucide-react';
 import type { Property } from '../lib/database.types';
 import Header from '../components/Header';
 import SEOHead from '../components/SEOHead';
 import PropertyGallery from '../components/property/PropertyGallery';
+import PropertyQuickInfo from '../components/property/PropertyQuickInfo';
 import DeferredMount from '../components/property/DeferredMount';
 import { logSupabaseError, supabase } from '../lib/supabase';
 import { getPublicPropertyById } from '../lib/publicListings';
-import { getAmenityIcon, listPropertyAmenities } from '../lib/amenities';
+import { getAmenityIcon, getAmenityCategoryName, listPropertyAmenities } from '../lib/amenities';
 import { listPropertyImages } from '../lib/propertyImages';
 import { generatePropertyStructuredData, generateBreadcrumbStructuredData } from '../lib/seo';
 import { listFeaturedPromoCodes } from '../lib/offers';
@@ -105,6 +104,7 @@ export default function PropertyPage() {
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [sidebarForced, setSidebarForced] = useState(false);
   const [numGuests, setNumGuests] = useState(2);
+  const [aboutExpanded, setAboutExpanded] = useState(false);
   const [isMobileLayout, setIsMobileLayout] = useState(
     () => typeof window !== 'undefined' && window.innerWidth < 1024,
   );
@@ -614,8 +614,12 @@ export default function PropertyPage() {
 
   const basePrice = property.price_per_day || property.price_full_day || 0;
   const amenitiesAll = listPropertyAmenities(property.amenities);
-  const amenitiesPreview = amenitiesAll.slice(0, 9);
+  const amenitiesPreview = amenitiesAll.slice(0, 4);
   const moreAmenities = Math.max(0, amenitiesAll.length - amenitiesPreview.length);
+  const descriptionLong = property.description.length > 320;
+  const descriptionPreview = descriptionLong
+    ? `${property.description.slice(0, 320).trimEnd()}…`
+    : property.description;
 
   // Why-love icon resolution (we map config keys → Lucide components so
   // propertyDefaults.ts stays free of React imports / dependencies).
@@ -669,19 +673,49 @@ export default function PropertyPage() {
       />
 
       <main className="xpx-container pt-3 sm:pt-5 xpx-property-page-main flex flex-col">
-        {/* Top action row — Back link on the left, Share menu on the right. */}
-        <div className="flex items-center justify-between gap-3">
+        {/* Concept C chrome: breadcrumb/back on row 1, title + share/save on row 2 (desktop). */}
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 sm:gap-x-4 gap-y-3 sm:gap-y-4 items-start">
+          <div className="col-start-1 row-start-1 min-w-0 lg:col-span-2">
           <button
             type="button"
             onClick={navigateBack}
-            className="inline-flex items-center gap-1.5 -ml-1 px-2.5 py-2 rounded-full text-sm font-semibold text-xpx-muted hover:text-xpx-text hover:bg-slate-100 transition-colors"
+            className="inline-flex items-center gap-1.5 -ml-1 px-2.5 py-2 rounded-full text-sm font-semibold text-xpx-muted hover:text-xpx-text hover:bg-slate-100 transition-colors lg:hidden"
             style={{ minHeight: 44 }}
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to results
+            Back
           </button>
 
-          <div className="flex items-center gap-1">
+          <nav aria-label="Breadcrumb" className="xpx-property-breadcrumb hidden lg:block min-w-0">
+            <ol className="flex items-center gap-1.5 min-w-0">
+              <li>
+                <a href="/" onClick={(e) => { e.preventDefault(); navigateHome(); }}>
+                  Home
+                </a>
+              </li>
+              <li aria-hidden className="text-xpx-subtle">›</li>
+              <li>
+                <a
+                  href={`/?location=${encodeURIComponent(property.city)}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigateTo(`/?location=${encodeURIComponent(property.city)}`);
+                  }}
+                >
+                  {property.city}
+                </a>
+              </li>
+              <li aria-hidden className="text-xpx-subtle">›</li>
+              <li className="min-w-0">
+                <span aria-current="page" className="block truncate">
+                  {propertyTitle}
+                </span>
+              </li>
+            </ol>
+          </nav>
+          </div>
+
+          <div className="col-start-2 row-start-1 lg:row-start-2 flex items-center gap-1 pt-0.5">
             <SaveListingButton
               propertyId={property.id}
               variant="inline"
@@ -769,25 +803,29 @@ export default function PropertyPage() {
             )}
             </div>
           </div>
-        </div>
 
-        {/* Image gallery — first on mobile (below header); before content grid on desktop */}
-        <div className="order-1 lg:order-1 mt-4 sm:mt-5 lg:mt-3">
-          <PropertyGallery images={property.images ?? []} title={propertyTitle} />
-        </div>
-
-        {/* Two-column content + sticky sidebar — after gallery on mobile */}
-        <div className="order-2 lg:order-2 mt-5 sm:mt-7 lg:mt-10 grid lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px] gap-8 lg:gap-10 xl:gap-12 items-start">
-          <div className="min-w-0 space-y-9 sm:space-y-12">
-            {/* 1. TITLE BLOCK */}
-            <header>
-              <h1 className="text-2xl sm:text-[26px] lg:text-[28px] font-extrabold tracking-tight text-xpx-text leading-[1.2]">
+        {/* Title block — above gallery (Concept C) */}
+        <header className="col-start-1 row-start-2 col-span-2 lg:col-span-1 min-w-0">
+            <div className="min-w-0">
+              <h1 className="text-[1.65rem] sm:text-[1.75rem] lg:text-[2.125rem] font-extrabold tracking-tight text-xpx-text leading-[1.18]">
                 {propertyTitle}
               </h1>
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <PropertyTrustLine property={property} variant="page" />
+                <span className="hidden sm:inline text-xpx-subtle" aria-hidden>
+                  ·
+                </span>
+                <p className="inline-flex items-center gap-1.5 text-sm text-xpx-muted min-w-0">
+                  <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--xpx-trust)' }} />
+                  <span className="truncate">
+                    {[property.city, stateLabel].filter(Boolean).join(', ')}
+                  </span>
+                </p>
+              </div>
               {(subtitle || property.is_verified) && (
                 <div className="mt-2 flex items-center gap-2.5 flex-wrap">
                   {subtitle && (
-                    <p className="text-base sm:text-lg text-xpx-muted">{subtitle}</p>
+                    <p className="text-sm text-xpx-muted">{subtitle}</p>
                   )}
                   {property.is_verified && (
                     <span
@@ -805,48 +843,47 @@ export default function PropertyPage() {
                   )}
                 </div>
               )}
+            </div>
+          <PropertySocialProofBand
+            propertyId={property.id}
+            city={property.city}
+            variant="whisper"
+          />
+        </header>
+        </div>
 
-              <p className="mt-3 inline-flex items-center gap-1.5 text-sm sm:text-[15px] text-xpx-muted">
-                <MapPin className="w-4 h-4 shrink-0" style={{ color: 'var(--xpx-trust)' }} />
-                <span>
-                  {[property.address, property.city, stateLabel].filter(Boolean).join(', ')}
-                </span>
-              </p>
+        {/* Bento gallery */}
+        <div className="mt-4 sm:mt-5">
+          <PropertyGallery images={property.images ?? []} title={propertyTitle} />
+        </div>
 
-              {/* Stats strip — uses inline dot separators on desktop, wraps to
-                  a stacked layout on narrow phones. */}
-              <ul className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-                <li>
-                  <PropertyTrustLine property={property} variant="page" />
-                </li>
-                <li className="inline-flex items-center gap-1.5 text-xpx-muted">
-                  <Users className="w-4 h-4 text-xpx-subtle" />
-                  <span className="tabular-nums">Up to {property.max_guests} guests</span>
-                </li>
-                <li className="inline-flex items-center gap-1.5 text-xpx-muted">
-                  <Bed className="w-4 h-4 text-xpx-subtle" />
-                  <span className="tabular-nums">
-                    {property.bedrooms} {property.bedrooms === 1 ? 'bedroom' : 'bedrooms'}
-                  </span>
-                </li>
-                <li className="inline-flex items-center gap-1.5 text-xpx-muted">
-                  <Bath className="w-4 h-4 text-xpx-subtle" />
-                  <span className="tabular-nums">
-                    {property.bathrooms}{' '}
-                    {property.bathrooms === 1 ? 'bathroom' : 'bathrooms'}
-                  </span>
-                </li>
-              </ul>
-              <PropertySocialProofBand propertyId={property.id} city={property.city} />
-            </header>
+        {/* Two-column content + sticky sidebar */}
+        <div className="mt-6 sm:mt-8 lg:mt-10 grid lg:grid-cols-[minmax(0,1fr)_minmax(320px,380px)] xl:grid-cols-[minmax(0,1fr)_400px] 2xl:grid-cols-[minmax(0,1fr)_420px] gap-8 lg:gap-10 xl:gap-12 items-start">
+          <div className="min-w-0 space-y-8 sm:space-y-10">
+            <PropertyQuickInfo property={property} />
 
             <DeferredMount rootMargin="400px 0px">
             {/* About + amenities */}
             <section id="about-section">
-              <h2 className="xpx-property-section-h2">About this stay</h2>
+              <h2 className="xpx-property-section-h2">About this space</h2>
               <p className="mt-4 text-[15px] sm:text-base text-xpx-muted leading-relaxed whitespace-pre-line">
-                {property.description}
+                {aboutExpanded ? property.description : descriptionPreview}
               </p>
+              {descriptionLong && (
+                <button
+                  type="button"
+                  onClick={() => setAboutExpanded((v) => !v)}
+                  className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-xpx-text underline underline-offset-4 hover:opacity-80"
+                >
+                  {aboutExpanded ? 'Show less' : 'Show more'}
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-200 motion-reduce:transition-none ${
+                      aboutExpanded ? 'rotate-180' : ''
+                    }`}
+                    aria-hidden
+                  />
+                </button>
+              )}
               {featureHighlights.length > 0 && (
                 <div className="mt-5 flex flex-wrap gap-2">
                   {featureHighlights.map((h) => (
@@ -870,7 +907,7 @@ export default function PropertyPage() {
             {amenitiesAll.length > 0 && (
               <section id="amenities-section">
                 <div className="flex items-end justify-between gap-3 flex-wrap">
-                  <h2 className="xpx-property-section-h2">Amenities</h2>
+                  <h2 className="xpx-property-section-h2">What this place offers</h2>
                   {moreAmenities > 0 && (
                     <a
                       href="#all-amenities"
@@ -882,30 +919,32 @@ export default function PropertyPage() {
                     </a>
                   )}
                 </div>
-                <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {amenitiesPreview.map((amenity) => {
                     const Icon = getAmenityIcon(amenity);
+                    const category = getAmenityCategoryName(amenity);
                     return (
                       <div
                         key={amenity}
-                        className="rounded-2xl px-4 py-3.5 flex items-center gap-3"
+                        className="xpx-property-amenity-card rounded-xl px-4 py-3.5 flex items-start gap-3"
                         style={{
                           background: 'var(--xpx-surface)',
                           border: '1px solid var(--xpx-border)',
                         }}
                       >
-                        <div
-                          className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center"
-                          style={{ background: 'var(--xpx-accent-a12)' }}
-                        >
-                          <Icon
-                            className="w-4 h-4"
-                            style={{ color: 'var(--xpx-warm-dark)' }}
-                          />
+                        <Icon
+                          className="w-5 h-5 shrink-0 mt-0.5"
+                          style={{ color: 'var(--xpx-warm-dark)' }}
+                          aria-hidden
+                        />
+                        <div className="min-w-0">
+                          <span className="text-sm text-xpx-text font-semibold block truncate">
+                            {amenity}
+                          </span>
+                          <span className="text-xs text-xpx-muted block truncate mt-0.5">
+                            {category}
+                          </span>
                         </div>
-                        <span className="text-sm text-xpx-text font-medium truncate">
-                          {amenity}
-                        </span>
                       </div>
                     );
                   })}
@@ -920,7 +959,10 @@ export default function PropertyPage() {
                     }}
                     onToggle={(e) => {
                       if ((e.target as HTMLDetailsElement).open) {
-                        trackXpressEvent('amenities_toggled', { property_id: property.id });
+                        trackXpressEvent('amenities_toggled', {
+                          property_id: property.id,
+                          action: (e.target as HTMLDetailsElement).open ? 'expand' : 'collapse',
+                        });
                       }
                     }}
                   >
@@ -1143,7 +1185,7 @@ export default function PropertyPage() {
           MobileBottomNav (which auto-hides on /property/* routes). Keeps
           the user one tap away from the booking sidebar at all times. */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 xpx-mobile-booking-bar xpx-mobile-booking-bar-surface">
-        <div className="xpx-container py-3 flex items-center justify-between gap-3">
+        <div className="xpx-container pt-3 pb-0 flex items-center justify-between gap-3">
           <div className="min-w-0">
             {hasValidDates ? (
               <>
@@ -1177,7 +1219,7 @@ export default function PropertyPage() {
             className="xpx-btn-primary shrink-0 rounded-2xl px-5 py-3 text-sm min-h-[48px] min-w-[44px] touch-manipulation"
           >
             {showBooking
-              ? 'Finish booking'
+              ? 'Finish inquiry'
               : hasValidDates
                 ? inquiryCtaLabel('property_with_dates')
                 : inquiryCtaLabel('property_no_dates')}

@@ -20,9 +20,9 @@ export function openingArrivalCtaLabel(hasDates: boolean): string {
 export function inquiryCtaLabel(context: InquiryCtaContext): string {
   switch (context) {
     case 'property_no_dates':
-      return 'Book now';
+      return 'Check availability';
     case 'property_with_dates':
-      return 'Book now';
+      return 'Send inquiry';
     case 'host_card':
       return 'Book now';
     case 'host_concierge':

@@ -1,16 +1,14 @@
-import { useEffect, useState } from 'react';
-import { Camera, X, ChevronLeft, ChevronRight, Bed } from 'lucide-react';
+import { useState } from 'react';
+import { Bed, LayoutGrid } from 'lucide-react';
 import {
   listPropertyImages,
   PROPERTY_GALLERY_THUMB_SIZES,
-  PROPERTY_LIGHTBOX_IMAGE_SIZES,
   propertyGalleryThumbSrc,
   propertyGalleryThumbSrcSet,
-  propertyLightboxImageSrc,
-  propertyLightboxImageSrcSet,
 } from '../../lib/propertyImages';
 import { trackXpressEvent } from '../../lib/analytics';
 import PropertyHeroCarousel from './PropertyHeroCarousel';
+import PropertyPhotoTour from './PropertyPhotoTour';
 
 interface PropertyGalleryProps {
   images: string[] | import('../../lib/database.types').Json;
@@ -18,12 +16,9 @@ interface PropertyGalleryProps {
 }
 
 /**
- * Apple/Expedia-style property gallery with VRBO-inspired hero carousel.
- *
- * Desktop: hero carousel (GPU transform) + stacked thumbnails.
- * Mobile: full-width transform carousel with counter pill.
- *
- * Both surfaces open the same lightbox with arrow / Escape support.
+ * Property gallery — mosaic + sliding hero (VRBO-style).
+ * Desktop: sliding hero left, two stills right, photo tour on click.
+ * Mobile: full-bleed slider with arrows, swipe, and “View all photos”.
  */
 export default function PropertyGallery({ images, title }: PropertyGalleryProps) {
   const safeImages = listPropertyImages(images);
@@ -33,21 +28,10 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
   const [index, setIndex] = useState(0);
   const [heroIndex, setHeroIndex] = useState(0);
 
-  useEffect(() => {
-    if (!open) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-      if (e.key === 'ArrowRight') setIndex((i) => (i + 1) % total);
-      if (e.key === 'ArrowLeft') setIndex((i) => (i - 1 + total) % total);
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [open, total]);
-
   if (total === 0) {
     return (
       <div
-        className="aspect-[16/10] sm:aspect-[2/1] rounded-3xl flex items-center justify-center"
+        className="xpx-property-bento aspect-[4/3] sm:aspect-[16/10] rounded-2xl sm:rounded-3xl flex items-center justify-center"
         style={{
           background: 'var(--xpx-surface-light)',
           border: '1px solid var(--xpx-border)',
@@ -64,220 +48,131 @@ export default function PropertyGallery({ images, title }: PropertyGalleryProps)
     trackXpressEvent('gallery_opened', { photo_index: i + 1, photo_total: total });
   };
 
-  const thumbs = safeImages.slice(1, 4);
-  const remaining = Math.max(0, total - 4);
+  const rightStack = safeImages.slice(1, 3);
+  const remaining = Math.max(0, total - 3);
+
+  const renderBentoImage = (img: string, photoIndex: number) => {
+    const thumbSrc = propertyGalleryThumbSrc(img);
+    const thumbSrcSet = propertyGalleryThumbSrcSet(img);
+    return (
+      <img
+        src={thumbSrc}
+        srcSet={thumbSrcSet}
+        sizes={thumbSrcSet ? PROPERTY_GALLERY_THUMB_SIZES : undefined}
+        alt={`${title} — photo ${photoIndex + 1}`}
+        width={960}
+        height={640}
+        className="w-full h-full object-cover object-center pointer-events-none"
+        loading={photoIndex === 0 ? 'eager' : 'lazy'}
+        decoding="async"
+      />
+    );
+  };
 
   return (
     <>
-      {/* Desktop / tablet — hero carousel + thumbnails */}
       <div
-        className="hidden sm:grid grid-cols-3 grid-rows-3 gap-3 md:gap-4 rounded-3xl overflow-hidden"
-        style={{ height: 'clamp(380px, 48vw, 520px)' }}
+        className="xpx-property-bento hidden sm:grid gap-2 md:gap-3 rounded-xl sm:rounded-2xl overflow-hidden"
+        style={{
+          gridTemplateColumns: rightStack.length > 0 ? 'minmax(0, 1.55fr) minmax(0, 1fr)' : '1fr',
+          height: 'clamp(340px, 38vw, 460px)',
+        }}
       >
-        <div
-          className={`relative overflow-hidden rounded-2xl ${
-            thumbs.length > 0 ? 'col-span-2 row-span-3' : 'col-span-3 row-span-3'
-          }`}
-        >
+        <div className="relative min-h-0 overflow-hidden">
           <PropertyHeroCarousel
             images={safeImages}
             title={title}
-            className="rounded-2xl"
+            className="h-full"
             imageClassName="w-full h-full object-cover"
+            showArrows={total > 1}
             onSlideClick={openAt}
             onIndexChange={setHeroIndex}
           />
-          <div
-            className="absolute inset-x-0 bottom-0 h-20 pointer-events-none"
-            style={{ background: 'linear-gradient(180deg, transparent, var(--xpx-overlay-scrim))' }}
-          />
-          <span
-            className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-xpx-text pointer-events-none"
-            style={{
-              background: 'rgba(255,255,255,0.92)',
-              backdropFilter: 'blur(12px) saturate(1.4)',
-              WebkitBackdropFilter: 'blur(12px) saturate(1.4)',
-              boxShadow: 'var(--xpx-shadow-hover)',
-            }}
-          >
-            <Camera className="w-3.5 h-3.5" />
-            <span className="tabular-nums">
-              {heroIndex + 1} / {total}
-            </span>
-          </span>
         </div>
 
-        {thumbs.map((img, i) => {
-          const isLastThumb = i === thumbs.length - 1;
-          const showOverlay = isLastThumb && remaining > 0;
-          const thumbSrc = propertyGalleryThumbSrc(img);
-          const thumbSrcSet = propertyGalleryThumbSrcSet(img);
-          return (
-            <button
-              key={`thumb-${i}`}
-              type="button"
-              onClick={() => openAt(i + 1)}
-              className="relative overflow-hidden rounded-2xl group focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--xpx-warm)]"
-              aria-label={`View photo ${i + 2} of ${total}`}
-            >
-              <img
-                src={thumbSrc}
-                srcSet={thumbSrcSet}
-                sizes={thumbSrcSet ? PROPERTY_GALLERY_THUMB_SIZES : undefined}
-                alt={`${title} — photo ${i + 2}`}
-                width={640}
-                height={427}
-                className="w-full h-full object-cover transition-transform ease-out group-hover:scale-[1.04]"
-                style={{ transitionDuration: '200ms', aspectRatio: '3 / 2' }}
-                loading="lazy"
-                decoding="async"
-              />
-              {showOverlay && (
-                <div
-                  className="absolute inset-0 flex items-center justify-center"
-                  style={{ background: 'var(--xpx-overlay-dark)' }}
+        {rightStack.length > 0 && (
+          <div className="grid grid-rows-2 gap-2 md:gap-3 min-h-0">
+            {rightStack.map((img, i) => {
+              const photoIndex = i + 1;
+              const isLast = i === rightStack.length - 1;
+              const showViewAll = isLast && total > 1;
+              return (
+                <button
+                  key={`bento-${photoIndex}`}
+                  type="button"
+                  onClick={() => openAt(photoIndex)}
+                  className="relative min-h-0 overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                  aria-label={
+                    showViewAll && remaining > 0
+                      ? `View all ${total} photos`
+                      : `View photo ${photoIndex + 1} of ${total}`
+                  }
                 >
-                  <div className="text-center" style={{ color: 'var(--xpx-on-dark)' }}>
-                    <p className="text-2xl font-extrabold tabular-nums leading-none">+{remaining}</p>
-                    <p className="text-[10px] uppercase tracking-wider opacity-80 mt-1">View all</p>
-                  </div>
-                </div>
-              )}
-            </button>
-          );
-        })}
+                  {renderBentoImage(img, photoIndex)}
+                  {showViewAll && (
+                    <span
+                      className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-xpx-text pointer-events-none"
+                      style={{
+                        background: 'rgba(255,255,255,0.94)',
+                        backdropFilter: 'blur(10px)',
+                        WebkitBackdropFilter: 'blur(10px)',
+                        boxShadow: 'var(--xpx-shadow-hover)',
+                        border: '1px solid var(--xpx-border)',
+                      }}
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5" aria-hidden />
+                      View all photos
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Mobile — transform carousel */}
-      <div className="sm:hidden relative aspect-[4/3] rounded-2xl overflow-hidden">
+      <div className="sm:hidden relative -mx-[var(--xpx-gutter)] aspect-[4/3] overflow-hidden">
         <PropertyHeroCarousel
           images={safeImages}
           title={title}
-          className="rounded-2xl"
+          className="h-full"
           imageClassName="w-full h-full object-cover"
-          showArrows={false}
+          showArrows={total > 1}
           onSlideClick={openAt}
           onIndexChange={setHeroIndex}
         />
-        <span
-          className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold tabular-nums pointer-events-none"
+        <div
+          className="absolute bottom-3 left-3 z-10 px-2.5 py-1 rounded-full text-[11px] font-semibold tabular-nums pointer-events-none"
+          style={{ background: 'rgba(0,0,0,0.55)', color: 'var(--xpx-on-dark)' }}
+        >
+          {heroIndex + 1} / {total}
+        </div>
+        <button
+          type="button"
+          onClick={() => openAt(heroIndex)}
+          className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold pointer-events-auto touch-manipulation"
           style={{
-            background: 'var(--xpx-overlay-dark)',
-            color: 'var(--xpx-on-dark)',
+            background: 'rgba(255,255,255,0.94)',
+            color: 'var(--xpx-text)',
             backdropFilter: 'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
+            border: '1px solid var(--xpx-border)',
+            minHeight: 36,
           }}
+          aria-label={`View all ${total} photos`}
         >
-          <Camera className="w-3 h-3" />
-          {heroIndex + 1} / {total}
-        </span>
+          <LayoutGrid className="w-3.5 h-3.5" aria-hidden />
+          View all photos
+        </button>
       </div>
 
-      {/* Lightbox */}
       {open && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Photo viewer"
-          className="fixed inset-0 z-[80] xpx-property-gallery-lightbox flex items-center justify-center"
-          onClick={() => setOpen(false)}
-        >
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="absolute top-4 right-4 z-[90] w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-            style={{ background: 'rgba(255,255,255,0.15)', minHeight: 44, minWidth: 44 }}
-            aria-label="Close gallery"
-          >
-            <X className="w-6 h-6" style={{ color: 'var(--xpx-on-dark)' }} />
-          </button>
-
-          <div
-            className="absolute top-4 left-4 z-[90] px-4 py-2 rounded-full backdrop-blur-sm font-semibold tabular-nums"
-            style={{ background: 'rgba(0,0,0,0.4)', color: 'var(--xpx-on-dark)' }}
-          >
-            {index + 1} / {total}
-          </div>
-
-          {total > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIndex((i) => (i - 1 + total) % total);
-                }}
-                className="absolute left-4 z-[90] w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                style={{ background: 'rgba(255,255,255,0.15)', minHeight: 44, minWidth: 44 }}
-                aria-label="Previous photo"
-              >
-                <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: 'var(--xpx-on-dark)' }} />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIndex((i) => (i + 1) % total);
-                }}
-                className="absolute right-4 z-[90] w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                style={{ background: 'rgba(255,255,255,0.15)', minHeight: 44, minWidth: 44 }}
-                aria-label="Next photo"
-              >
-                <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: 'var(--xpx-on-dark)' }} />
-              </button>
-            </>
-          )}
-
-          <img
-            src={propertyLightboxImageSrc(safeImages[index])}
-            srcSet={propertyLightboxImageSrcSet(safeImages[index])}
-            sizes={propertyLightboxImageSrcSet(safeImages[index]) ? PROPERTY_LIGHTBOX_IMAGE_SIZES : undefined}
-            alt={`${title} — photo ${index + 1}`}
-            width={1280}
-            height={800}
-            onClick={(e) => e.stopPropagation()}
-            className="max-w-[92vw] max-h-[85vh] object-contain rounded-lg select-none"
-            loading="eager"
-            decoding="async"
-          />
-
-          {total > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[90] max-w-full overflow-x-auto scrollbar-hide">
-              <div className="flex gap-2 px-4">
-                {safeImages.map((img, i) => {
-                  const lbThumb = propertyGalleryThumbSrc(img);
-                  return (
-                  <button
-                    key={`lb-${i}`}
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIndex(i);
-                    }}
-                    className={`shrink-0 w-14 h-14 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
-                      i === index
-                        ? 'border-white scale-110'
-                        : 'border-transparent opacity-60 hover:opacity-100'
-                    }`}
-                    aria-label={`Jump to photo ${i + 1}`}
-                    aria-current={i === index ? 'true' : undefined}
-                  >
-                    <img
-                      src={lbThumb}
-                      alt=""
-                      width={80}
-                      height={80}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </button>
-                );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
+        <PropertyPhotoTour
+          images={safeImages}
+          title={title}
+          startIndex={index}
+          onClose={() => setOpen(false)}
+        />
       )}
     </>
   );

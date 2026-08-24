@@ -106,34 +106,32 @@ export default function PropertyTrustLine({
   };
 
   return (
-    <div className={`flex flex-col gap-1 min-w-0 ${className}`}>
-      <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-        {trust.kind === 'verified_external_rating' && (
-          <span
-            className={`inline-flex items-center max-w-full font-semibold text-xpx-text tabular-nums truncate shrink-0 ${externalClass}`}
-            title={TRUST_BADGE_COPY.externalRating.title}
-          >
-            {trust.label}
-          </span>
-        )}
-        {!omitStayScore && (
-          <StayScoreBadge label={stayScore.label} variant={variant} onOpenInfo={openInfo} />
-        )}
-        <TrustChip label={chipLabel} title={chipTitle} />
-      </div>
+    <div className={`flex flex-wrap items-center gap-1.5 min-w-0 ${className}`}>
+      {trust.kind === 'verified_external_rating' && (
+        <span
+          className={`inline-flex items-center max-w-full font-semibold text-xpx-text tabular-nums truncate shrink-0 ${externalClass}`}
+          title={TRUST_BADGE_COPY.externalRating.title}
+        >
+          {trust.label}
+        </span>
+      )}
+      {!omitStayScore && (
+        <StayScoreBadge
+          label={stayScore.label}
+          variant={variant}
+          onOpenInfo={openInfo}
+        />
+      )}
+      <TrustChip label={chipLabel} title={chipTitle} />
       {variant === 'page' && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <p className="text-[11px] sm:text-xs text-xpx-subtle leading-snug max-w-xl">
-            {stayScore.microcopy}
-          </p>
-          <button
-            type="button"
-            onClick={openInfo}
-            className="text-[11px] sm:text-xs font-semibold text-xpx-text underline underline-offset-2 hover:opacity-80"
-          >
-            How it works
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={openInfo}
+          className="text-[11px] sm:text-xs font-semibold text-xpx-muted underline underline-offset-2 hover:text-xpx-text"
+          title={stayScore.microcopy}
+        >
+          How it works
+        </button>
       )}
     </div>
   );

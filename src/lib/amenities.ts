@@ -217,6 +217,16 @@ export function getAmenityIcon(amenityName: string) {
   return Home;
 }
 
+/** Catalog category for a listing amenity — never invents speeds, lockers, or other specs. */
+export function getAmenityCategoryName(amenityName: string): string {
+  for (const category of AMENITY_CATEGORIES) {
+    if (category.amenities.some((a) => a.name === amenityName)) {
+      return category.name;
+    }
+  }
+  return 'Listed amenity';
+}
+
 export interface GroupedPropertyAmenities {
   categoryName: string;
   items: { name: string; icon: LucideIcon }[];

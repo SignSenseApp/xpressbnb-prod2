@@ -12,6 +12,8 @@ export type UseTransformGalleryOptions = {
   resumeAfterMs?: number;
   swipeEnabled?: boolean;
   reducedMotion?: boolean;
+  /** Logical slide to start on (0-based). Applied on mount only. */
+  initialIndex?: number;
 };
 
 export type UseTransformGalleryResult = {
@@ -25,6 +27,7 @@ export type UseTransformGalleryResult = {
   isDragging: boolean;
   goNext: () => void;
   goPrev: () => void;
+  goTo: (logicalIndex: number) => void;
   resetToFirst: () => void;
   handleTransitionEnd: () => void;
   onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => void;
@@ -33,6 +36,11 @@ export type UseTransformGalleryResult = {
   onPointerCancel: (e: React.PointerEvent<HTMLDivElement>) => void;
   didSwipe: () => boolean;
 };
+
+function trackFromLogical(logical: number, count: number, loopEnabled: boolean) {
+  const clamped = count <= 0 ? 0 : Math.min(Math.max(logical, 0), count - 1);
+  return loopEnabled ? clamped + 1 : clamped;
+}
 
 export function useTransformGallery({
   slideCount: count,
@@ -43,6 +51,7 @@ export function useTransformGallery({
   resumeAfterMs = 3000,
   swipeEnabled = true,
   reducedMotion = false,
+  initialIndex = 0,
 }: UseTransformGalleryOptions): UseTransformGalleryResult {
   const containerRef = useRef<HTMLDivElement>(null);
   const resumeTimerRef = useRef<number | null>(null);
@@ -61,7 +70,9 @@ export function useTransformGallery({
     return [-1, ...Array.from({ length: count }, (_, i) => i), count];
   }, [count, loopEnabled]);
 
-  const [trackIndex, setTrackIndex] = useState(loopEnabled ? 1 : 0);
+  const [trackIndex, setTrackIndex] = useState(() =>
+    trackFromLogical(initialIndex, count, loopEnabled),
+  );
   const [enableTransition, setEnableTransition] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
@@ -109,6 +120,15 @@ export function useTransformGallery({
 
   const goNextRef = useRef(goNext);
   goNextRef.current = goNext;
+
+  const goTo = useCallback(
+    (logical: number) => {
+      if (count <= 0) return;
+      setEnableTransition(true);
+      setTrackIndex(trackFromLogical(logical, count, loopEnabled));
+    },
+    [count, loopEnabled],
+  );
 
   const resetToFirst = useCallback(() => {
     setEnableTransition(true);
@@ -274,6 +294,7 @@ export function useTransformGallery({
     isDragging,
     goNext,
     goPrev,
+    goTo,
     resetToFirst,
     handleTransitionEnd,
     onPointerDown,
