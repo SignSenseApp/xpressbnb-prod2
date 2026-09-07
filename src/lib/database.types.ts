@@ -375,6 +375,77 @@ export type Database = {
         }
         Relationships: []
       }
+      host_brand_properties: {
+        Row: {
+          brand_id: string
+          created_at: string
+          id: string
+          property_id: string
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          id?: string
+          property_id: string
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          id?: string
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "host_brand_properties_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "host_brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "host_brand_properties_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: true
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      host_brands: {
+        Row: {
+          business_description: string | null
+          business_name: string
+          created_at: string
+          host_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          business_description?: string | null
+          business_name: string
+          created_at?: string
+          host_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          business_description?: string | null
+          business_name?: string
+          created_at?: string
+          host_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "host_brands_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: true
+            referencedRelation: "hosts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hosts: {
         Row: {
           billing_cycle: string
@@ -1423,6 +1494,10 @@ export type Database = {
         Args: { p_booking_id: string }
         Returns: undefined
       }
+      replace_host_brand_properties: {
+        Args: { p_brand_id: string; p_property_ids?: string[] }
+        Returns: string[]
+      }
       save_guest_push_subscription: {
         Args: {
           p_auth_key: string
@@ -1590,6 +1665,8 @@ export const Constants = {
 export type Property = Database['public']['Tables']['properties']['Row']
 export type Booking = Database['public']['Tables']['bookings']['Row']
 export type Host = Database['public']['Tables']['hosts']['Row']
+export type HostBrand = Database['public']['Tables']['host_brands']['Row']
+export type HostBrandProperty = Database['public']['Tables']['host_brand_properties']['Row']
 export type PropertyCalendarAvailability = Database['public']['Tables']['property_calendar']['Row']
 export type ViewEvent = Database['public']['Tables']['view_events']['Row']
 

@@ -9,6 +9,17 @@ import DemandForecast from '../../components/premium/DemandForecast';
 import PremiumUpgradeCTA from '../../components/premium/PremiumUpgradeCTA';
 import RealtimeToast, { type ToastPayload } from '../../components/RealtimeToast';
 import HostValueProp from '../../components/host/HostValueProp';
+import BrandRecognitionCard from '../../components/host/BrandRecognitionCard';
+import BrandOnboardingFlow from '../../components/host/BrandOnboardingFlow';
+import { loadHostBrandState, type HostBrandIdentity } from '../../lib/hostBrand';
+import {
+  brandCardVariant,
+  dismissHostBrandCard,
+  isHostBrandCardDismissed,
+  type BrandFlowMode,
+  type HostBrandListingOption,
+} from '../../lib/hostBrandUi';
+import { listPropertyImages, propertyCardImageUrl } from '../../lib/propertyImages';
 
 type PropertyRow = Database['public']['Tables']['properties']['Row'];
 
@@ -28,6 +39,18 @@ interface OverviewPageProps {
 /** Rolling window: now minus 7×24h (UTC ISO for PostgREST `gte`). */
 function sevenDaysAgoIso(): string {
   return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function toBrandListingOptions(properties: PropertyRow[]): HostBrandListingOption[] {
+  return properties.map((property) => {
+    const cover = listPropertyImages(property.images)[0] ?? null;
+    return {
+      id: property.id,
+      title: property.title || 'Untitled listing',
+      city: property.city || '',
+      coverUrl: cover ? propertyCardImageUrl(cover, 128) : null,
+    };
+  });
 }
 
 function OverviewKpiSkeleton() {
@@ -60,6 +83,12 @@ export default function OverviewPage({ onNavigate }: OverviewPageProps = {}) {
   const [selectedProperty, setSelectedProperty] = useState<PropertyRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<ToastPayload | null>(null);
+  const [brand, setBrand] = useState<HostBrandIdentity | null>(null);
+  const [brandLoading, setBrandLoading] = useState(true);
+  const [brandError, setBrandError] = useState(false);
+  const [brandDismissed, setBrandDismissed] = useState(false);
+  const [brandFlowOpen, setBrandFlowOpen] = useState(false);
+  const [brandFlowMode, setBrandFlowMode] = useState<BrandFlowMode>('create');
 
   const loadStats = useCallback(async () => {
     if (!host?.id) return;
@@ -156,6 +185,31 @@ export default function OverviewPage({ onNavigate }: OverviewPageProps = {}) {
     void loadStats();
   }, [host?.id, loadStats]);
 
+  useEffect(() => {
+    if (!host?.id) {
+      setBrand(null);
+      setBrandLoading(false);
+      setBrandError(false);
+      setBrandDismissed(false);
+      return;
+    }
+
+    setBrandDismissed(isHostBrandCardDismissed(host.id));
+    let cancelled = false;
+    setBrandLoading(true);
+    setBrandError(false);
+    void loadHostBrandState(host.id).then((result) => {
+      if (cancelled) return;
+      setBrand(result.brand);
+      setBrandError(result.error);
+      setBrandLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [host?.id]);
+
   const emerald = '#50C878';
   const slateIcon = '#64748b';
 
@@ -190,6 +244,29 @@ export default function OverviewPage({ onNavigate }: OverviewPageProps = {}) {
   ];
 
   const totalProperties = properties.length;
+  const brandCard = brandCardVariant({
+    hostId: host?.id,
+    overviewLoading: loading,
+    brandLoading,
+    brandError,
+    brand,
+    dismissed: brandDismissed,
+    propertyCount: totalProperties,
+    totalBookingsAllTime,
+  });
+
+  const openBrandFlow = (nextMode: BrandFlowMode) => {
+    setBrandFlowMode(nextMode);
+    setBrandFlowOpen(true);
+  };
+
+  const refreshBrand = () => {
+    if (!host?.id) return;
+    void loadHostBrandState(host.id).then((result) => {
+      setBrand(result.brand);
+      setBrandError(result.error);
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -249,6 +326,40 @@ export default function OverviewPage({ onNavigate }: OverviewPageProps = {}) {
             );
           })}
         </div>
+      )}
+
+      {brandCard !== 'hidden' && (
+        <BrandRecognitionCard
+          variant={brandCard}
+          hostName={host?.name ?? 'Host'}
+          brand={brand}
+          onAdd={() => openBrandFlow('create')}
+          onEdit={() => openBrandFlow('edit')}
+          onDismiss={() => {
+            if (!host?.id) return;
+            dismissHostBrandCard(host.id);
+            setBrandDismissed(true);
+          }}
+        />
+      )}
+
+      {host?.id && (
+        <BrandOnboardingFlow
+          open={brandFlowOpen}
+          mode={brandFlowMode}
+          hostId={host.id}
+          hostName={host.name ?? 'Host'}
+          properties={toBrandListingOptions(properties)}
+          existingBrand={brand}
+          onClose={() => {
+            setBrandFlowOpen(false);
+            refreshBrand();
+          }}
+          onCompleted={(next) => {
+            setBrand(next);
+            setBrandFlowOpen(false);
+          }}
+        />
       )}
 
       {/* Quick actions + activity */}
